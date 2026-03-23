@@ -1,0 +1,47 @@
+File Name (Title),Destination Folder Path
+Main Express Server,backend/server.js
+MongoDB Connection,backend/config/db.js
+Socket.io Configuration,backend/config/socket.js
+Environment Setup,backend/config/env.js
+JWT Authentication Middleware,backend/middlewares/authMiddleware.js
+RBAC Middleware,backend/middlewares/rbacMiddleware.js
+Multer File Upload Middleware,backend/middlewares/uploadMiddleware.js
+Zod Validation Middleware,backend/middlewares/validateMiddleware.js
+Authentication Controller,backend/controllers/authController.js
+Admin Controller,backend/controllers/adminController.js
+Teacher Controller,backend/controllers/teacherController.js
+Student Controller,backend/controllers/studentController.js
+Chat Controller,backend/controllers/chatController.js
+Public Website Controller,backend/controllers/publicController.js
+Auth Routes,backend/routes/authRoutes.js
+Admin Routes,backend/routes/adminRoutes.js
+Teacher Routes,backend/routes/teacherRoutes.js
+Student Routes,backend/routes/studentRoutes.js
+Public Website Routes,backend/routes/publicRoutes.js
+Chat Routes,backend/routes/chatRoutes.js
+User Model,backend/models/User.js
+Class & Subject Models,backend/models/Class.js
+Subject Model,backend/models/Subject.js
+Assignment Model,backend/models/Assignment.js
+Fee & Notice Models,backend/models/Fee.js
+Notice Model,backend/models/Notice.js
+Message Model (Chat),backend/models/Message.js
+Timetable Model,backend/models/Timetable.js
+Gallery Model,backend/models/Gallery.js
+Unique ID Generator,backend/utils/generateId.js
+Email Utility,backend/utils/email.js
+
+
+File Name (Title),Destination Folder Path
+School Management System App,frontend/src/App.jsx
+React Entry Point,frontend/src/main.jsx
+Main CSS File,frontend/src/index.css
+Frontend Package.json,frontend/package.json
+Tailwind Configuration,frontend/tailwind.config.js
+Vite Configuration,frontend/vite.config.js
+
+
+File Name (Title),Destination Folder Path
+Project Readme,documentation/README.md
+Installation Steps,documentation/installation.md
+Deployment Guide,documentation/deployment.md
