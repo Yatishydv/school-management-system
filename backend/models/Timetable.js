@@ -5,6 +5,7 @@ const timetableSchema = new mongoose.Schema({
     schedule: [{
         day: { type: String, enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'], required: true },
         subject: { type: mongoose.Schema.Types.ObjectId, ref: 'Subject', required: true },
+        teacher: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
         startTime: { type: String, required: true }, // e.g., "09:00"
         endTime: { type: String, required: true }, // e.g., "09:45"
         room: { type: String }

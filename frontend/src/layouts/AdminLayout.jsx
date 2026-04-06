@@ -1,8 +1,8 @@
 // frontend/src/layouts/AdminLayout.jsx
 import React, { useState } from "react";
 import Sidebar from "../components/admin/Sidebar.jsx";
-import useAuthStore from "../state/authStore.js";
-import { Menu } from "lucide-react"; // Import Menu icon
+import useAuthStore from "../stores/authStore.js";
+import { Menu, X } from "lucide-react";
 
 const AdminLayout = ({ children }) => {
   const { user } = useAuthStore();
@@ -13,39 +13,46 @@ const AdminLayout = ({ children }) => {
   };
 
   return (
-    <div className="flex min-h-screen bg-neutral-bg-subtle">
+    <div className="flex min-h-screen bg-white md:bg-gray-50/50 overflow-x-hidden">
 
-      {/* SIDEBAR */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0 transition-transform duration-300 ease-in-out`}>
+      {/* SIDEBAR - Fixed Desktop, Drawer Mobile */}
+      <div className={`fixed inset-y-0 left-0 z-50 w-72 transform ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0 transition-transform duration-500 ease-out shadow-2xl md:shadow-none`}>
         <Sidebar />
+        
+        {/* Mobile Close Button */}
+        <button 
+          onClick={toggleSidebar}
+          className="md:hidden absolute top-6 -right-12 w-10 h-10 bg-white border border-gray-100 text-primary-950 rounded-r-xl flex items-center justify-center shadow-xl"
+        >
+          <X size={20} />
+        </button>
       </div>
 
       {/* Overlay for mobile */}
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 bg-black opacity-50 z-40 md:hidden"
+          className="fixed inset-0 bg-primary-950/20 backdrop-blur-sm z-40 md:hidden transition-opacity"
           onClick={toggleSidebar}
         ></div>
       )}
 
       {/* MAIN CONTENT */}
-      <div className="flex-1 md:ml-64 p-8">
-        {/* Mobile Menu Button */}
-        <button
-          className="md:hidden p-2 text-gray-600 focus:outline-none focus:bg-gray-100 absolute top-4 left-4 z-50"
-          onClick={toggleSidebar}
-        >
-          <Menu size={24} />
-        </button>
-
-        <div className="mb-6 mt-10 md:mt-0">
-          <h1 className="text-3xl font-bold text-primary-900">
-            Welcome, {user?.name || "Admin"}
-          </h1>
-          <p className="text-gray-600">Manage your school operations</p>
+      <div className="flex-1 md:ml-72 md:max-w-[calc(100%-18rem)] min-h-screen relative overflow-x-hidden">
+        {/* Mobile Header (Only visible on small screens) */}
+        <div className="md:hidden flex items-center justify-between p-6 bg-white border-b sticky top-0 z-30">
+           <div className="text-lg font-black tracking-tighter uppercase text-primary-950">HUB<span className="text-accent-500 italic">.</span></div>
+           <button
+             className="p-3 text-primary-950 bg-gray-50 rounded-xl"
+             onClick={toggleSidebar}
+           >
+             <Menu size={24} />
+           </button>
         </div>
 
-        <div>{children}</div>
+        {/* Page Content */}
+        <div className="animate-fade-in">
+          {children}
+        </div>
       </div>
     </div>
   );

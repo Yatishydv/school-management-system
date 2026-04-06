@@ -1,22 +1,20 @@
 import React from 'react';
 
-const Button = ({ children, className = '', variant = 'primary', onClick, disabled }) => {
-    const baseStyle = 'px-6 py-3 font-sans font-semibold rounded-lg transition-all duration-300 ease-in-out transform hover:-translate-y-1 hover:shadow-md focus:outline-none focus:ring-4 focus:ring-opacity-50';
+const Button = ({ children, className = '', variant = 'primary', onClick, disabled, type = "button" }) => {
+    const baseStyle = 'px-8 py-4 font-black uppercase tracking-widest text-[10px] rounded-2xl transition-all duration-500 ease-out transform hover:-translate-y-1 hover:shadow-2xl focus:outline-none disabled:opacity-50 disabled:translate-y-0 disabled:shadow-none';
 
     const variants = {
-        primary: 'bg-primary text-white hover:bg-primary-dark focus:ring-primary-light',
-        secondary: 'bg-secondary text-gray-800 hover:bg-secondary-dark focus:ring-secondary-light',
-        neutral: 'bg-gray-200 text-gray-800 hover:bg-gray-300 focus:ring-gray-400',
-        destructive: 'bg-danger text-white hover:bg-red-700 focus:ring-red-300', // Using default red for destructive for now
-        ghost: 'bg-transparent text-primary hover:bg-gray-100 focus:ring-gray-200',
-        accent: 'bg-accent text-white hover:bg-accent-dark focus:ring-accent-light', // Added accent variant
+        primary: 'bg-primary-950 text-white hover:bg-accent-500 shadow-xl shadow-primary-950/10',
+        secondary: 'bg-white text-primary-950 border border-gray-100 hover:bg-gray-50 shadow-sm',
+        accent: 'bg-accent-500 text-white hover:bg-accent-600 shadow-xl shadow-accent-500/20',
+        destructive: 'bg-white text-red-500 border border-red-50 hover:bg-red-500 hover:text-white',
+        ghost: 'bg-transparent text-primary-950 hover:bg-gray-50',
     };
-
-    const disabledStyle = 'opacity-50 cursor-not-allowed';
 
     return (
         <button
-            className={`${baseStyle} ${variants[variant]} ${disabled ? disabledStyle : ''} ${className}`}
+            type={type}
+            className={`${baseStyle} ${variants[variant] || variants.primary} ${className}`}
             onClick={onClick}
             disabled={disabled}
         >

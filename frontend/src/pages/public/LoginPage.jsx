@@ -1,9 +1,10 @@
 // frontend/src/pages/public/LoginPage.jsx
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import axios from "../../api/axios"; // Import the configured axios instance
-import useAuthStore from "../../stores/useAuthStore";
+import axios from "../../api/axios";
+import useAuthStore from "../../stores/authStore";
 import { User, EyeOff, Eye } from "lucide-react";
+import { toast } from "react-toastify";
 
 const API_URL = "/auth/login"; // Use relative path as base URL is set in axios instance
 
@@ -64,15 +65,25 @@ const LoginPage = () => {
           email: data.email,
           role: data.role,
           profileImage: data.profileImage,
+          address: data.address,
+          phone: data.phone,
+          rollNumber: data.rollNumber,
+          classId: data.classId,
         },
       });
 
       axios.defaults.headers.common["Authorization"] = `Bearer ${data.token}`;
 
+      toast.success("Login successful! Welcome back.", {
+        autoClose: 3000,
+      });
+      
       console.log("Redirecting to:", roleRedirect[data.role], "for role:", data.role);
       navigate(roleRedirect[data.role] || "/", { replace: true });
     } catch (err) {
-      setError(err?.response?.data?.message || "Invalid ID or password.");
+      const msg = err?.response?.data?.message || "Invalid ID or password.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }

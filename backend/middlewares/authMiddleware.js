@@ -1,4 +1,4 @@
-import * as jwt from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import { default as User } from '../models/User.js';
 
 const protect = async (req, res, next) => {
@@ -21,7 +21,7 @@ const protect = async (req, res, next) => {
 
             next();
         } catch (error) {
-            console.error(error);
+            console.error("JWT ERROR:", error.message);
             res.status(401).json({ message: 'Not authorized, token failed' });
         }
     }
@@ -31,4 +31,12 @@ const protect = async (req, res, next) => {
     }
 };
 
-export { protect };
+const admin = (req, res, next) => {
+    if (req.user && req.user.role === 'admin') {
+        next();
+    } else {
+        res.status(401).json({ message: 'Not authorized as an admin' });
+    }
+};
+
+export { protect, admin };

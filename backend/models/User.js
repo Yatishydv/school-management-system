@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs';
 const userSchema = new mongoose.Schema({
     uniqueId: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    email: { type: String, unique: true, sparse: true, default: null }, 
+    email: { type: String, unique: true, sparse: true }, 
     role: { 
         type: String, 
         enum: ['admin', 'teacher', 'student'], 
@@ -20,7 +20,12 @@ const userSchema = new mongoose.Schema({
     
     // Student Fields
     classId: { type: mongoose.Schema.Types.ObjectId, ref: 'Class' }, 
-    rollNumber: { type: String }
+    rollNumber: { type: String },
+    fatherName: { type: String },
+    motherName: { type: String },
+    dob: { type: String },
+    prevSchool: { type: String },
+    admissionDate: { type: Date, default: Date.now }
 }, { timestamps: true });
 
 // Pre-save middleware for hashing password

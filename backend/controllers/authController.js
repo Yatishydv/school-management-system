@@ -16,16 +16,15 @@ const generateToken = (userId, role, name) => {
 const loginUser = async (req, res) => {
     const { uniqueId, password } = req.body;
 
-    console.log("LOGIN BODY:", req.body);
+    console.log("LOGIN ATTEMPT - ID:", uniqueId, "PWD_LEN:", password?.length);
 
     try {
         const user = await User.findOne({ uniqueId });
-
-        console.log("FOUND USER:", user);
+        console.log("FOUND USER DOCUMENT:", user ? "YES" : "NO");
 
         if (!user) {
-            console.log("❌ User not found");
-            return res.status(400).json({ message: 'Invalid credentials or user ID.' });
+            console.log("❌ User not found:", uniqueId);
+            return res.status(401).json({ message: 'Authentication failed: User ID not found.' });
         }
 
         // Compare password
@@ -33,8 +32,8 @@ const loginUser = async (req, res) => {
         console.log("PASSWORD MATCH:", isMatch);
 
         if (!isMatch) {
-            console.log("❌ Password mismatch");
-            return res.status(401).json({ message: 'Invalid credentials or user ID.' });
+            console.log("❌ Password mismatch for:", uniqueId);
+            return res.status(401).json({ message: 'Authentication failed: Incorrect password.' });
         }
 
         const token = generateToken(user._id, user.role, user.name);
@@ -48,6 +47,10 @@ const loginUser = async (req, res) => {
             email: user.email,
             role: user.role,
             profileImage: user.profileImage,
+            address: user.address,
+            phone: user.phone,
+            rollNumber: user.rollNumber,
+            classId: user.classId,
             token,
         });
 

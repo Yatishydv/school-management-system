@@ -4,11 +4,11 @@ const generateUniqueId = async (rolePrefix) => {
     // Determine the starting sequence based on the role
     const prefixMap = {
         ADMIN: 'ADM',
-        TEACHER: 'TCH',
-        STUDENT: 'STD',
+        TEACHER: 'TEC',
+        STUDENT: 'STU',
     };
     
-    const prefix = prefixMap[rolePrefix] || 'USR';
+    const prefix = prefixMap[rolePrefix.toUpperCase()] || 'USR';
 
     // Find the latest user ID with this prefix to determine the next sequence number
     const latestUser = await User.findOne({ uniqueId: new RegExp(`^${prefix}`) })

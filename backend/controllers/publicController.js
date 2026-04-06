@@ -22,7 +22,7 @@ export const getPublicNotices = async (req, res) => {
 // @access  Public
 export const getGallery = async (req, res) => {
     try {
-        const gallery = await Gallery.find().select('caption url date').sort({ date: -1 });
+        const gallery = await Gallery.find().select('title caption url keywords tags date').sort({ date: -1 });
         res.status(200).json(gallery);
     } catch (error) {
         res.status(500).json({ message: 'Error fetching gallery.' });

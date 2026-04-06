@@ -13,6 +13,7 @@ const admissionSchema = new mongoose.Schema(
     prevSchool: { type: String },
     photo: { type: String }, // file URL
     birthCertificate: { type: String }, // file URL
+    status: { type: String, enum: ['Pending', 'Admitted', 'Rejected'], default: 'Pending' },
   },
   { timestamps: true }
 );

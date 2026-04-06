@@ -1,6 +1,12 @@
 import express from "express";
 import multer from "multer";
-import { submitAdmission, getAdmissions } from "../controllers/admissionController.js";
+import { 
+  submitAdmission, 
+  getAdmissions, 
+  updateAdmissionStatus, 
+  deleteAdmission 
+} from "../controllers/admissionController.js";
+import { protect, admin } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
@@ -16,6 +22,8 @@ router.post(
   submitAdmission
 );
 
-router.get("/all", getAdmissions);
+router.get("/all", protect, admin, getAdmissions);
+router.patch("/:id/status", protect, admin, updateAdmissionStatus);
+router.delete("/:id", protect, admin, deleteAdmission);
 
 export default router;

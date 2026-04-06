@@ -1,16 +1,22 @@
 import React from "react";
 
 const Input = React.forwardRef(
-  ({ type = "text", placeholder, value, onChange, className = "", ...props }, ref) => (
-    <input
-      ref={ref}
-      type={type}
-      placeholder={placeholder}
-      value={value || ""}
-      onChange={onChange}
-      className={`w-full px-4 py-3 font-sans border border-gray-300 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-transparent transition-all duration-300 ${className}`}
-      {...props}
-    />
+  ({ label, type = "text", placeholder, className = "", error, ...props }, ref) => (
+    <div className="space-y-2 w-full">
+      {label && (
+        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 block ml-1">
+          {label}
+        </label>
+      )}
+      <input
+        ref={ref}
+        type={type}
+        placeholder={placeholder}
+        className={`w-full px-6 py-4 bg-white border border-gray-100 rounded-2xl focus:ring-4 focus:ring-accent-100 focus:border-accent-500 transition-all font-bold text-sm outline-none placeholder:text-gray-300 shadow-sm ${error ? "border-red-500 ring-4 ring-red-50" : ""} ${className}`}
+        {...props}
+      />
+      {error && <p className="text-[10px] font-bold text-red-500 ml-1">{error}</p>}
+    </div>
   )
 );
 

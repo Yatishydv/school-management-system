@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import useAuthStore from "../../state/authStore";
+import useAuthStore from "../../stores/authStore";
 import Input from "../ui/Input";
 import Button from "../ui/Button";
 import adminService from "../../api/adminService";
+import { toast } from "react-toastify";
 
 const AddStudentForm = ({ onClose, onUserAdded }) => {
   const { token } = useAuthStore();
@@ -29,7 +30,7 @@ const AddStudentForm = ({ onClose, onUserAdded }) => {
 
     try {
       await adminService.addUser(formData, token);
-      alert("Student added successfully!");
+      toast.success("Student added successfully!");
       onUserAdded();
       onClose();
     } catch (err) {

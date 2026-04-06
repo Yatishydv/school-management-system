@@ -88,7 +88,7 @@ export const getContacts = async (req, res) => {
     } else if (role === 'student') {
         // Student can chat with their Class Teacher and Subject Teachers
         const studentClassId = req.user.classId;
-        const subjectTeachers = await Subject.find({ classId: studentClassId }).distinct('assignedTeacher');
+        const subjectTeachers = await Subject.find({ classId: studentClassId }).distinct('assignedTeachers');
         
         const classInfo = await Class.findById(studentClassId).select('classTeacher');
         const classTeacherId = classInfo?.classTeacher;

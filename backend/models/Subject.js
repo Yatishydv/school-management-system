@@ -1,9 +1,9 @@
 import mongoose from 'mongoose';
 
 const subjectSchema = new mongoose.Schema({
-    name: { type: String, required: true, unique: true }, // e.g., "Mathematics"
-    code: { type: String, unique: true }, // e.g., "MATH101"
-    assignedTeacher: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    name: { type: String, required: true }, // e.g., "Mathematics"
+    code: { type: String }, // e.g., "MATH101"
+    assignedTeachers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     classId: { type: mongoose.Schema.Types.ObjectId, ref: 'Class', required: true }
 }, { timestamps: true });
 

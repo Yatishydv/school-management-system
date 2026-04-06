@@ -32,3 +32,26 @@ export const getAdmissions = async (req, res) => {
     res.status(500).json({ success: false });
   }
 };
+
+export const updateAdmissionStatus = async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+  try {
+    const admission = await Admission.findByIdAndUpdate(id, { status }, { new: true });
+    if (!admission) return res.status(404).json({ message: "Admission record not found" });
+    res.status(200).json({ success: true, message: `Status updated to ${status}`, data: admission });
+  } catch (err) {
+    res.status(500).json({ message: "Error updating status", success: false });
+  }
+};
+
+export const deleteAdmission = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const admission = await Admission.findByIdAndDelete(id);
+    if (!admission) return res.status(404).json({ message: "Admission record not found" });
+    res.status(200).json({ success: true, message: "Admission record deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Error deleting record", success: false });
+  }
+};

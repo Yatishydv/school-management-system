@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 
 const feeSchema = new mongoose.Schema({
     student: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    title: { type: String, required: true },
     amountDue: { type: Number, required: true },
     amountPaid: { type: Number, default: 0 },
     dueDate: { type: Date, required: true },
@@ -13,7 +14,14 @@ const feeSchema = new mongoose.Schema({
     paymentHistory: [{
         amount: Number,
         date: { type: Date, default: Date.now },
-        method: String
+        method: String,
+        remarks: String
+    }],
+    auditLog: [{
+        action: String,
+        details: String,
+        date: { type: Date, default: Date.now },
+        modifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
     }]
 }, { timestamps: true });
 

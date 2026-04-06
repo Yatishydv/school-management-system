@@ -8,11 +8,24 @@ import {
     getAssignments, 
     submitAssignment, 
     getFeeStatus,
-    getNotices
+    getNotices,
+    getStudentProfile,
+    getStudentSubjects,
+    getAttendanceStats,
+    getAttendanceHistory,
+    getRecentResults,
+    getResults,
+    getDashboardSummary
 } from '../controllers/studentController.js';
 
 router.use(protect);
 router.use(authorize(['student']));
+
+// Profile
+router.get('/profile', getStudentProfile);
+
+// Subjects
+router.get('/subjects', getStudentSubjects);
 
 // Timetable
 router.get('/timetable', getTimetable);
@@ -31,6 +44,15 @@ router.get('/fees', getFeeStatus);
 //Notices
 router.get('/notices', getNotices);
 
-// (Other routes for marks, attendance, etc. would go here)
+// Attendance
+router.get('/attendance/stats', getAttendanceStats);
+router.get('/attendance/history', getAttendanceHistory);
+
+// Results
+router.get('/results', getResults);
+router.get('/results/recent', getRecentResults);
+
+// Dashboard Summary
+router.get('/dashboard/summary', getDashboardSummary);
 
 export default router;
