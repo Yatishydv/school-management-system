@@ -66,7 +66,14 @@ const StudentNotifications = () => {
     if (loading) return <div className="p-20 flex items-center justify-center min-h-[60vh] animate-pulse font-body text-blue-400 font-bold uppercase tracking-widest text-xs">Syncing Matrix...</div>;
 
     return (
-        <div className="min-h-screen bg-gray-50/30 pb-24 font-body">
+        <div className="min-h-screen bg-gray-50/30 pb-24 font-body relative overflow-hidden">
+            {/* Vertical Editorial Watermark */}
+            <div className="fixed right-[-5%] top-1/2 -translate-y-1/2 rotate-90 pointer-events-none select-none z-0 hidden lg:block">
+                <h1 className="text-[18vh] font-black text-transparent uppercase tracking-tighter leading-none opacity-20" 
+                    style={{ WebkitTextStroke: '1px rgba(30, 58, 138, 0.15)' }}>
+                    ALERTS
+                </h1>
+            </div>
             {/* Clean Header Section */}
             <div className="bg-white border-b border-gray-100">
                 <div className="max-w-7xl mx-auto px-8 md:px-14 py-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">

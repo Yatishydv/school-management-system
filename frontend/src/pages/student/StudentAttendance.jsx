@@ -57,9 +57,12 @@ const StudentAttendance = () => {
 
     return (
         <div className="min-h-screen bg-blue-50/20 pb-24 relative overflow-hidden font-body">
-            {/* Background Decal */}
-            <div className="absolute top-20 left-1/2 -translate-x-1/2 text-[12vw] font-black text-blue-900/[0.02] pointer-events-none select-none tracking-tighter uppercase whitespace-nowrap -rotate-6">
-                PRESENCE HISTORY
+            {/* Vertical Editorial Watermark */}
+            <div className="fixed right-[-5%] top-1/2 -translate-y-1/2 rotate-90 pointer-events-none select-none z-0 hidden lg:block">
+                <h1 className="text-[18vh] font-black text-transparent uppercase tracking-tighter leading-none opacity-20" 
+                    style={{ WebkitTextStroke: '1px rgba(30, 58, 138, 0.15)' }}>
+                    PRESENCE HISTORY
+                </h1>
             </div>
 
             <div className="px-8 md:px-14 pt-16 relative z-10 space-y-12">

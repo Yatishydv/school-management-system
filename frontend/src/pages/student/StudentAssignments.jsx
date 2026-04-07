@@ -63,9 +63,12 @@ const StudentAssignments = () => {
 
     return (
         <div className="min-h-screen bg-gray-50/20 pb-40 relative overflow-hidden font-body">
-            {/* Decal */}
-            <div className="absolute top-20 left-[-10%] text-[15vw] font-black text-blue-950/[0.03] pointer-events-none select-none tracking-tighter uppercase whitespace-nowrap rotate-90">
-                PORTFOLIO
+            {/* Vertical Editorial Watermark */}
+            <div className="fixed right-[-5%] top-1/2 -translate-y-1/2 rotate-90 pointer-events-none select-none z-0 hidden lg:block">
+                <h1 className="text-[18vh] font-black text-transparent uppercase tracking-tighter leading-none opacity-20" 
+                    style={{ WebkitTextStroke: '1px rgba(30, 58, 138, 0.15)' }}>
+                    PORTFOLIO
+                </h1>
             </div>
 
             <header className="px-8 md:px-14 pt-16 relative z-10 space-y-12 mb-20">

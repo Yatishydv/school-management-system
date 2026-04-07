@@ -331,7 +331,7 @@ const AddEditUserModal = ({
                    <div className="px-8 py-5 bg-primary-950/5 border border-primary-950/20 rounded-2xl flex items-center gap-3">
                       <Shield size={16} className="text-accent-500" />
                       <span className="text-xs font-black text-primary-950 uppercase tracking-tighter">
-                        {classes.find(c => c._id === predefinedClassId) ? `${classes.find(c => c._id === predefinedClassId).name}${classes.find(c => c._id === predefinedClassId).stream !== 'General' ? ` (${classes.find(c => c._id === predefinedClassId).stream})` : ''}` : "Target Node: Fixed"}
+                        {classes.find(c => c._id === predefinedClassId) ? `${classes.find(c => c._id === predefinedClassId).name}${classes.find(c => c._id === predefinedClassId).stream && classes.find(c => c._id === predefinedClassId).stream !== 'General' ? ` (${classes.find(c => c._id === predefinedClassId).stream})` : ''}` : "Target Node: Fixed"}
                       </span>
                    </div>
                    <input type="hidden" {...register("classId")} value={predefinedClassId} />

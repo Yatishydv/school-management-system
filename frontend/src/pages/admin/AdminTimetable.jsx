@@ -186,7 +186,7 @@ const AdminTimetable = () => {
                             onChange={(e) => setSelectedClassId(e.target.value)}
                         >
                             <option value="">Select Target Node (Class)</option>
-                            {classes.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
+                            {classes.map(c => <option key={c._id} value={c._id}>{c.name}{c.stream !== 'General' ? ` (${c.stream})` : ''}</option>)}
                         </select>
                     </div>
                 </div>

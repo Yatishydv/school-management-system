@@ -15,9 +15,13 @@ import {
   Layout,
   Wallet,
   Trophy,
-  ChevronRight
+  ChevronRight,
+  Bell,
+  Award,
+  ClipboardList
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import ProfileEditModal from "../../components/student/ProfileEditModal";
 
 const StudentDashboard = () => {
   const { user, token } = useAuthStore();
@@ -27,22 +31,29 @@ const StudentDashboard = () => {
   const [timetable, setTimetable] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [notices, setNotices] = useState([]);
+  const [recentResults, setRecentResults] = useState([]);
+  const [allAssignments, setAllAssignments] = useState([]);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const [profileData, summaryData, timetableData, subjectsData, noticesData] = await Promise.all([
+        const [profileData, summaryData, timetableData, subjectsData, noticesData, resultsData, assignmentsData] = await Promise.all([
           studentService.getProfile(token),
           studentService.getDashboardSummary(token),
           studentService.getTimetable(token),
           studentService.getSubjects(token),
-          studentService.getNotices(token)
+          studentService.getNotices(token),
+          studentService.getRecentResults(token),
+          studentService.getAssignments(token)
         ]);
         setProfile(profileData);
         setDashStats(summaryData);
         setTimetable(timetableData);
         setSubjects(subjectsData);
         setNotices(noticesData);
+        setRecentResults(resultsData || []);
+        setAllAssignments(assignmentsData || []);
       } catch (err) {
         console.error("Failed to fetch dashboard data", err);
       } finally {
@@ -55,15 +66,22 @@ const StudentDashboard = () => {
   if (loading) return <div className="p-10 animate-pulse text-sky-400 font-black uppercase tracking-widest">Waking up the Scholar Portal...</div>;
 
   return (
-    <div className="min-h-screen bg-blue-50/20 pb-24 font-body">
+    <div className="min-h-screen bg-blue-50/20 pb-24 font-body relative overflow-hidden">
+      {/* Vertical Editorial Watermark */}
+      <div className="fixed right-[-5%] top-1/2 -translate-y-1/2 rotate-90 pointer-events-none select-none z-0 hidden lg:block">
+        <h1 className="text-[18vh] font-black text-transparent uppercase tracking-tighter leading-none opacity-20" 
+            style={{ WebkitTextStroke: '1px rgba(30, 58, 138, 0.15)' }}>
+          SCHOLAR HUB
+        </h1>
+      </div>
       {/* ------------------------------------------------------------------ */}
       {/*                        HERO HEADER SECTION                        */}
       {/* ------------------------------------------------------------------ */}
       <section className="px-8 md:px-14 pt-12">
-        <div className="bg-white rounded-[3rem] p-4 border border-gray-100 shadow-sm overflow-hidden relative group">
+        <div className="bg-white rounded-[4rem] p-4 border border-gray-100 shadow-2xl overflow-hidden relative group">
            {/* Gradient Backdrop */}
-           <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-sky-400 opacity-90 transition-all duration-700"></div>
-           <div className="absolute top-0 right-0 w-[40%] h-full bg-white/10 -skew-x-12 translate-x-20"></div>
+           <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-indigo-600 to-sky-400 opacity-95 transition-all duration-700 group-hover:scale-105"></div>
+           <div className="absolute top-0 right-0 w-[50%] h-full bg-white/10 -skew-x-12 translate-x-20 blur-3xl"></div>
            
            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between p-8 md:pt-14 md:pb-32 gap-12">
               <div className="space-y-6 flex-1 text-center md:text-left">
@@ -105,13 +123,31 @@ const StudentDashboard = () => {
                     {/* Decorative Rings */}
                     <div className="absolute inset-0 border-[1px] border-white/40 rounded-full scale-90 animate-ping-slow"></div>
                  </div>
-                 <div className="absolute -bottom-24 left-1/2 -translate-x-1/2 bg-white p-4 rounded-2xl shadow-2xl border border-gray-50 flex items-center gap-4 z-20 whitespace-nowrap">
-                    <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
-                       <Trophy size={20} />
+                 <div className="absolute -bottom-12 -right-8 bg-white/80 backdrop-blur-xl p-6 rounded-[2.5rem] shadow-2xl border border-white/50 flex items-center gap-5 z-20 whitespace-nowrap animate-fade-up">
+                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-lg ${
+                      (dashStats?.percentile <= 10) ? 'bg-gradient-to-br from-amber-400 to-orange-500 shadow-amber-500/20' : 
+                      (dashStats?.percentile <= 30) ? 'bg-gradient-to-br from-slate-300 to-slate-500 shadow-slate-500/20' :
+                      (dashStats?.percentile <= 50) ? 'bg-gradient-to-br from-orange-300 to-orange-700 shadow-orange-700/20' :
+                      'bg-gradient-to-br from-blue-400 to-blue-600 shadow-blue-600/20'
+                    }`}>
+                       <Trophy size={28} />
                     </div>
                     <div>
-                       <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Class Rank</p>
-                       <p className="text-xl font-black text-blue-600 leading-none">Top 3%</p>
+                       <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Class Rank</p>
+                       <p className="text-2xl font-black text-primary-950 leading-none">
+                          Rank #{dashStats?.rank || '—'} <span className="text-[10px] text-gray-300 font-bold uppercase tracking-widest leading-none block mt-1">out of {dashStats?.totalStudents || '—'} Scholars</span>
+                       </p>
+                       <p className={`text-[9px] font-bold uppercase tracking-widest mt-1 ${
+                          (dashStats?.percentile <= 10) ? 'text-amber-600' : 
+                          (dashStats?.percentile <= 30) ? 'text-slate-500' :
+                          (dashStats?.percentile <= 50) ? 'text-orange-700' :
+                          'text-blue-600'
+                       }`}>
+                          {dashStats?.percentile <= 10 ? 'Elite Gold' : 
+                           dashStats?.percentile <= 30 ? 'Elite Silver' :
+                           dashStats?.percentile <= 50 ? 'Elite Bronze' :
+                           'Global Tier'}
+                       </p>
                     </div>
                  </div>
               </div>
@@ -191,7 +227,10 @@ const StudentDashboard = () => {
               </div>
 
               <div className="pt-8 border-t border-gray-50">
-                 <button className="w-full py-5 bg-blue-50 text-blue-600 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all">
+                 <button 
+                   onClick={() => setIsEditModalOpen(true)}
+                   className="w-full py-5 bg-blue-50 text-blue-600 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-sm hover:shadow-xl hover:shadow-blue-500/20"
+                 >
                     Update Profile Details
                  </button>
               </div>
@@ -201,17 +240,28 @@ const StudentDashboard = () => {
                <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/20 rounded-full translate-x-20 -translate-y-20 blur-[100px] group-hover:scale-125 transition-transform duration-1000"></div>
                <h4 className="text-lg font-black uppercase tracking-widest text-blue-400 italic">Today's Schedule</h4>
                <div className="space-y-4">
-                  {timetable.length > 0 ? timetable.filter(item => item.day === new Date().toLocaleDateString('en-US', { weekday: 'long' })).sort((a,b) => a.startTime.localeCompare(b.startTime)).map((session, i) => (
-                    <div key={i} className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
-                       <div className="text-center min-w-[60px] border-r border-white/10 pr-4">
-                          <p className="text-[10px] font-black text-blue-400">{session.startTime}</p>
-                       </div>
-                       <div className="space-y-0.5">
-                          <p className="text-xs font-black uppercase italic tracking-tighter">{session.subject?.name}</p>
-                          <p className="text-[9px] font-bold text-white/40 uppercase">{session.subject?.assignedTeachers?.[0]?.name || 'Institutional Staff'}</p>
-                       </div>
-                    </div>
-                  )) : (
+                  {timetable.length > 0 ? timetable.filter(item => item.day === new Date().toLocaleDateString('en-US', { weekday: 'long' })).sort((a,b) => a.startTime.localeCompare(b.startTime)).map((session, i) => {
+                    const now = new Date();
+                    const currentHours = now.getHours();
+                    const currentMinutes = now.getMinutes();
+                    const [startH, startM] = session.startTime.split(':').map(Number);
+                    const [endH, endM] = session.endTime.split(':').map(Number);
+                    const isLive = (currentHours > startH || (currentHours === startH && currentMinutes >= startM)) && 
+                                   (currentHours < endH || (currentHours === endH && currentMinutes < endM));
+                    
+                    return (
+                      <div key={i} className={`flex items-center gap-4 p-4 rounded-2xl border transition-all duration-500 ${isLive ? 'bg-blue-600/10 border-blue-500 shadow-lg shadow-blue-500/10 scale-[1.02]' : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'}`}>
+                         <div className="text-center min-w-[60px] border-r border-white/10 pr-4">
+                            <p className={`text-[10px] font-black ${isLive ? 'text-blue-200' : 'text-blue-400'}`}>{session.startTime}</p>
+                            {isLive && <span className="text-[8px] font-black text-blue-400 animate-pulse block">LIVE</span>}
+                         </div>
+                         <div className="space-y-0.5">
+                            <p className="text-xs font-black uppercase italic tracking-tighter">{session.subject?.name}</p>
+                            <p className={`text-[9px] font-bold uppercase transition-colors ${isLive ? 'text-blue-300' : 'text-white/40'}`}>{session.subject?.assignedTeachers?.[0]?.name || 'Institutional Staff'}</p>
+                         </div>
+                      </div>
+                    );
+                  }) : (
                     <div className="py-8 text-center bg-white/5 rounded-2xl border border-white/10 border-dashed">
                        <p className="text-[9px] font-bold text-white/30 uppercase tracking-[0.2em]">No Sessions Slated Today</p>
                     </div>
@@ -226,57 +276,155 @@ const StudentDashboard = () => {
 
         {/* Learning Journey / Recent Lessons */}
         <div className="lg:col-span-2 space-y-12">
-            <div className="flex items-center justify-between">
-               <h2 className="text-4xl font-black uppercase italic tracking-tighter text-primary-950">Learning Matrix</h2>
-               <div className="flex items-center gap-2">
-                  <div className="w-8 h-px bg-gray-200"></div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-300">Fall Semester 24</span>
+            {/* Announcements Section */}
+            <div className="bg-white rounded-[3rem] border border-gray-100 shadow-sm p-10 space-y-8">
+               <div className="flex items-center justify-between border-b border-gray-50 pb-6">
+                  <div className="flex items-center gap-4">
+                     <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
+                        <Bell size={24} />
+                     </div>
+                     <h3 className="text-xl font-black uppercase italic tracking-tighter text-primary-950">Broadcast Matrix</h3>
+                  </div>
+                  <Link to="/student/notifications" className="text-[10px] font-black uppercase tracking-widest text-blue-500 hover:text-blue-800 transition-colors">View All Archive</Link>
+               </div>
+               <div className="space-y-4">
+                  {notices.length > 0 ? notices.slice(0, 3).map((notice, i) => (
+                    <div key={i} className="flex items-start gap-6 p-6 rounded-2xl hover:bg-gray-50 transition-all border border-transparent hover:border-gray-100 group">
+                       <div className="text-center min-w-[50px] space-y-1">
+                          <p className="text-xs font-black text-primary-950">{new Date(notice.createdAt).getDate()}</p>
+                          <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">{new Date(notice.createdAt).toLocaleString('default', { month: 'short' })}</p>
+                       </div>
+                       <div className="space-y-1 flex-1">
+                          <div className="flex items-center gap-2">
+                             <div className="w-1 h-1 rounded-full bg-blue-500"></div>
+                             <p className="text-[10px] font-black uppercase tracking-widest text-gray-300">{notice.sender?.role || 'Admin'} Dispatch</p>
+                          </div>
+                          <h5 className="text-sm font-bold text-primary-950 group-hover:text-blue-600 transition-colors">{notice.title}</h5>
+                       </div>
+                    </div>
+                  )) : (
+                    <p className="text-center py-10 text-[10px] font-bold text-gray-300 uppercase tracking-widest">Digital frequencies clear. No broadcasts available.</p>
+                  )}
                </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-               {subjects.length > 0 ? subjects.map((subject, i) => (
-                  <div key={i} className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-8 group hover:shadow-2xl transition-all duration-500">
-                    <div className="flex justify-between items-start">
-                       <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all">
-                          <BookOpen size={24} />
-                       </div>
-                       <div className="text-right">
-                          <p className="text-[9px] font-black uppercase tracking-widest text-gray-300">Subject Code</p>
-                          <p className="text-xl font-black text-blue-600 tabular-nums">{subject.code || 'N/A'}</p>
-                       </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                       <h5 className="text-2xl font-black text-primary-950 uppercase italic leading-none">{subject.name}</h5>
-                       <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                          Instructors: {subject.assignedTeachers?.map(t => t.name).join(', ') || 'Staff Allocated'}
-                       </p>
-                    </div>
-
-                    <div className="space-y-4">
-                       <div className="h-1.5 w-full bg-gray-50 rounded-full overflow-hidden">
-                          <div 
-                             className="h-full bg-blue-600 rounded-full transition-all duration-1000 group-hover:bg-sky-400" 
-                             style={{ width: `75%` }} // Default progress for demo until we have module tracking
-                          ></div>
-                       </div>
-                       <button className="w-full py-4 text-[9px] font-black uppercase tracking-[0.2em] text-blue-600 hover:text-blue-800 flex items-center justify-center gap-2 transition-colors">
-                          View Module Content <ChevronRight size={14} />
-                       </button>
-                    </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+               {/* Upcoming Assignments */}
+               <div className="bg-white rounded-[3rem] border border-gray-100 shadow-sm p-10 space-y-8">
+                  <div className="flex items-center justify-between">
+                     <div className="flex items-center gap-4">
+                        <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
+                           <ClipboardList size={24} />
+                        </div>
+                        <h3 className="text-xl font-black uppercase italic tracking-tighter text-primary-950">Submissions Queue</h3>
+                     </div>
                   </div>
-               )) : (
-                 <div className="col-span-full py-20 bg-gray-50 rounded-[3rem] border border-dashed border-gray-200 flex flex-col items-center justify-center text-center space-y-4">
-                    <div className="w-16 h-16 rounded-3xl bg-white flex items-center justify-center text-gray-300 shadow-sm">
-                       <Layout size={32} />
-                    </div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Curriculum Pending Allocation</p>
-                 </div>
-               )}
+                  <div className="space-y-6">
+                     {allAssignments.filter(a => a.status === 'Pending').slice(0, 2).map((asm, i) => (
+                       <Link to="/student/assignments" key={i} className="block p-6 rounded-2xl bg-gray-50 hover:bg-indigo-50 border border-transparent hover:border-indigo-100 transition-all group">
+                          <div className="flex justify-between items-start mb-2">
+                             <span className="text-[9px] font-black uppercase tracking-widest text-indigo-400">{asm.subject?.name}</span>
+                             <span className="text-[9px] font-black uppercase text-red-500 italic">Deadline Due</span>
+                          </div>
+                          <h6 className="text-sm font-black text-primary-950 group-hover:text-indigo-600 transition-colors uppercase italic">{asm.title}</h6>
+                       </Link>
+                     ))}
+                     {allAssignments.filter(a => a.status === 'Pending').length === 0 && (
+                       <p className="text-center py-6 text-[10px] font-bold text-gray-300 uppercase tracking-widest italic">All performance tasks are current.</p>
+                     )}
+                  </div>
+               </div>
+
+               {/* Recent Results */}
+               <div className="bg-white rounded-[3rem] border border-gray-100 shadow-sm p-10 space-y-8">
+                  <div className="flex items-center justify-between">
+                     <div className="flex items-center gap-4">
+                        <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
+                           <Award size={24} />
+                        </div>
+                        <h3 className="text-xl font-black uppercase italic tracking-tighter text-primary-950">Rank Metrics</h3>
+                     </div>
+                  </div>
+                  <div className="space-y-6">
+                     {recentResults.slice(0, 2).map((res, i) => (
+                       <div key={i} className="flex items-center justify-between p-6 rounded-2xl bg-gray-50 border border-transparent group">
+                          <div>
+                             <p className="text-[9px] font-black uppercase tracking-widest text-emerald-600 mb-1">{res.subjectId?.name || 'Academic Unit'}</p>
+                             <p className="text-sm font-black text-primary-950 italic">{res.marksObtained}/{res.totalMarks}</p>
+                          </div>
+                          <div className={`px-4 py-2 bg-white rounded-xl text-xs font-black uppercase italic border border-gray-100 ${res.marksObtained/res.totalMarks >= 0.75 ? 'text-emerald-500' : 'text-blue-500'}`}>
+                             {res.grade || 'A'}
+                          </div>
+                       </div>
+                     ))}
+                     {recentResults.length === 0 && (
+                       <p className="text-center py-6 text-[10px] font-bold text-gray-300 uppercase tracking-widest italic">Cycle evaluations pending.</p>
+                     )}
+                  </div>
+               </div>
+            </div>
+
+            <div className="space-y-12">
+                <div className="flex items-center justify-between">
+                   <h2 className="text-4xl font-black uppercase italic tracking-tighter text-primary-950">Learning Matrix</h2>
+                   <div className="flex items-center gap-2">
+                      <div className="w-8 h-px bg-gray-200"></div>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-gray-300">Fall Semester 24</span>
+                   </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                   {subjects.length > 0 ? subjects.map((subject, i) => (
+                      <div key={i} className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-8 group hover:shadow-2xl transition-all duration-500">
+                        <div className="flex justify-between items-start">
+                           <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                              <BookOpen size={24} />
+                           </div>
+                           <div className="text-right">
+                              <p className="text-[9px] font-black uppercase tracking-widest text-gray-300">Subject Code</p>
+                              <p className="text-xl font-black text-blue-600 tabular-nums">{subject.code || 'N/A'}</p>
+                           </div>
+                        </div>
+                        
+                        <div className="space-y-2">
+                           <h5 className="text-2xl font-black text-primary-950 uppercase italic leading-none">{subject.name}</h5>
+                           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                              Instructors: {subject.assignedTeachers?.map(t => t.name).join(', ') || 'Staff Allocated'}
+                           </p>
+                        </div>
+
+                        <div className="space-y-4">
+                           <div className="h-1.5 w-full bg-gray-50 rounded-full overflow-hidden">
+                              <div 
+                                 className="h-full bg-blue-600 rounded-full transition-all duration-1000 group-hover:bg-sky-400" 
+                                 style={{ width: `75%` }} // Default progress for demo until we have module tracking
+                              ></div>
+                           </div>
+                           <Link to="/student/subjects" className="w-full py-4 text-[9px] font-black uppercase tracking-[0.2em] text-blue-600 hover:text-blue-800 flex items-center justify-center gap-2 transition-colors">
+                              View Module Content <ChevronRight size={14} />
+                           </Link>
+                        </div>
+                      </div>
+                   )) : (
+                     <div className="col-span-full py-20 bg-gray-50 rounded-[3rem] border border-dashed border-gray-200 flex flex-col items-center justify-center text-center space-y-4">
+                        <div className="w-16 h-16 rounded-3xl bg-white flex items-center justify-center text-gray-300 shadow-sm">
+                           <Layout size={32} />
+                        </div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Curriculum Pending Allocation</p>
+                     </div>
+                   )}
+                </div>
             </div>
         </div>
       </section>
+
+      <ProfileEditModal 
+        isOpen={isEditModalOpen} 
+        onClose={() => setIsEditModalOpen(false)} 
+        profile={profile} 
+        token={token} 
+        onUpdate={(updated) => setProfile(updated)} 
+      />
     </div>
   );
 };

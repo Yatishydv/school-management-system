@@ -36,9 +36,12 @@ const StudentTimetable = () => {
 
   return (
     <div className="min-h-screen bg-gray-50/20 pb-40 relative overflow-hidden font-body">
-      {/* Watermark Decoration */}
-      <div className="absolute top-20 right-[-10%] text-[20vw] font-black text-blue-950/[0.03] pointer-events-none select-none tracking-tighter uppercase whitespace-nowrap rotate-12">
-        SCHEDULE
+      {/* Vertical Editorial Watermark */}
+      <div className="fixed right-[-5%] top-1/2 -translate-y-1/2 rotate-90 pointer-events-none select-none z-0 hidden lg:block">
+        <h1 className="text-[18vh] font-black text-transparent uppercase tracking-tighter leading-none opacity-20" 
+            style={{ WebkitTextStroke: '1px rgba(30, 58, 138, 0.15)' }}>
+          SCHEDULE
+        </h1>
       </div>
 
       <div className="px-8 md:px-14 pt-16 relative z-10 space-y-16">
@@ -46,15 +49,6 @@ const StudentTimetable = () => {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-10">
            <div className="space-y-6">
-              <button 
-                onClick={() => navigate(-1)}
-                className="group flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.3em] text-blue-600 hover:text-blue-800 transition-all"
-              >
-                <div className="p-2 bg-blue-50 rounded-lg group-hover:-translate-x-1 transition-transform">
-                  <ChevronLeft size={16} />
-                </div> 
-                Back to Dashboard
-              </button>
               <div className="space-y-4">
                  <div className="flex items-center gap-3">
                     <div className="w-8 h-px bg-blue-600"></div>

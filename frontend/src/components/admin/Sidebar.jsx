@@ -72,10 +72,12 @@ const Sidebar = () => {
     ],
     student: [
       { name: "Dashboard", icon: LayoutDashboard, path: "/student/dashboard" },
+      { name: "Attendance", icon: Activity, path: "/student/attendance" },
       { name: "Subjects", icon: BookOpen, path: "/student/subjects" },
       { name: "Timetable", icon: Calendar, path: "/student/timetable" },
-      { name: "Fees", icon: GraduationCap, path: "/student/fees" },
-      { name: "Results", icon: FileText, path: "/student/results" },
+      { name: "Assignments", icon: FileText, path: "/student/assignments" },
+      { name: "Results", icon: Award, path: "/student/results" },
+      { name: "Fees", icon: DollarSign, path: "/student/fees" },
       { name: "Notifications", icon: Bell, path: "/student/notifications", badge: true },
     ],
   };

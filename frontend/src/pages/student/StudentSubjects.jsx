@@ -35,9 +35,12 @@ const StudentSubjects = () => {
 
   return (
     <div className="min-h-screen bg-gray-50/20 pb-40 relative overflow-hidden font-body">
-      {/* Watermark */}
-      <div className="absolute top-20 left-1/2 -translate-x-1/2 text-[15vw] font-black text-blue-950/[0.03] pointer-events-none select-none tracking-tighter uppercase whitespace-nowrap -rotate-6">
-        CURRICULUM
+      {/* Vertical Editorial Watermark */}
+      <div className="fixed right-[-5%] top-1/2 -translate-y-1/2 rotate-90 pointer-events-none select-none z-0 hidden lg:block">
+        <h1 className="text-[18vh] font-black text-transparent uppercase tracking-tighter leading-none opacity-20" 
+            style={{ WebkitTextStroke: '1px rgba(30, 58, 138, 0.15)' }}>
+          CURRICULUM
+        </h1>
       </div>
 
       <header className="px-8 md:px-14 pt-16 relative z-10 space-y-12 mb-20">
@@ -122,9 +125,9 @@ const StudentSubjects = () => {
                       </div>
                     </div>
                     
-                    <button className="w-full py-6 bg-gray-50 rounded-[1.5rem] text-blue-950 flex items-center justify-center gap-4 group-hover:bg-blue-600 group-hover:text-white transition-all transform group-hover:-translate-y-2 font-black uppercase text-[10px] tracking-[0.2em] shadow-sm hover:shadow-2xl hover:shadow-blue-900/20 active:scale-95 italic">
+                    <Link to="/student/assignments" className="w-full py-6 bg-gray-50 rounded-[1.5rem] text-blue-950 flex items-center justify-center gap-4 group-hover:bg-blue-600 group-hover:text-white transition-all transform group-hover:-translate-y-2 font-black uppercase text-[10px] tracking-[0.2em] shadow-sm hover:shadow-2xl hover:shadow-blue-900/20 active:scale-95 italic">
                        Access Studio <ArrowRight size={20} className="group-hover:translate-x-2 transition-transform" />
-                    </button>
+                    </Link>
                   </div>
                 </div>
               </div>

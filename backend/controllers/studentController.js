@@ -265,6 +265,39 @@ const getDashboardSummary = async (req, res) => {
             ? (validResults.reduce((acc, curr) => acc + (curr.marksObtained / curr.totalMarks), 0) / validResults.length * 100).toFixed(1)
             : 0;
 
+        // --- Class Rank Calculation ---
+        let rank = 1;
+        let totalStudents = 1;
+        let percentile = 100;
+
+        if (classId) {
+            // Find all students in this class
+            const classmates = await User.find({ classId, role: 'student' }).select('_id');
+            totalStudents = classmates.length;
+
+            if (totalStudents > 0) {
+                // Fetch all results for these students to calculate their averages
+                const allResults = await Result.find({ classId });
+                
+                // Group averages by student
+                const studentScores = classmates.map(mate => {
+                    const mateResults = allResults.filter(r => r.studentId.toString() === mate._id.toString() && r.totalMarks > 0);
+                    const mateAvg = mateResults.length > 0
+                        ? (mateResults.reduce((acc, curr) => acc + (curr.marksObtained / curr.totalMarks), 0) / mateResults.length * 100)
+                        : 0;
+                    return { id: mate._id.toString(), score: mateAvg };
+                });
+
+                // Sort by score descending
+                const sortedScores = studentScores.sort((a, b) => b.score - a.score);
+                
+                // Find current student's rank
+                const myIndex = sortedScores.findIndex(s => s.id === studentId.toString());
+                rank = myIndex + 1;
+                percentile = ((rank / totalStudents) * 100).toFixed(1);
+            }
+        }
+
         // 4. Fees (Total Dues)
         const studentFees = await Fee.find({ student: studentId, status: { $ne: 'Paid' } });
         const totalDues = studentFees.reduce((acc, f) => acc + (f.amountDue - (f.amountPaid || 0)), 0);
@@ -274,7 +307,10 @@ const getDashboardSummary = async (req, res) => {
             pendingAssignments,
             performance: avgMarks,
             gpa: validResults.length > 0 ? (avgMarks / 25).toFixed(1) : "0.0",
-            totalDues
+            totalDues,
+            rank,
+            totalStudents,
+            percentile
         });
     } catch (error) {
         res.status(500).json({ message: 'Error generating dashboard summary.', error: error.message });

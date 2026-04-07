@@ -77,6 +77,16 @@ const getSubjects = async (token) => {
     return response.data;
 };
 
+const updateProfile = async (formData, token) => {
+    const response = await axiosInstance.put("/users/profile", formData, {
+        headers: {
+            ...getConfig(token).headers,
+            "Content-Type": "multipart/form-data",
+        },
+    });
+    return response.data;
+};
+
 const studentService = {
     getDashboardSummary,
     getTimetable,
@@ -91,6 +101,7 @@ const studentService = {
     getAllResults,
     getProfile,
     getSubjects,
+    updateProfile,
 };
 
 export default studentService;

@@ -191,7 +191,7 @@ const AdminNotifications = () => {
                                     >
                                         <option value="">Choose Class Registry...</option>
                                         {classes.map(c => (
-                                            <option key={c._id} value={c._id}>{c.name} - {c.stream}</option>
+                                            <option key={c._id} value={c._id}>{c.name}{c.stream !== 'General' ? ` (${c.stream})` : ''}</option>
                                         ))}
                                     </select>
                                 </div>
@@ -279,7 +279,7 @@ const AdminNotifications = () => {
                                         <div className="space-y-1 overflow-hidden">
                                             <h4 className="text-xl font-black text-primary-950 tracking-tight leading-tight truncate">{alert.title}</h4>
                                             <div className="flex items-center gap-2">
-                                                <span className="text-[10px] font-black text-accent-500 uppercase tracking-widest italic">{alert.targetType}: {alert.targetId?.name || "All Personnel"}</span>
+                                                <span className="text-[10px] font-black text-accent-500 uppercase tracking-widest italic">{alert.targetType}: {alert.targetId?.name ? `${alert.targetId.name}${alert.targetId.stream && alert.targetId.stream !== 'General' ? ` (${alert.targetId.stream})` : ''}` : "All Personnel"}</span>
                                             </div>
                                         </div>
                                         <div className="text-[10px] font-bold text-gray-300 whitespace-nowrap pt-1">
