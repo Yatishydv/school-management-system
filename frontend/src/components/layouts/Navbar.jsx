@@ -69,7 +69,8 @@ const Navbar = () => {
                 <Link to={dashboardPath}>
                   <Button
                     variant="secondary"
-                    className="px-5 py-1.5 text-sm font-body bg-white text-primary-950 hover:bg-neutral-50 !rounded-full border border-primary-100 shadow-sm"
+                    size="sm"
+                    className="!rounded-full border border-gray-100 bg-white/50 backdrop-blur-sm shadow-sm font-black"
                   >
                     Dashboard
                   </Button>
@@ -77,16 +78,17 @@ const Navbar = () => {
                 <Button
                   variant="ghost"
                   onClick={logout}
-                  className="font-body text-primary-900 hover:text-accent-500"
+                  className="p-1 hover:text-accent-500 hover:bg-transparent -translate-y-0 transition-all"
                 >
-                  <LogOut size={24} />
+                  <LogOut size={22} className="opacity-70 group-hover:opacity-100" />
                 </Button>
               </>
             ) : (
               <Link to="/login">
                 <Button
-                  variant="primary"
-                  className="px-5 py-1.5 text-sm font-body bg-accent-500/90 border border-white/50 backdrop-blur-sm text-white hover:bg-accent-600 !rounded-full shadow-sm"
+                  variant="accent"
+                  size="sm"
+                  className="!rounded-full border border-white/20 shadow-xl shadow-accent-500/30"
                 >
                   Login
                 </Button>
@@ -129,7 +131,11 @@ const Navbar = () => {
             {isAuthenticated ? (
               <div className="space-y-3 px-2">
                 <Link to={dashboardPath} onClick={() => setIsOpen(false)}>
-                  <Button className="w-full !rounded-full bg-primary-900 text-white hover:bg-primary-800">
+                  <Button 
+                    variant="primary"
+                    size="md"
+                    className="w-full !rounded-full shadow-xl shadow-primary-950/20"
+                  >
                     Dashboard
                   </Button>
                 </Link>
@@ -137,7 +143,7 @@ const Navbar = () => {
                 <Button
                   onClick={logout}
                   variant="ghost"
-                  className="w-full !rounded-full text-red-600 hover:bg-red-50"
+                  className="w-full !rounded-full text-red-600 hover:bg-red-50 py-3"
                 >
                   Logout
                 </Button>
@@ -145,7 +151,11 @@ const Navbar = () => {
             ) : (
               <div className="px-2">
                 <Link to="/login" onClick={() => setIsOpen(false)}>
-                  <Button className="w-full !rounded-full bg-accent-500 text-white hover:bg-accent-400">
+                  <Button 
+                    variant="accent"
+                    size="md"
+                    className="w-full !rounded-full shadow-xl shadow-accent-500/20"
+                  >
                     Login
                   </Button>
                 </Link>

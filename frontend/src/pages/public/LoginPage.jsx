@@ -1,5 +1,5 @@
 // frontend/src/pages/public/LoginPage.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "../../api/axios";
 import useAuthStore from "../../stores/authStore";
@@ -10,7 +10,7 @@ const API_URL = "/auth/login"; // Use relative path as base URL is set in axios 
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { setAuth } = useAuthStore();
+  const { setAuth, token, user } = useAuthStore();
 
   const [form, setForm] = useState({
     uniqueId: "",
@@ -26,6 +26,15 @@ const LoginPage = () => {
     teacher: "/teacher/dashboard",
     student: "/student/dashboard",
   };
+
+  // EFFECTIVE REDIRECT FOR AUTHENTICATED USERS
+  useEffect(() => {
+    if (token && user?.role) {
+      const destination = roleRedirect[user.role] || "/";
+      console.log("User already authenticated. Redirecting to:", destination);
+      navigate(destination, { replace: true });
+    }
+  }, [token, user, navigate]);
 
   const handleChange = (e) => {
     setForm((prev) => ({

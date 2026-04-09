@@ -16,7 +16,7 @@ const useAutoLogout = (timeoutInMinutes = 5) => {
       timerRef.current = setTimeout(() => {
         logout();
         navigate("/login");
-        toast.info(`Session expired due to ${timeoutInMinutes} minutes of inactivity.`, {
+        toast.info("Session expired due to inactivity for security.", {
             toastId: "session-expired", // Prevent multiple toasts
         });
       }, timeoutMs);

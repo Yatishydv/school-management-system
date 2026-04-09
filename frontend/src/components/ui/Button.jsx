@@ -1,7 +1,13 @@
 import React from 'react';
 
-const Button = ({ children, className = '', variant = 'primary', onClick, disabled, type = "button" }) => {
-    const baseStyle = 'px-8 py-4 font-black uppercase tracking-widest text-[10px] rounded-2xl transition-all duration-500 ease-out transform hover:-translate-y-1 hover:shadow-2xl focus:outline-none disabled:opacity-50 disabled:translate-y-0 disabled:shadow-none';
+const Button = ({ children, className = '', variant = 'primary', size = 'md', onClick, disabled, type = "button" }) => {
+    const baseStyle = 'font-black uppercase tracking-widest rounded-2xl transition-all duration-500 ease-out transform focus:outline-none disabled:opacity-50 disabled:translate-y-0 disabled:shadow-none inline-flex items-center justify-center';
+
+    const sizes = {
+        sm: 'px-6 py-2.5 text-[11px] hover:-translate-y-0.5 active:scale-95',
+        md: 'px-8 py-4 text-[12px] hover:-translate-y-1',
+        lg: 'px-12 py-6 text-[14px] hover:-translate-y-1.5 shadow-2xl',
+    };
 
     const variants = {
         primary: 'bg-primary-950 text-white hover:bg-accent-500 shadow-xl shadow-primary-950/10',
@@ -14,7 +20,7 @@ const Button = ({ children, className = '', variant = 'primary', onClick, disabl
     return (
         <button
             type={type}
-            className={`${baseStyle} ${variants[variant] || variants.primary} ${className}`}
+            className={`${baseStyle} ${sizes[size] || sizes.md} ${variants[variant] || variants.primary} ${className}`}
             onClick={onClick}
             disabled={disabled}
         >

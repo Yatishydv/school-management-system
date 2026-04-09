@@ -28,19 +28,25 @@ import AddEditUserModal from "../../components/admin/AddEditUserModal";
 import adminService from "../../api/adminService";
 import { toast } from "react-toastify";
 
-const KPI = ({ title, value, sub, icon: Icon, color, link }) => (
-  <Link to={link || "#"} className="group relative block bg-white p-6 sm:p-8 rounded-3xl border border-gray-100 shadow-sm transition-all duration-500 hover:shadow-xl hover:-translate-y-1 w-full box-border">
-    <div className="relative z-10 flex items-start justify-between gap-4">
-      <div className="space-y-4 flex-1">
-        <div className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-400 break-words leading-relaxed">{title}</div>
-        <div className="text-lg sm:text-2xl lg:text-3xl font-black text-primary-950 tracking-tighter leading-none break-all whitespace-normal" title={value}>{value}</div>
-        {sub && <div className="text-[10px] font-bold text-accent-500 flex items-center gap-1">
-          <span className="w-1.5 h-1.5 rounded-full bg-accent-500 animate-pulse"></span>
-          <span className="break-words">{sub}</span>
-        </div>}
-      </div>
-      <div className={`p-3 sm:p-4 rounded-2xl bg-gray-50 text-primary-950 group-hover:bg-accent-500 group-hover:text-white transition-all duration-500 shrink-0 self-start`}>
+const KPI = ({ title, value, sub, icon: Icon, color, link, isHero }) => (
+  <Link to={link || "#"} className={`group relative block bg-white p-6 sm:p-8 rounded-3xl border border-gray-100 shadow-sm transition-all duration-500 hover:shadow-xl hover:-translate-y-1 w-full box-border overflow-hidden ${isHero ? 'h-full flex flex-col' : ''}`}>
+    {/* Absolute Icon Background Decor */}
+    <div className={`absolute -top-4 -right-4 p-8 rounded-full bg-gray-50 text-gray-100 group-hover:bg-accent-500/10 group-hover:text-accent-500/20 transition-all duration-500 ${isHero ? 'scale-150 origin-top-right opacity-20' : ''}`}>
+      {Icon && <Icon size={isHero ? 120 : 80} strokeWidth={1} />}
+    </div>
+
+    <div className={`relative z-10 flex flex-col justify-between flex-1 ${isHero ? 'space-y-12' : 'space-y-6'}`}>
+      <div className={`w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center text-primary-950 group-hover:bg-accent-500 group-hover:text-white transition-all duration-500 shadow-sm`}>
         {Icon && <Icon size={20} />}
+      </div>
+      
+      <div className="space-y-2">
+        <div className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-400 break-words leading-relaxed mb-1">{title}</div>
+        <div className={`${isHero ? 'text-4xl sm:text-5xl lg:text-6xl' : 'text-2xl sm:text-3xl lg:text-4xl'} font-black text-primary-950 tracking-tighter leading-none whitespace-nowrap`} title={value}>{value}</div>
+        {sub && <div className="text-[10px] font-bold text-accent-500 flex items-center gap-1.5 pt-4 border-t border-gray-50/50">
+          <div className="w-2 h-2 rounded-full bg-accent-500 animate-pulse"></div>
+          <span className="uppercase tracking-[0.2em] font-black">{sub}</span>
+        </div>}
       </div>
     </div>
   </Link>
@@ -184,13 +190,20 @@ const AdminDashboard = () => {
       </header>
 
       <div className="px-4 sm:px-8 md:px-14 space-y-12 relative z-10 w-full overflow-x-hidden box-border">
-        {/* KPIs Section */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
-          <KPI title="Students" value={stats.students} sub="Enrolled" icon={Users} color="text-accent-500" link="/admin/students" />
-          <KPI title="Faculty" value={stats.teachers} sub="Active Mentors" icon={UserPlus} color="text-primary-900" link="/admin/teachers" />
-          <KPI title="Dues" value={`₹${stats.pendingFees}`} sub="Awaiting Payment" icon={Download} color="text-red-500" link="/admin/admissions" />
-          <KPI title="Hubs" value={stats.classes} sub="Structural Units" icon={Shield} color="text-accent-400" link="/admin/classes" />
-          <KPI title="Gallery" value={stats.galleryCount} sub="Digital Assets" icon={Image} color="text-accent-500" link="/admin/gallery" />
+        {/* Bento-Style Metrics Grid */}
+        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {/* Left Metrics (2x2 Column Block) */}
+          <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-8">
+            <KPI title="Students" value={stats.students} sub="Enrolled" icon={Users} color="text-accent-500" link="/admin/students" />
+            <KPI title="Faculty" value={stats.teachers} sub="Active Mentors" icon={UserPlus} color="text-primary-900" link="/admin/teachers" />
+            <KPI title="Dues" value={`₹${stats.pendingFees}`} sub="Awaiting Payment" icon={Download} color="text-red-500" link="/admin/admissions" />
+            <KPI title="Hubs" value={stats.classes} sub="Structural Units" icon={Shield} color="text-accent-400" link="/admin/classes" />
+          </div>
+
+          {/* Right Hero Metric (Double-Height Feature) */}
+          <div className="lg:row-span-1 lg:h-full">
+            <KPI title="Gallery" value={stats.galleryCount} sub="Digital Assets" icon={Image} color="text-accent-500" link="/admin/gallery" isHero={true} />
+          </div>
         </section>
 
         {/* Analytics & Actions */}
