@@ -1,13 +1,39 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import axios from "../../api/axios";
+import useAuthStore from "../../stores/authStore";
 import { Mail, ArrowLeft, Fingerprint } from "lucide-react";
 import { toast } from "react-toastify";
 
 const ForgotPassword = () => {
-  const [identifier, setIdentifier] = useState("");
+  const navigate = useNavigate();
+  const { token, user } = useAuthStore();
+  const [searchParams] = useSearchParams();
+
+  const [identifier, setIdentifier] = useState(searchParams.get("uid") || "");
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [maskedEmail, setMaskedEmail] = useState("");
+
+  const roleRedirect = {
+    admin: "/admin/dashboard",
+    teacher: "/teacher/dashboard",
+    student: "/student/dashboard",
+  };
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (token && user?.role) {
+      const destination = roleRedirect[user.role] || "/";
+      navigate(destination, { replace: true });
+    }
+  }, [token, user, navigate]);
+
+  // Update identifier if uid in searchParams changes
+  useEffect(() => {
+    const uid = searchParams.get("uid");
+    if (uid) setIdentifier(uid);
+  }, [searchParams]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -15,7 +41,8 @@ const ForgotPassword = () => {
 
     try {
       setLoading(true);
-      await axios.post("/auth/forgot-password", { identifier: identifier.trim() });
+      const res = await axios.post("/auth/forgot-password", { identifier: identifier.trim() });
+      setMaskedEmail(res.data.maskedEmail || "");
       setSubmitted(true);
       toast.success("Security verified. Check your email.");
     } catch (err) {
@@ -35,7 +62,7 @@ const ForgotPassword = () => {
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Check Your Email</h1>
           <p className="text-gray-600 mb-6 text-sm">
-            If account <strong>{identifier}</strong> exists, we've sent a password reset link to the registered email address.
+            We've sent a password reset link to <strong className="text-primary-600">{maskedEmail || "your registered email"}</strong> for account <strong>{identifier}</strong>.
           </p>
           <Link
             to="/login"

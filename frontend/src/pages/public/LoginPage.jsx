@@ -159,7 +159,10 @@ const LoginPage = () => {
 
           {/* Forgot Password */}
           <div className="flex justify-end text-sm">
-            <Link to="/forgot-password" className="text-accent-500 hover:underline">
+            <Link 
+              to={`/forgot-password?uid=${form.uniqueId}`} 
+              className="text-accent-500 hover:underline"
+            >
               Forgot Password?
             </Link>
           </div>

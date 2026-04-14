@@ -14,6 +14,17 @@ const userSchema = new mongoose.Schema({
     phone: { type: String },
     address: { type: String },
     profileImage: { type: String },
+
+    // Personal / Social Details (Mainly for Admin/Teachers)
+    bio: { type: String },
+    personalEmail: { type: String },
+    secondaryPhone: { type: String },
+    socialLinks: {
+        whatsapp: { type: String },
+        instagram: { type: String },
+        facebook: { type: String },
+        twitter: { type: String }
+    },
     
     // Teacher Fields
     assignedClasses: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Class' }],
@@ -26,6 +37,17 @@ const userSchema = new mongoose.Schema({
     dob: { type: String },
     prevSchool: { type: String },
     admissionDate: { type: Date, default: Date.now },
+
+    // Demographic and Identification (Common)
+    gender: { type: String, enum: ['Male', 'Female', 'Other'] },
+    religion: { type: String },
+    category: { type: String }, // General, OBC, SC, ST etc
+    aadharNumber: { type: String },
+    emergencyContact: { type: String },
+
+    // Teacher / Professional Fields
+    qualification: { type: String },
+    experience: { type: String },
 
     // Reset Password Fields
     resetPasswordToken: { type: String },

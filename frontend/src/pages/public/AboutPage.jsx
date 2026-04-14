@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { 
   Shield, 
   Star, 
@@ -122,10 +123,10 @@ const AboutPage = () => {
                </p>
             </div>
             <div className="pt-6">
-               <button className="flex items-center gap-3 text-accent-600 font-black text-[10px] uppercase tracking-[0.3em] group">
+               <Link to="/gallery" className="flex items-center gap-3 text-accent-600 font-black text-[10px] uppercase tracking-[0.3em] group w-fit">
                   <span>Explore History</span>
                   <ArrowRight size={14} className="group-hover:translate-x-2 transition-transform" />
-               </button>
+               </Link>
             </div>
           </div>
 
@@ -234,9 +235,11 @@ const AboutPage = () => {
            </div>
            
            <div className="pt-6">
-              <button className="px-10 py-5 bg-accent-500 text-white rounded-full font-black uppercase tracking-widest text-xs hover:bg-white hover:text-primary-950 hover:-translate-y-1 transition-all shadow-xl shadow-black/20">
-                 Apply for Admission
-              </button>
+              <Link to="/admissions">
+                <button className="px-10 py-5 bg-accent-500 text-white rounded-full font-black uppercase tracking-widest text-xs hover:bg-white hover:text-primary-950 hover:-translate-y-1 transition-all shadow-xl shadow-black/20">
+                   Apply for Admission
+                </button>
+              </Link>
            </div>
         </div>
       </section>

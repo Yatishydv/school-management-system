@@ -1,6 +1,7 @@
-// frontend/src/pages/public/AdmissionsPage.jsx
-import React, { useState } from "react";
-import axios from "axios";
+import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import axios from "../../api/axios";
+import { toast } from "react-toastify";
 import Button from "../../components/ui/Button";
 import { 
   Sparkles, 
@@ -39,6 +40,19 @@ const AdmissionsPage = () => {
 
   const [photo, setPhoto] = useState(null);
   const [birthCertificate, setBirthCertificate] = useState(null);
+  const [schoolInfo, setSchoolInfo] = useState(null);
+
+  useEffect(() => {
+    const fetchInfo = async () => {
+      try {
+        const res = await axios.get("/public/school-info");
+        setSchoolInfo(res.data);
+      } catch (err) {
+        console.error("Failed to fetch group info");
+      }
+    };
+    fetchInfo();
+  }, []);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -56,10 +70,23 @@ const AdmissionsPage = () => {
       await axios.post("/admissions/submit", data, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      alert("Admission Form Submitted Successfully!");
+      toast.success("Identity Portfolio Received. Our council will review it shortly.");
+      setForm({
+        studentName: "",
+        fatherName: "",
+        motherName: "",
+        dob: "",
+        classApplied: "",
+        phone: "",
+        email: "",
+        address: "",
+        prevSchool: "",
+      });
+      setPhoto(null);
+      setBirthCertificate(null);
     } catch (error) {
       console.error("Submission error:", error);
-      alert("Error submitting the form. Please try again.");
+      toast.error("Transmission Interrupted. Please check connectivity.");
     }
   };
 
@@ -137,10 +164,11 @@ const AdmissionsPage = () => {
                 Start Application
                 <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
               </Button>
-              <div className="flex items-center gap-2 text-primary-950 font-black uppercase tracking-widest text-[10px] cursor-pointer hover:text-accent-600 transition-colors">
-                 <span>Download Prospectus</span>
-                 <ChevronDown size={14} />
-              </div>
+              <Link to="/contact" className="w-full sm:w-auto">
+                <Button variant="ghost" className="w-full px-12 py-5 rounded-full border-2 border-primary-950/10 text-primary-950 hover:bg-primary-50">
+                  Contact Office
+                </Button>
+              </Link>
            </div>
         </div>
 
@@ -370,15 +398,15 @@ const AdmissionsPage = () => {
                    Our dedicated enrollment councilors are available from 8:00 AM to 4:00 PM to guide you.
                  </p>
                  <div className="flex flex-col sm:flex-row items-center justify-center gap-8 pt-6">
-                    <div className="text-center group cursor-pointer">
+                    <a href={`tel:${schoolInfo?.phone || "+919876543210"}`} className="text-center group cursor-pointer">
                        <p className="text-xs font-black uppercase tracking-[0.3em] text-primary-950 mb-2 opacity-40 group-hover:opacity-100 transition-opacity">Voice Support</p>
-                       <p className="text-3xl font-black text-primary-950 group-hover:text-accent-500 transition-colors">+91 98765 43210</p>
-                    </div>
+                       <p className="text-3xl font-black text-primary-950 group-hover:text-accent-500 transition-colors">{schoolInfo?.phone || "+91 98765 43210"}</p>
+                    </a>
                     <div className="h-10 w-[2px] bg-gray-100 hidden sm:block"></div>
-                    <div className="text-center group cursor-pointer">
+                    <a href={`mailto:${schoolInfo?.email || "admissions@sbs.edu"}`} className="text-center group cursor-pointer">
                        <p className="text-xs font-black uppercase tracking-[0.3em] text-primary-950 mb-2 opacity-40 group-hover:opacity-100 transition-opacity">Email Portal</p>
-                       <p className="text-3xl font-black text-primary-950 group-hover:text-accent-500 transition-colors">admissions@sbs.edu</p>
-                    </div>
+                       <p className="text-3xl font-black text-primary-950 group-hover:text-accent-500 transition-colors">{schoolInfo?.email || "admissions@sbs.edu"}</p>
+                    </a>
                  </div>
               </div>
            </div>

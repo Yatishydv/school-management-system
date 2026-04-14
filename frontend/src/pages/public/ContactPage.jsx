@@ -1,6 +1,6 @@
-// frontend/src/pages/public/ContactPage.jsx
-import React, { useState } from "react";
-import axios from "axios";
+import React, { useState, useEffect } from "react";
+import axios from "../../api/axios";
+import { toast } from "react-toastify";
 import Button from "../../components/ui/Button";
 import {
   Mail,
@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 
 const ContactPage = () => {
+  const [schoolInfo, setSchoolInfo] = useState(null);
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -34,6 +35,41 @@ const ContactPage = () => {
     subject: "",
     message: "",
   });
+
+  useEffect(() => {
+    const fetchInfo = async () => {
+      try {
+        const res = await axios.get("/public/school-info");
+        setSchoolInfo(res.data);
+      } catch (err) {
+        console.error("Failed to fetch school contact info");
+      }
+    };
+    fetchInfo();
+  }, []);
+
+  const socials = schoolInfo?.socialLinks || {};
+
+  const getSocialHref = (platform, handle) => {
+    if (!handle) return "";
+    if (handle.startsWith("http")) return handle;
+    
+    // Remove @ if present
+    const cleanHandle = handle.startsWith("@") ? handle.substring(1) : handle;
+    
+    switch (platform) {
+      case "facebook":
+        return handle.includes("facebook.com") ? `https://${handle}` : `https://facebook.com/${cleanHandle}`;
+      case "instagram":
+        return handle.includes("instagram.com") ? `https://${handle}` : `https://instagram.com/${cleanHandle}`;
+      case "twitter":
+        return handle.includes("twitter.com") || handle.includes("x.com") ? `https://${handle}` : `https://x.com/${cleanHandle}`;
+      case "whatsapp":
+        return `https://wa.me/${handle.replace(/\s+/g, "")}`;
+      default:
+        return handle;
+    }
+  };
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -44,23 +80,37 @@ const ContactPage = () => {
 
     try {
       await axios.post("/contact/send", form);
-      alert("Message sent to school successfully!");
+      toast.success("Message Transmitted. Our team will relay a response shortly.");
+      setForm({
+        name: "",
+        email: "",
+        phone: "",
+        subject: "",
+        message: "",
+      });
     } catch (err) {
-      alert("Failed to send message, try again.");
+      console.error(err);
+      toast.error("Signal Lost. Please verify your connection.");
     }
   };
 
   const contactCards = [
     { 
       title: "Phone Support", 
-      details: ["Office: +91 98765 43210", "Admin: +91 88001 23456"], 
+      details: [
+        `Office: ${schoolInfo?.phone || "+91 98765 43210"}`, 
+        `Admin: ${schoolInfo?.secondaryPhone || "+91 88001 23456"}`
+      ], 
       icon: Headphones, 
       color: "bg-blue-50 text-blue-600",
       label: "Call Us Anytime"
     },
     { 
       title: "Email Inquiry", 
-      details: ["info@sbsschool.com", "admissions@sbsschool.com"], 
+      details: [
+        schoolInfo?.email || "info@sbsschool.com", 
+        schoolInfo?.personalEmail || "admissions@sbsschool.com"
+      ], 
       icon: Mail, 
       color: "bg-accent-50 text-accent-700",
       label: "Digital Response"
@@ -181,8 +231,7 @@ const ContactPage = () => {
                    <div className="space-y-3">
                       <p className="text-2xl font-black text-primary-950 tracking-tighter">S.B.S. Senior Secondary School</p>
                       <p className="text-base font-medium text-gray-500 leading-relaxed italic pr-10">
-                         Village Badhwana, Tehsil Dadri, <br />
-                         District Charkhi Dadri, Haryana – 127308
+                         {schoolInfo?.address || "Village Badhwana, Tehsil Dadri, Charkhi Dadri, Haryana – 127308"}
                       </p>
                    </div>
                 </div>
@@ -348,7 +397,7 @@ const ContactPage = () => {
                { q: "What are the standard office hours?", a: "We are operational Monday through Friday, 9:00 AM to 3:00 PM. Saturday support is available until 12:00 PM." },
                { q: "Is GPS-tracked transport available?", a: "Yes, we provide safe, reliable, and GPS-monitored transportation covering the entire Charkhi Dadri region." }
              ].map((faq, i) => (
-               <div key={i} className="group p-10 md:p-14 rounded-[4rem] bg-neutral-bg-subtle border border-gray-100 hover:bg-white hover:shadow-4xl transition-all duration-500">
+                <div key={i} className="group p-10 md:p-14 rounded-[4rem] bg-neutral-bg-subtle border border-gray-100 hover:bg-white hover:shadow-4xl transition-all duration-500">
                   <div className="flex items-center gap-8 mb-6">
                      <div className="w-12 h-12 rounded-2xl bg-accent-500 text-white flex items-center justify-center flex-shrink-0 shadow-lg group-hover:rotate-12 transition-transform">
                         <HelpCircle size={24} />
@@ -372,11 +421,26 @@ const ContactPage = () => {
                </div>
                
                <div className="flex justify-center md:justify-start gap-8">
-                  {[Facebook, Instagram, Twitter].map((Icon, i) => (
-                     <div key={i} className="w-20 h-20 rounded-[2.5rem] bg-neutral-bg-subtle border border-gray-100 flex items-center justify-center text-primary-950 hover:bg-primary-950 hover:text-white hover:rotate-[360deg] transition-all duration-700 cursor-pointer shadow-xl group">
-                        <Icon size={32} className="group-hover:scale-110 transition-transform" />
-                     </div>
-                  ))}
+                  {socials.facebook && (
+                    <a href={getSocialHref("facebook", socials.facebook)} target="_blank" rel="noopener noreferrer" className="w-20 h-20 rounded-[2.5rem] bg-neutral-bg-subtle border border-gray-100 flex items-center justify-center text-primary-950 hover:bg-primary-950 hover:text-white hover:rotate-[360deg] transition-all duration-700 cursor-pointer shadow-xl group">
+                      <Facebook size={32} className="group-hover:scale-110 transition-transform" />
+                    </a>
+                  )}
+                  {socials.instagram && (
+                    <a href={getSocialHref("instagram", socials.instagram)} target="_blank" rel="noopener noreferrer" className="w-20 h-20 rounded-[2.5rem] bg-neutral-bg-subtle border border-gray-100 flex items-center justify-center text-primary-950 hover:bg-primary-950 hover:text-white hover:rotate-[360deg] transition-all duration-700 cursor-pointer shadow-xl group">
+                      <Instagram size={32} className="group-hover:scale-110 transition-transform" />
+                    </a>
+                  )}
+                  {socials.twitter && (
+                    <a href={getSocialHref("twitter", socials.twitter)} target="_blank" rel="noopener noreferrer" className="w-20 h-20 rounded-[2.5rem] bg-neutral-bg-subtle border border-gray-100 flex items-center justify-center text-primary-950 hover:bg-primary-950 hover:text-white hover:rotate-[360deg] transition-all duration-700 cursor-pointer shadow-xl group">
+                      <Twitter size={32} className="group-hover:scale-110 transition-transform" />
+                    </a>
+                  )}
+                  {socials.whatsapp && (
+                    <a href={getSocialHref("whatsapp", socials.whatsapp)} target="_blank" rel="noopener noreferrer" className="w-20 h-20 rounded-[2.5rem] bg-neutral-bg-subtle border border-gray-100 flex items-center justify-center text-primary-950 hover:bg-primary-950 hover:text-white hover:rotate-[360deg] transition-all duration-700 cursor-pointer shadow-xl group">
+                      <MessageCircle size={32} className="group-hover:scale-110 transition-transform" />
+                    </a>
+                  )}
                </div>
             </div>
             

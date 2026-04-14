@@ -29,6 +29,19 @@ const userFormSchema = z.object({
   motherName: z.string().optional().or(z.literal("")),
   dob: z.string().optional().or(z.literal("")),
   prevSchool: z.string().optional().or(z.literal("")),
+  gender: z.enum(["Male", "Female", "Other"]).optional().or(z.literal("")),
+  religion: z.string().optional().or(z.literal("")),
+  category: z.string().optional().or(z.literal("")),
+  aadharNumber: z.string().optional().or(z.literal("")),
+  emergencyContact: z.string().optional().or(z.literal("")),
+  qualification: z.string().optional().or(z.literal("")),
+  experience: z.string().optional().or(z.literal("")),
+  bio: z.string().optional().or(z.literal("")),
+  personalEmail: z.string().optional().or(z.literal("")),
+  secondaryPhone: z.string().optional().or(z.literal("")),
+  instagram: z.string().optional().or(z.literal("")),
+  facebook: z.string().optional().or(z.literal("")),
+  twitter: z.string().optional().or(z.literal("")),
 });
 
 const AddEditUserModal = ({
@@ -72,6 +85,19 @@ const AddEditUserModal = ({
       motherName: user?.motherName || "",
       dob: user?.dob || "",
       prevSchool: user?.prevSchool || "",
+      gender: user?.gender || "",
+      religion: user?.religion || "",
+      category: user?.category || "",
+      aadharNumber: user?.aadharNumber || "",
+      emergencyContact: user?.emergencyContact || "",
+      qualification: user?.qualification || "",
+      experience: user?.experience || "",
+      bio: user?.bio || "",
+      personalEmail: user?.personalEmail || "",
+      secondaryPhone: user?.secondaryPhone || "",
+      instagram: user?.socialLinks?.instagram || "",
+      facebook: user?.socialLinks?.facebook || "",
+      twitter: user?.socialLinks?.twitter || "",
     },
   });
 
@@ -136,40 +162,54 @@ const AddEditUserModal = ({
           : []
       };
 
+      // Wrap social links if present
+      const finalSocialLinks = {
+        instagram: data.instagram,
+        facebook: data.facebook,
+        twitter: data.twitter
+      };
+
+      const finalPayload = {
+        ...sanitizedData,
+        socialLinks: JSON.stringify(finalSocialLinks)
+      };
+
       // Remove password if not provided (especially when editing)
-      if (!sanitizedData.password || sanitizedData.password.trim() === "") {
-        delete sanitizedData.password;
+      if (!finalPayload.password || finalPayload.password.trim() === "") {
+        delete finalPayload.password;
+      }
+
+      const socialLinksData = {
+        instagram: data.instagram || "",
+        facebook: data.facebook || "",
+        twitter: data.twitter || ""
+      };
+
+      const formData = new FormData();
+      
+      // Add general fields
+      Object.keys(sanitizedData).forEach(key => {
+        // Skip flat social fields as we bundle them
+        if (['instagram', 'facebook', 'twitter'].includes(key)) return;
+        
+        if (Array.isArray(sanitizedData[key])) {
+          sanitizedData[key].forEach(val => formData.append(`${key}[]`, val));
+        } else if (sanitizedData[key] !== undefined && sanitizedData[key] !== null) {
+          formData.append(key, sanitizedData[key]);
+        }
+      });
+
+      // Bundled Social Links
+      formData.append('socialLinks', JSON.stringify(socialLinksData));
+
+      if (selectedFile) {
+        formData.append('profileImage', selectedFile);
       }
 
       if (isEditing) {
-        // Prepare FormData for multipart upload
-        const formData = new FormData();
-        Object.keys(sanitizedData).forEach(key => {
-          if (Array.isArray(sanitizedData[key])) {
-            sanitizedData[key].forEach(val => formData.append(`${key}[]`, val));
-          } else if (sanitizedData[key] !== undefined) {
-            formData.append(key, sanitizedData[key]);
-          }
-        });
-        if (selectedFile) {
-          formData.append('profileImage', selectedFile);
-        }
-
         await adminService.updateUser(user._id, formData, token);
         toast.success("Record Modified.");
       } else {
-        const formData = new FormData();
-        Object.keys(sanitizedData).forEach(key => {
-          if (Array.isArray(sanitizedData[key])) {
-            sanitizedData[key].forEach(val => formData.append(`${key}[]`, val));
-          } else if (sanitizedData[key] !== undefined) {
-            formData.append(key, sanitizedData[key]);
-          }
-        });
-        if (selectedFile) {
-          formData.append('profileImage', selectedFile);
-        }
-
         await adminService.addUser(formData, token);
         toast.success("Identity Instated.");
       }
@@ -314,6 +354,22 @@ const AddEditUserModal = ({
               <Input label="Contact Number" placeholder="+91 98765 43210" {...register("phone")} />
               <Input label="Residential Address" placeholder="Area, City, PIN" {...register("address")} />
            </div>
+
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+              <Select label="Gender" {...register("gender")} error={errors.gender?.message}>
+                <option value="">Select Gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </Select>
+              <Input label="Religion" placeholder="e.g. Hindu" {...register("religion")} />
+              <Input label="Category" placeholder="e.g. General" {...register("category")} />
+           </div>
+
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+              <Input label="Aadhar identification" placeholder="12 Digit Number" {...register("aadharNumber")} />
+              <Input label="Emergency Contact" placeholder="Parent/Guardian Contact" {...register("emergencyContact")} />
+           </div>
         </div>
 
         {/* Role Specific Assignment (The "Big" part) */}
@@ -358,16 +414,34 @@ const AddEditUserModal = ({
             </div>
           </div>
         ) : (
-          <div className="p-10 bg-primary-950/5 rounded-[2.5rem] border border-primary-950/10 flex flex-col items-center justify-center text-center space-y-4">
-             <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center text-primary-950 shadow-sm border border-primary-950/5">
-                <BookOpen size={28} />
-             </div>
-             <div className="max-w-xs">
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary-950 mb-2">Multi-Node Node Axis</p>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-loose">
-                  Faculty units are assigned to subjects and classes via the <span className="text-accent-500 italic">Academic Hub</span> or <span className="text-accent-500 italic">Subject Vault</span>.
-                </p>
-             </div>
+          <div className="space-y-12">
+            <div className="space-y-8 p-10 bg-gray-50 rounded-[2.5rem] border border-gray-100">
+               <div className="flex items-center gap-3">
+                  <div className="w-1.5 h-1.5 rounded-full bg-accent-500"></div>
+                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-400">Professional Profile</span>
+               </div>
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                  <Input label="Qualification" placeholder="e.g. M.Sc Mathematics" {...register("qualification")} />
+                  <Input label="Work Experience" placeholder="e.g. 5 Years" {...register("experience")} />
+               </div>
+               <Input label="Professional Bio" placeholder="Short description for portal" {...register("bio")} />
+            </div>
+
+            <div className="space-y-8 p-10 bg-primary-950/5 rounded-[2.5rem] border border-primary-950/10">
+               <div className="flex items-center gap-3">
+                  <div className="w-1.5 h-1.5 rounded-full bg-accent-500"></div>
+                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-400">Social & Personal Connectivity</span>
+               </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                  <Input label="Personal Email" type="email" placeholder="personal@gmail.com" {...register("personalEmail")} />
+                  <Input label="Emergency/Secondary Phone" placeholder="Alternate Number" {...register("secondaryPhone")} />
+               </div>
+               <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                  <Input label="Instagram Link" placeholder="https://instagram.com/username" {...register("instagram")} />
+                  <Input label="Facebook Link" placeholder="https://facebook.com/profile" {...register("facebook")} />
+                  <Input label="Twitter (X) Link" placeholder="https://x.com/username" {...register("twitter")} />
+               </div>
+            </div>
           </div>
         )}
 

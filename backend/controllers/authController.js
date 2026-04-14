@@ -149,41 +149,63 @@ const forgotPassword = async (req, res) => {
 
         const message = `
             <!DOCTYPE html>
-            <html>
+            <html lang="en">
             <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <style>
-                    .container { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb; border-radius: 12px; }
-                    .header { text-align: center; padding: 20px 0; }
-                    .card { background: #ffffff; padding: 40px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #e5e7eb; }
-                    .title { font-size: 24px; font-weight: 700; color: #111827; margin-bottom: 16px; text-align: center; }
-                    .text { color: #4b5563; margin-bottom: 24px; font-size: 16px; text-align: center; }
-                    .btn-container { text-align: center; margin-bottom: 30px; }
-                    .btn { background-color: #6366f1; color: #ffffff !important; padding: 14px 28px; text-decoration: none; border-radius: 10px; font-weight: 600; display: inline-block; transition: background-color 0.2s; }
-                    .footer { text-align: center; font-size: 12px; color: #9ca3af; margin-top: 30px; }
-                    .divider { border-top: 1px solid #e5e7eb; margin: 24px 0; }
+                    body { margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F4F7F9; color: #1f2937; }
+                    .wrapper { padding: 40px 20px; text-align: center; }
+                    .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); }
+                    .header-accent { height: 8px; background: linear-gradient(90deg, #155724, #2E8B57, #3CB371); }
+                    .content { padding: 48px 40px; }
+                    .logo { font-size: 28px; font-weight: 800; color: #155724; margin-bottom: 32px; letter-spacing: -0.5px; }
+                    .title { font-size: 24px; font-weight: 700; color: #111827; margin-bottom: 16px; }
+                    .desc { font-size: 16px; line-height: 1.6; color: #4b5563; margin-bottom: 32px; }
+                    .btn-wrapper { margin: 40px 0; }
+                    .btn { 
+                        background-color: #2E8B57; 
+                        color: #ffffff !important; 
+                        padding: 16px 36px; 
+                        text-decoration: none; 
+                        border-radius: 14px; 
+                        font-weight: 700; 
+                        font-size: 16px;
+                        display: inline-block;
+                        box-shadow: 0 10px 15px -3px rgba(46, 139, 87, 0.3);
+                        transition: transform 0.2s, box-shadow 0.2s;
+                    }
+                    .divider { border-top: 1px solid #f3f4f6; margin: 40px 0; }
+                    .footer { padding-bottom: 40px; font-size: 14px; color: #9ca3af; }
+                    .link-alt { font-size: 12px; color: #6b7280; word-break: break-all; margin-top: 20px; padding: 15px; background: #f9fafb; border-radius: 8px; }
                 </style>
             </head>
             <body>
-                <div class="container">
-                    <div class="header">
-                        <h2 style="color: #6366f1; margin: 0;">School Management System</h2>
-                    </div>
-                    <div class="card">
-                        <h1 class="title">Reset Your Password</h1>
-                        <p class="text">Hello ${user.name},<br>We received a request to reset your password for account <strong>${user.uniqueId}</strong>. Click the button below to choose a new one.</p>
-                        
-                        <div class="btn-container">
-                            <a href="${resetUrl}" class="btn">Reset Password</a>
+                <div class="wrapper">
+                    <div class="container">
+                        <div class="header-accent"></div>
+                        <div class="content">
+                            <div class="logo">SBS Badhwana</div>
+                            <h1 class="title">Reset Your Password</h1>
+                            <p class="desc">Hello ${user.name},<br>We received a request to secure your account <strong>${user.uniqueId}</strong>. Simply click the button below to choose a new password and regain access.</p>
+                            
+                            <div class="btn-wrapper">
+                                <a href="${resetUrl}" class="btn">Secure My Account</a>
+                            </div>
+
+                            <p class="desc" style="font-size: 14px; background: #fffbeb; padding: 15px; border-radius: 12px; border: 1px solid #fef3c7; color: #92400e;">
+                                <strong>💡 Note:</strong> If you are unable to reset your password through this link, please contact the school administration directly. For any other profile or academic details, only the administrator has the authority to make modifications.
+                            </p>
+                            
+                            <div class="divider"></div>
+                            
+                            <p class="desc" style="font-size: 14px; margin-bottom: 10px;">If the button doesn't work, copy and paste this link into your browser:</p>
+                            <div class="link-alt">${resetUrl}</div>
                         </div>
-                        
-                        <div class="divider"></div>
-                        
-                        <p class="text" style="font-size: 14px;">If the button doesn't work, copy and paste this link into your browser:</p>
-                        <p style="font-size: 11px; color: #6b7280; word-break: break-all; margin-top: 10px; text-align: center;">${resetUrl}</p>
                     </div>
                     <div class="footer">
-                        <p>&copy; ${new Date().getFullYear()} School Management System. All rights reserved.</p>
-                        <p>If you didn't request this email, you can safely ignore it.</p>
+                        <p>&copy; ${new Date().getFullYear()} SBS Badhwana Management System. All rights reserved.</p>
+                        <p>This is an automated security message. Please do not reply.</p>
                     </div>
                 </div>
             </body>
@@ -192,7 +214,18 @@ const forgotPassword = async (req, res) => {
 
         try {
             await sendEmail(user.email, 'Password Reset Request', message);
-            res.status(200).json({ message: 'Password reset link sent to the registered email address.' });
+
+            // Mask email for security/privacy (e.g., ya***@gmail.com)
+            const [localPart, domain] = user.email.split('@');
+            const maskedLocal = localPart.length > 2 
+                ? localPart.substring(0, 2) + '*'.repeat(localPart.length - 2)
+                : localPart + '***';
+            const maskedEmail = `${maskedLocal}@${domain}`;
+
+            res.status(200).json({ 
+                message: 'Password reset link sent to the registered email address.',
+                maskedEmail 
+            });
         } catch (err) {
             user.resetPasswordToken = undefined;
             user.resetPasswordExpire = undefined;

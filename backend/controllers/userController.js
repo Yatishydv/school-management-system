@@ -1,5 +1,7 @@
 import User from '../models/User.js';
 import Notification from '../models/Notification.js';
+import fs from 'fs';
+import path from 'path';
 
 // @desc    Get user profile
 // @route   GET /api/user/profile
@@ -17,33 +19,97 @@ const getProfile = async (req, res) => {
 };
 
 // @desc    Update user profile
-// @route   PUT /api/user/profile
+// @route   PUT /api/users/profile
 // @access  Private
 const updateProfile = async (req, res) => {
+    console.log("Profile Update Request Body:", req.body);
     try {
         const user = await User.findById(req.user._id);
 
-        if (user) {
-            user.name = req.body.name || user.name;
-            user.email = req.body.email || user.email;
-            if (req.file) {
-                user.profileImage = req.file.path;
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Update fields
+        user.name = req.body.name || user.name;
+        user.email = req.body.email || user.email;
+        user.phone = req.body.phone || user.phone;
+        user.address = req.body.address || user.address;
+        user.bio = req.body.bio !== undefined ? req.body.bio : user.bio;
+        user.personalEmail = req.body.personalEmail || user.personalEmail;
+        user.secondaryPhone = req.body.secondaryPhone || user.secondaryPhone;
+        
+        // Handle socialLinks (nested object)
+        if (req.body.socialLinks) {
+            try {
+                const socials = typeof req.body.socialLinks === 'string' 
+                    ? JSON.parse(req.body.socialLinks) 
+                    : req.body.socialLinks;
+                
+                user.socialLinks = {
+                    whatsapp: socials.whatsapp || (user.socialLinks?.whatsapp || ''),
+                    instagram: socials.instagram || (user.socialLinks?.instagram || ''),
+                    facebook: socials.facebook || (user.socialLinks?.facebook || ''),
+                    twitter: socials.twitter || (user.socialLinks?.twitter || '')
+                };
+            } catch (parseErr) {
+                console.error("Social links parse error:", parseErr);
+            }
+        }
+
+        if (req.file) {
+            console.log("File detected:", req.file.filename);
+            
+            // Delete old image if it exists and is different from default
+            if (user.profileImage && user.profileImage !== 'uploads/default.png') {
+                try {
+                    // Critical Fix: Use absolute path relative to project root
+                    const rootDir = path.resolve(__dirname, '..', '..');
+                    const oldPath = path.join(rootDir, user.profileImage);
+                    console.log("Attempting to delete old image at:", oldPath);
+                    
+                    if (fs.existsSync(oldPath)) {
+                        fs.unlinkSync(oldPath);
+                        console.log("SUCCESS: Old profile image deleted:", user.profileImage);
+                    } else {
+                        console.warn("WARNING: Old profile file not found on disk at:", oldPath);
+                    }
+                } catch (unlinkErr) {
+                    console.error("CRITICAL: Failed to delete old image:", unlinkErr.message);
+                }
             }
 
-            const updatedUser = await user.save();
-
-            res.json({
-                _id: updatedUser._id,
-                name: updatedUser.name,
-                email: updatedUser.email,
-                role: updatedUser.role,
-                profileImage: updatedUser.profileImage,
-            });
-        } else {
-            res.status(404).json({ message: 'User not found' });
+            // Construct new path relative to backend root
+            user.profileImage = `uploads/${req.file.destination.split('uploads')[0] ? 'profileImage' : req.file.destination.split('uploads')[1]}/${req.file.filename}`.replace(/\/+/g, '/');
         }
+
+        console.log("About to save user node...");
+        const updatedUser = await user.save();
+        console.log("User node saved successfully.");
+
+        // Return CLEAN response to fix "Ghost Error"
+        res.status(200).json({
+            _id: updatedUser._id,
+            uniqueId: updatedUser.uniqueId,
+            name: updatedUser.name,
+            email: updatedUser.email,
+            role: updatedUser.role,
+            phone: updatedUser.phone,
+            address: updatedUser.address,
+            bio: updatedUser.bio,
+            personalEmail: updatedUser.personalEmail,
+            secondaryPhone: updatedUser.secondaryPhone,
+            socialLinks: {
+                whatsapp: updatedUser.socialLinks?.whatsapp || "",
+                instagram: updatedUser.socialLinks?.instagram || "",
+                facebook: updatedUser.socialLinks?.facebook || "",
+                twitter: updatedUser.socialLinks?.twitter || ""
+            },
+            profileImage: updatedUser.profileImage
+        });
     } catch (error) {
-        res.status(500).json({ message: 'Server Error' });
+        console.error("Profile update error:", error);
+        res.status(500).json({ message: error.message || 'Update Protocol Violation' });
     }
 };
 

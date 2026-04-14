@@ -55,7 +55,8 @@ const ClassesPage = () => {
     {
         "Name*": "Class 10",
         "Stream": "General",
-        "Sections (Comma Separated)": "A, B, C"
+        "Sections (Comma Separated)": "A, B, C",
+        "Class Teacher (ID/Name)": "TEC0001"
     }
   ];
 
@@ -63,7 +64,8 @@ const ClassesPage = () => {
       const payload = jsonData.map(row => ({
           name: row["Name*"],
           stream: row["Stream"],
-          sections: row["Sections (Comma Separated)"] 
+          sections: row["Sections (Comma Separated)"],
+          classTeacher: row["Class Teacher (ID/Name)"]
       })).filter(c => c.name);
 
       if (payload.length === 0) {

@@ -121,7 +121,8 @@ const addUser = async (req, res) => {
     const { 
         name, email, password, role, classId, uniqueId: providedId, phone, address, 
         rollNumber, assignedClasses, fatherName, motherName, dob, prevSchool,
-        admissionId
+        admissionId, gender, religion, category, aadharNumber, emergencyContact,
+        qualification, experience, bio, personalEmail, secondaryPhone, socialLinks
     } = req.body;
 
     try {
@@ -181,6 +182,17 @@ const addUser = async (req, res) => {
             dob: role === 'student' ? dob : undefined,
             prevSchool: role === 'student' ? prevSchool : undefined,
             admissionDate: role === 'student' ? new Date() : undefined,
+            gender,
+            religion,
+            category,
+            aadharNumber,
+            emergencyContact,
+            qualification,
+            experience,
+            bio,
+            personalEmail,
+            secondaryPhone,
+            socialLinks: (typeof socialLinks === 'string') ? JSON.parse(socialLinks) : socialLinks
         });
 
         if (newUser) {
@@ -308,6 +320,22 @@ const addUsersBulk = async (req, res) => {
                     dob: role === 'student' ? dob : undefined,
                     prevSchool: role === 'student' ? prevSchool : undefined,
                     admissionDate: role === 'student' ? new Date() : undefined,
+                    gender: userData.Gender || userData.gender,
+                    religion: userData.Religion || userData.religion,
+                    category: userData.Category || userData.category,
+                    aadharNumber: userData["Aadhar Number"] || userData.aadharNumber,
+                    emergencyContact: userData["Emergency Contact"] || userData.emergencyContact,
+                    qualification: userData.Qualification || userData.qualification,
+                    experience: userData.Experience || userData.experience,
+                    bio: userData.Bio || userData.bio,
+                    personalEmail: userData["Personal Email"] || userData.personalEmail,
+                    secondaryPhone: userData["Secondary Phone"] || userData.secondaryPhone,
+                    socialLinks: userData.socialLinks || {
+                        whatsapp: userData.WhatsApp,
+                        instagram: userData.Instagram,
+                        facebook: userData.Facebook,
+                        twitter: userData.Twitter
+                    }
                 });
 
                 if (newUser && !password && email) {
@@ -344,7 +372,9 @@ const addUsersBulk = async (req, res) => {
 const updateUser = async (req, res) => {
     const { 
         name, email, password, role, classId, uniqueId, phone, address, 
-        rollNumber, assignedClasses, fatherName, motherName, dob, prevSchool 
+        rollNumber, assignedClasses, fatherName, motherName, dob, prevSchool,
+        gender, religion, category, aadharNumber, emergencyContact,
+        qualification, experience, bio, personalEmail, secondaryPhone, socialLinks
     } = req.body;
 
     try {
@@ -369,6 +399,21 @@ const updateUser = async (req, res) => {
             if (motherName !== undefined) user.motherName = motherName;
             if (dob !== undefined) user.dob = dob;
             if (prevSchool !== undefined) user.prevSchool = prevSchool;
+
+            // Updated Fields
+            if (gender !== undefined) user.gender = gender;
+            if (religion !== undefined) user.religion = religion;
+            if (category !== undefined) user.category = category;
+            if (aadharNumber !== undefined) user.aadharNumber = aadharNumber;
+            if (emergencyContact !== undefined) user.emergencyContact = emergencyContact;
+            if (qualification !== undefined) user.qualification = qualification;
+            if (experience !== undefined) user.experience = experience;
+            if (bio !== undefined) user.bio = bio;
+            if (personalEmail !== undefined) user.personalEmail = personalEmail;
+            if (secondaryPhone !== undefined) user.secondaryPhone = secondaryPhone;
+            if (socialLinks !== undefined) {
+                user.socialLinks = (typeof socialLinks === 'string') ? JSON.parse(socialLinks) : socialLinks;
+            }
 
             // Teacher specific
             const classesInput = assignedClasses || req.body['assignedClasses[]'];
@@ -569,7 +614,7 @@ const addClassesBulk = async (req, res) => {
         
         for (const [index, classData] of classes.entries()) {
             try {
-                const { name, stream, sections } = classData;
+                const { name, stream, sections, classTeacher: teacherStr } = classData;
                 if (!name || name.trim() === '') {
                     throw new Error(`Row ${index + 2}: Class Name is required.`);
                 }
@@ -583,6 +628,19 @@ const addClassesBulk = async (req, res) => {
                         parsedSections = sections.split(',').map(s => s.trim()).filter(s => s !== "");
                     }
                 }
+
+                // Resolve Class Teacher (ID or name)
+                let classTeacherId = null;
+                if (teacherStr && teacherStr.trim() !== '') {
+                    const matchedTeacher = await User.findOne({ 
+                        role: 'teacher',
+                        $or: [
+                            { uniqueId: teacherStr.trim() },
+                            { name: new RegExp('^' + teacherStr.trim() + '$', 'i') }
+                        ]
+                    });
+                    if (matchedTeacher) classTeacherId = matchedTeacher._id;
+                }
                 
                 const existing = await Class.findOne({ name: name.trim(), stream: stream || 'General' });
                 if (existing) {
@@ -592,7 +650,8 @@ const addClassesBulk = async (req, res) => {
                 await Class.create({ 
                     name: name.trim(), 
                     sections: parsedSections, 
-                    stream: stream || 'General'
+                    stream: stream || 'General',
+                    classTeacher: classTeacherId
                 });
                 
                 results.successful++;
@@ -712,7 +771,7 @@ const addSubjectsBulk = async (req, res) => {
         
         for (const [index, subjectData] of subjects.entries()) {
             try {
-                const { name, code, Class: classNameStr } = subjectData;
+                const { name, code, Class: classNameStr, Teachers: teachersStr } = subjectData;
                 if (!name || name.trim() === '') throw new Error(`Row ${index + 2}: Subject Name is required.`);
                 if (!code || code.trim() === '') throw new Error(`Row ${index + 2}: Subject Code is required.`);
                 
@@ -726,6 +785,22 @@ const addSubjectsBulk = async (req, res) => {
                 } else {
                     throw new Error(`Row ${index + 2}: Class is required.`);
                 }
+
+                // Resolve Teachers (Comma separated IDs or names)
+                let teacherIds = [];
+                if (teachersStr) {
+                    const teacherArray = (typeof teachersStr === 'string' ? teachersStr.split(',') : [teachersStr]).map(t => t.trim());
+                    for (const t of teacherArray) {
+                        const matchedT = await User.findOne({
+                            role: 'teacher',
+                            $or: [
+                                { uniqueId: t },
+                                { name: new RegExp('^' + t + '$', 'i') }
+                            ]
+                        });
+                        if (matchedT) teacherIds.push(matchedT._id);
+                    }
+                }
                 
                 const existing = await Subject.findOne({ code: code.trim(), classId });
                 if (existing) throw new Error(`Row ${index + 2}: Subject Code ${code} already exists for this class.`);
@@ -733,7 +808,8 @@ const addSubjectsBulk = async (req, res) => {
                 await Subject.create({ 
                     name: name.trim(), 
                     code: code.trim(), 
-                    classId
+                    classId,
+                    assignedTeachers: teacherIds
                 });
                 
                 results.successful++;

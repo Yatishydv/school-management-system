@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import axios from "../../api/axios";
 import { 
   Facebook, 
   Instagram, 
@@ -8,10 +9,48 @@ import {
   Mail, 
   Phone, 
   MapPin, 
-  ArrowRight 
+  ArrowRight,
+  MessageCircle
 } from "lucide-react";
 
 const Footer = () => {
+  const [schoolInfo, setSchoolInfo] = useState(null);
+
+  useEffect(() => {
+    const fetchInfo = async () => {
+      try {
+        const res = await axios.get("/public/school-info");
+        setSchoolInfo(res.data);
+      } catch (err) {
+        console.error("Failed to fetch school footer info");
+      }
+    };
+    fetchInfo();
+  }, []);
+
+  const socials = schoolInfo?.socialLinks || {};
+
+  const getSocialHref = (platform, handle) => {
+    if (!handle) return "";
+    if (handle.startsWith("http")) return handle;
+    
+    // Remove @ if present
+    const cleanHandle = handle.startsWith("@") ? handle.substring(1) : handle;
+    
+    switch (platform) {
+      case "facebook":
+        return handle.includes("facebook.com") ? `https://${handle}` : `https://facebook.com/${cleanHandle}`;
+      case "instagram":
+        return handle.includes("instagram.com") ? `https://${handle}` : `https://instagram.com/${cleanHandle}`;
+      case "twitter":
+        return handle.includes("twitter.com") || handle.includes("x.com") ? `https://${handle}` : `https://x.com/${cleanHandle}`;
+      case "whatsapp":
+        return `https://wa.me/${handle.replace(/\s+/g, "")}`;
+      default:
+        return handle;
+    }
+  };
+
   return (
     <footer className="relative bg-black text-gray-400 pt-20 pb-10 overflow-hidden border-t border-white/5">
       {/* Background Accents */}
@@ -32,18 +71,26 @@ const Footer = () => {
               Empowering the next generation with excellence in education, ethics, and innovation since 2004.
             </p>
             <div className="flex items-center gap-4">
-              <a href="#" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-accent-500 hover:text-white transition-all duration-300">
-                <Facebook size={18} />
-              </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-accent-500 hover:text-white transition-all duration-300">
-                <Instagram size={18} />
-              </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-accent-500 hover:text-white transition-all duration-300">
-                <Twitter size={18} />
-              </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-accent-500 hover:text-white transition-all duration-300">
-                <Linkedin size={18} />
-              </a>
+              {socials.facebook && (
+                <a href={getSocialHref("facebook", socials.facebook)} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-accent-500 hover:text-white transition-all duration-300">
+                  <Facebook size={18} />
+                </a>
+              )}
+              {socials.instagram && (
+                <a href={getSocialHref("instagram", socials.instagram)} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-accent-500 hover:text-white transition-all duration-300">
+                  <Instagram size={18} />
+                </a>
+              )}
+              {socials.twitter && (
+                <a href={getSocialHref("twitter", socials.twitter)} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-accent-500 hover:text-white transition-all duration-300">
+                  <Twitter size={18} />
+                </a>
+              )}
+              {socials.whatsapp && (
+                <a href={getSocialHref("whatsapp", socials.whatsapp)} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-accent-500 hover:text-white transition-all duration-300">
+                  <MessageCircle size={18} />
+                </a>
+              )}
             </div>
           </div>
 
@@ -71,20 +118,20 @@ const Footer = () => {
           <div className="md:col-span-3 space-y-6">
             <h4 className="text-white font-bold tracking-wider uppercase text-sm">Contact Us</h4>
             <ul className="space-y-4">
-              <li className="flex items-start gap-3">
-                <MapPin size={20} className="text-accent-500 mt-1 shrink-0" />
-                <span>Main Street, Badhwana, Haryana 127308</span>
+              <li className="flex items-start gap-4">
+                <MapPin size={22} className="text-accent-500 mt-1 shrink-0" />
+                <span className="text-sm leading-relaxed">{schoolInfo?.address || "Main Street, Badhwana, Haryana 127308"}</span>
               </li>
-              <li className="flex items-center gap-3">
+              <li className="flex items-center gap-4">
                 <Mail size={20} className="text-accent-500 shrink-0" />
-                <a href="mailto:info@sbsbadhwana.edu" className="hover:text-accent-400 transition-colors">
-                  info@sbsbadhwana.edu
+                <a href={`mailto:${schoolInfo?.email || "info@sbsbadhwana.edu"}`} className="text-sm hover:text-accent-400 transition-colors">
+                  {schoolInfo?.email || "info@sbsbadhwana.edu"}
                 </a>
               </li>
-              <li className="flex items-center gap-3">
+              <li className="flex items-center gap-4">
                 <Phone size={20} className="text-accent-500 shrink-0" />
-                <a href="tel:+911234567890" className="hover:text-accent-400 transition-colors">
-                  +91 123 456 7890
+                <a href={`tel:${schoolInfo?.phone || "+911234567890"}`} className="text-sm hover:text-accent-400 transition-colors tabular-nums">
+                  {schoolInfo?.phone || "+91 123 456 7890"}
                 </a>
               </li>
             </ul>

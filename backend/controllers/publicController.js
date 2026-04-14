@@ -57,3 +57,22 @@ export const getSchoolStats = async (req, res) => {
         res.status(500).json({ message: 'Error fetching school statistics.' });
     }
 };
+
+// @desc    Get school contact and social info (from Admin profile)
+// @route   GET /api/public/school-info
+// @access  Public
+export const getSchoolInfo = async (req, res) => {
+    try {
+        // Find the main admin (Master Admin)
+        const admin = await User.findOne({ role: 'admin' })
+            .select('name email phone address socialLinks profileImage');
+        
+        if (!admin) {
+            return res.status(404).json({ message: 'School info not found.' });
+        }
+
+        res.status(200).json(admin);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching school info.' });
+    }
+};

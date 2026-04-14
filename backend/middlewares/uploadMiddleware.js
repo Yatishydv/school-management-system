@@ -9,7 +9,7 @@ const __dirname = path.dirname(__filename);
 // Define storage location and file naming
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const uploadPath = path.join(__dirname, '..', 'uploads', file.fieldname);
+        const uploadPath = path.join(__dirname, '..', '..', 'uploads', file.fieldname);
         // Create directory if it doesn't exist
         fs.mkdirSync(uploadPath, { recursive: true });
         cb(null, uploadPath);

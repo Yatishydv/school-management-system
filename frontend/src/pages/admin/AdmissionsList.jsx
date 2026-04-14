@@ -10,7 +10,7 @@ import {
   XCircle,
   Clock
 } from "lucide-react";
-import axios from "axios";
+import axios from "../../api/axios";
 import { toast } from "react-toastify";
 import Modal from "../../components/shared/Modal";
 import AddEditUserModal from "../../components/admin/AddEditUserModal";
@@ -27,7 +27,7 @@ const AdmissionsList = () => {
 
   const fetchAdmissions = async () => {
     try {
-      const res = await axios.get("http://localhost:5005/api/admissions/all", {
+      const res = await axios.get("/admissions/all", {
         headers: { Authorization: `Bearer ${token}` }
       });
       setData(res.data.data || []);
@@ -40,7 +40,7 @@ const AdmissionsList = () => {
 
   const handleUpdateStatus = async (id, status) => {
     try {
-      await axios.patch(`http://localhost:5005/api/admissions/${id}/status`, { status }, {
+      await axios.patch(`/admissions/${id}/status`, { status }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.success(`Application ${status}`);
@@ -52,7 +52,7 @@ const AdmissionsList = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:5005/api/admissions/${id}`, {
+      await axios.delete(`/admissions/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.success("Application deleted.");

@@ -1,5 +1,5 @@
-// frontend/src/pages/public/HomePage.jsx
 import React, { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import Button from "../../components/ui/Button";
 import { BookOpen, Users, Award, Shield, Sparkles, ArrowRight, CheckCircle, Trophy, Star } from "lucide-react";
 import schoolImage from "../../assets/school.png";
@@ -171,13 +171,17 @@ const HomePage = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">
-              <Button className="w-full sm:w-auto px-8 py-4 rounded-full bg-primary-950 text-white hover:bg-black shadow-2xl shadow-primary-950/20 flex items-center justify-center gap-2 group transition-all">
-                Explore Programs
-                <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-              </Button>
-              <Button variant="ghost" className="w-full sm:w-auto px-8 py-4 rounded-full border-2 border-primary-950/10 text-primary-950 hover:bg-primary-50">
-                Contact Office
-              </Button>
+              <Link to="/about" className="w-full sm:w-auto">
+                <Button className="w-full px-8 py-4 rounded-full bg-primary-950 text-white hover:bg-black shadow-2xl shadow-primary-950/20 flex items-center justify-center gap-2 group transition-all">
+                  Explore Programs
+                  <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </Link>
+              <Link to="/contact" className="w-full sm:w-auto">
+                <Button variant="ghost" className="w-full px-8 py-4 rounded-full border-2 border-primary-950/10 text-primary-950 hover:bg-primary-50">
+                  Contact Office
+                </Button>
+              </Link>
             </div>
           </div>
 
@@ -282,12 +286,12 @@ const HomePage = () => {
                       )}
                     </div>
 
-                    <div className="mt-auto pt-4 border-t border-gray-100">
+                    <Link to="/about" className="mt-auto pt-4 border-t border-gray-100 block">
                       <div className="flex items-center gap-2 text-accent-600 font-bold text-[10px] uppercase tracking-[0.2em] group-hover:gap-3 transition-all duration-300">
                         <span>Explore More</span>
                         <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
                       </div>
-                    </div>
+                    </Link>
                   </div>
                   
                   {/* Bottom pattern */}
@@ -366,15 +370,19 @@ const HomePage = () => {
                 </p>
 
                 <div className="flex flex-col sm:flex-row items-center gap-6 pt-4">
-                  <Button className="w-full sm:w-auto px-10 py-5 rounded-full bg-accent-500 text-white hover:bg-accent-600 active:scale-95 shadow-2xl shadow-accent-500/20 transition-all duration-300 font-black uppercase tracking-widest text-sm flex items-center justify-center gap-3 relative overflow-hidden group">
-                    <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full animate-shimmer"></div>
-                    <span className="relative">Apply for Admission</span>
-                    <ArrowRight size={18} className="relative group-hover:translate-x-2 transition-transform" />
-                  </Button>
-                  <Button variant="ghost" className="w-full sm:w-auto px-10 py-5 rounded-full border-2 border-primary-950/10 text-primary-950 hover:bg-gray-50 transition-all font-black uppercase tracking-widest text-sm flex items-center gap-2">
-                    <span>Virtual Tour</span>
-                    <div className="w-2 h-2 rounded-full bg-accent-500 animate-pulse"></div>
-                  </Button>
+                  <Link to="/admissions" className="w-full sm:w-auto">
+                    <Button className="w-full px-10 py-5 rounded-full bg-accent-500 text-white hover:bg-accent-600 active:scale-95 shadow-2xl shadow-accent-500/20 transition-all duration-300 font-black uppercase tracking-widest text-sm flex items-center justify-center gap-3 relative overflow-hidden group">
+                      <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full animate-shimmer"></div>
+                      <span className="relative">Apply for Admission</span>
+                      <ArrowRight size={18} className="relative group-hover:translate-x-2 transition-transform" />
+                    </Button>
+                  </Link>
+                  <Link to="/gallery" className="w-full sm:w-auto">
+                    <Button variant="ghost" className="w-full px-10 py-5 rounded-full border-2 border-primary-950/10 text-primary-950 hover:bg-gray-50 transition-all font-black uppercase tracking-widest text-sm flex items-center gap-2">
+                      <span>Virtual Tour</span>
+                      <div className="w-2 h-2 rounded-full bg-accent-500 animate-pulse"></div>
+                    </Button>
+                  </Link>
                 </div>
               </div>
 

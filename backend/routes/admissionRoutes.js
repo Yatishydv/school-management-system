@@ -8,10 +8,9 @@ import {
 } from "../controllers/admissionController.js";
 import { protect, admin } from "../middlewares/authMiddleware.js";
 
-const router = express.Router();
+import upload from "../middlewares/uploadMiddleware.js";
 
-// File Upload Config
-const upload = multer({ dest: "uploads/" });
+const router = express.Router();
 
 router.post(
   "/submit",

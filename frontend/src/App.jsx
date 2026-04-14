@@ -17,12 +17,14 @@ import ContactPage from "./pages/public/ContactPage.jsx";
 import LoginPage from "./pages/public/LoginPage.jsx";
 import ForgotPassword from "./pages/public/ForgotPassword.jsx";
 import ResetPassword from "./pages/public/ResetPassword.jsx";
+import NotFound from "./pages/public/NotFound.jsx";
 // PROTECTED ROUTE
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 
 // ADMIN LAYOUT + PAGES
 import AdminLayout from "./layouts/AdminLayout.jsx";
 import AdminDashboard from "./pages/admin/AdminDashboard.jsx";
+import AdminProfile from "./pages/admin/AdminProfile.jsx";
 import AdminGallery from "./pages/admin/AdminGallery.jsx";
 import StudentsPage from "./pages/admin/StudentsPage.jsx";
 import TeachersPage from "./pages/admin/TeachersPage.jsx";
@@ -112,6 +114,16 @@ const App = () => {
             <ProtectedRoute role="admin">
               <AdminLayout>
                 <AdminDashboard />
+              </AdminLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/profile"
+          element={
+            <ProtectedRoute role="admin">
+              <AdminLayout>
+                <AdminProfile />
               </AdminLayout>
             </ProtectedRoute>
           }
@@ -232,6 +244,9 @@ const App = () => {
         <Route path="/admin/timetable" element={<ProtectedRoute role="admin"><AdminLayout><AdminTimetable /></AdminLayout></ProtectedRoute>} />
         <Route path="/admin/exams" element={<ProtectedRoute role="admin"><AdminLayout><ExamsPage /></AdminLayout></ProtectedRoute>} />
         <Route path="/admin/fees" element={<ProtectedRoute role="admin"><AdminLayout><AdminFees /></AdminLayout></ProtectedRoute>} />
+        
+        {/* CATCH ALL - 404 */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
 
       {/* Footer only on public pages */}

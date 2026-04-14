@@ -51,7 +51,13 @@ const StudentsPage = () => {
         "Father Name": "Richard Doe",
         "Mother Name": "Jane Doe",
         "DOB (YYYY-MM-DD)": "2010-05-15",
-        "Previous School": "Springfield High"
+        "Gender": "Male",
+        "Religion": "Hindu",
+        "Category": "General",
+        "Aadhar Number": "123456789012",
+        "Emergency Contact": "9876543211",
+        "Previous School": "Springfield High",
+        "Bio": "Brief overview..."
     }
   ];
 
@@ -66,7 +72,13 @@ const StudentsPage = () => {
           fatherName: row["Father Name"],
           motherName: row["Mother Name"],
           dob: row["DOB (YYYY-MM-DD)"],
+          gender: row["Gender"],
+          religion: row["Religion"],
+          category: row["Category"],
+          aadharNumber: row["Aadhar Number"] ? String(row["Aadhar Number"]) : undefined,
+          emergencyContact: row["Emergency Contact"] ? String(row["Emergency Contact"]) : undefined,
           prevSchool: row["Previous School"],
+          bio: row["Bio"],
           role: 'student'
       })).filter(u => u.name);
 
@@ -133,8 +145,14 @@ const StudentsPage = () => {
         "Father Name": u.fatherName || '',
         "Mother Name": u.motherName || '',
         "DOB (YYYY-MM-DD)": u.dob || '',
+        "Gender": u.gender || '',
+        "Religion": u.religion || '',
+        "Category": u.category || '',
+        "Aadhar Number": u.aadharNumber || '',
+        "Emergency Contact": u.emergencyContact || '',
         "Previous School": u.prevSchool || '',
-        "Admission Date": u.admissionDate ? new Date(u.admissionDate).toLocaleDateString() : ''
+        "Admission Date": u.admissionDate ? new Date(u.admissionDate).toLocaleDateString() : '',
+        "Bio": u.bio || ''
     }));
     const ws = xlsx.utils.json_to_sheet(exportData);
     const wb = xlsx.utils.book_new();

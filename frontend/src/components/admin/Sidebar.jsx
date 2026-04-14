@@ -59,7 +59,7 @@ const Sidebar = () => {
       { name: "Exams", icon: FileText, path: "/admin/exams" },
       { name: "Fees", icon: DollarSign, path: "/admin/fees" },
       { name: "Gallery", icon: Image, path: "/admin/gallery" },
-      { name: "Notifications", icon: Bell, path: "/admin/notifications" },
+      { name: "My Account", icon: Shield, path: "/admin/profile" },
     ],
     teacher: [
       { name: "Dashboard", icon: LayoutDashboard, path: "/teacher/dashboard" },

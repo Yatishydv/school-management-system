@@ -1,0 +1,7 @@
+{
+  "verbose": true,
+  "watch": ["server.js", "controllers/", "models/", "routes/", "middleware/", "utils/"],
+  "ext": "js,json",
+  "ignore": ["uploads/*", "**/uploads/**", "node_modules/*", "**/node_modules/**"],
+  "delay": "2500"
+}

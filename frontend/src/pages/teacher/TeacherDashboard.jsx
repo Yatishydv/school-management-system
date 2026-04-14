@@ -20,10 +20,16 @@ import {
   ClipboardList,
   ChevronRight,
   MapPin,
+  Phone,
   Trophy,
   Layout,
   Bell,
-  MessageSquare
+  MessageSquare,
+  Instagram,
+  Facebook,
+  Twitter,
+  Smartphone,
+  Globe
 } from "lucide-react";
 import Spinner from "../../components/ui/Spinner";
 import Modal from "../../components/shared/Modal";
@@ -368,58 +374,186 @@ const TeacherDashboard = () => {
         isOpen={isProfileModalOpen} 
         onClose={() => setIsProfileModalOpen(false)} 
         title="Faculty Data Sheet"
+        size="4xl"
       >
-        <div className="p-4 md:p-10 space-y-12 max-h-[85vh] overflow-y-auto">
-           <div className="flex flex-col md:flex-row items-center gap-8">
-              <div className="w-24 h-24 rounded-[2rem] border-4 border-emerald-500/20 overflow-hidden shadow-xl">
+        <div className="p-6 md:p-12 space-y-12 bg-white overscroll-contain">
+           {/* Header / Identity Section */}
+           <div className="flex flex-col md:flex-row items-center gap-10">
+              <div className="w-32 h-32 rounded-[2.5rem] border-8 border-emerald-50 relative group overflow-hidden shadow-2xl transition-transform hover:scale-105">
                  {(profile?.profileImage || user?.profileImage) ? (
                     <img 
                       src={`http://localhost:5005/${profile?.profileImage || user?.profileImage}`} 
                       alt={profile?.name} 
-                      className="w-full h-full object-cover" 
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                      onError={(e) => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=" + (profile?.name || user?.name) + "&background=059669&color=fff"; }}
                     />
                  ) : (
                     <div className="w-full h-full bg-emerald-50 flex items-center justify-center text-emerald-600">
-                      <User size={40} />
+                      <User size={48} />
                     </div>
                  )}
+                 <div className="absolute inset-0 bg-emerald-950/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
               </div>
               <div className="text-center md:text-left">
-                 <h4 className="text-3xl font-black text-primary-950 uppercase italic leading-none font-display">{profile?.name}</h4>
-                 <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mt-3 bg-emerald-50 px-4 py-1.5 rounded-full inline-block">Professional Faculty</p>
+                 <p className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.4em] mb-2">Faculty Identification</p>
+                 <h4 className="text-4xl font-black text-primary-950 uppercase italic leading-none font-display">{profile?.name}</h4>
+                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mt-4">
+                    <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest bg-emerald-50 px-4 py-1.5 rounded-full border border-emerald-100 italic">Professional Academician</span>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-2 border-l border-gray-100">Senior Faculty Node</span>
+                 </div>
               </div>
            </div>
 
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
-              {[
-                { label: "Unique Identifier", value: profile?.uniqueId, icon: Fingerprint },
-                { label: "Digital Mail", value: profile?.email, icon: Mail },
-                { label: "Mobile Frequency", value: profile?.phone || "+91-XXXXXXXXXX", icon: Activity },
-                { label: "Institutional Base", value: profile?.address || "Main Campus Cluster", icon: MapPin },
-                { label: "Qualification", value: profile?.qualification || "Post Graduate", icon: Star },
-                { label: "Date of Enlistment", value: profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString() : "N/A", icon: Calendar }
-              ].map((item, i) => (
-                <div key={i} className="space-y-3 p-6 bg-gray-50 rounded-[1.5rem] border border-gray-100 hover:border-emerald-200 transition-colors group">
-                    <div className="flex items-center gap-3 text-gray-400 group-hover:text-emerald-600 transition-colors">
-                      <item.icon size={16} />
-                      <span className="text-[9px] font-black uppercase tracking-widest">{item.label}</span>
-                    </div>
-                    <p className="text-sm font-black text-primary-950 italic uppercase tracking-tight">{item.value}</p>
+           {/* Professional Bio */}
+           {(profile?.bio || user?.bio) && (
+             <div className="p-8 bg-gray-50 rounded-[2rem] border border-gray-100 italic text-primary-950/70 text-sm leading-relaxed relative">
+                <div className="absolute top-4 left-4 text-emerald-200">
+                   <MessageSquare size={24} />
                 </div>
-              ))}
+                <div className="pl-6">
+                   "{profile?.bio || user?.bio}"
+                </div>
+             </div>
+           )}
+
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+              {/* Professional data column */}
+              <div className="space-y-8">
+                 <div className="flex items-center gap-3 border-b border-gray-50 pb-4">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">Professional Matrix</span>
+                 </div>
+                 <div className="grid grid-cols-1 gap-6">
+                    {[
+                      { label: "Unique Identifier", value: profile?.uniqueId, icon: Fingerprint },
+                      { label: "Qualification", value: profile?.qualification || "Specified", icon: Star },
+                      { label: "Work Experience", value: profile?.experience || "N/A", icon: Activity },
+                      { label: "Identification (Aadhar)", value: profile?.aadharNumber || "Registered", icon: Shield },
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-center gap-4 group">
+                          <div className="p-3 bg-gray-50 rounded-xl text-gray-400 group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-all">
+                             <item.icon size={18} />
+                          </div>
+                          <div>
+                             <p className="text-[9px] font-black uppercase tracking-widest text-gray-300">{item.label}</p>
+                             <p className="text-sm font-black text-primary-950 italic uppercase">{item.value}</p>
+                          </div>
+                      </div>
+                    ))}
+                 </div>
+
+                 {/* Demographic Matrix */}
+                 <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+                    {[
+                      { label: "Gender", value: profile?.gender || "Specified", icon: User },
+                      { label: "Religion", value: profile?.religion || "N/A", icon: Star },
+                      { label: "Category", value: profile?.category || "General", icon: Layers },
+                      { label: "Contact Frequency", value: profile?.phone || "Private", icon: Phone, type: 'tel' },
+                    ].map((item, i) => (
+                      <div key={i} className="space-y-1">
+                          <p className="text-[9px] font-black uppercase tracking-widest text-gray-300">{item.label}</p>
+                          {item.type === 'tel' && item.value !== 'Private' ? (
+                            <a href={`tel:${item.value}`} className="text-xs font-black text-primary-950 hover:text-blue-600 transition-colors uppercase tabular-nums">
+                               {item.value}
+                            </a>
+                          ) : (
+                            <p className="text-xs font-black text-primary-950 uppercase">{item.value}</p>
+                          )}
+                      </div>
+                    ))}
+                 </div>
+              </div>
+
+              {/* Digital & Social connectivity column */}
+              <div className="space-y-10">
+                 <div className="flex items-center gap-3 border-b border-gray-50 pb-4">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">Digital Channels</span>
+                 </div>
+                 
+                 <div className="space-y-6">
+                    <a 
+                      href={`mailto:${profile?.email || user?.email}`}
+                      className="flex items-center gap-4 p-6 bg-gray-50 rounded-3xl border border-gray-100 group hover:border-emerald-200 transition-all"
+                    >
+                       <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-gray-400 group-hover:text-emerald-600 shadow-sm transition-all">
+                          <Mail size={18} />
+                       </div>
+                       <div className="flex-1 overflow-hidden">
+                          <p className="text-[9px] font-black uppercase tracking-widest text-gray-300">Mail Vector</p>
+                          <p className="text-sm font-black text-primary-950 lowercase truncate group-hover:text-emerald-600 transition-colors">
+                            {profile?.email || user?.email}
+                          </p>
+                       </div>
+                    </a>
+                    
+                    <a 
+                      href={`tel:${profile?.phone || profile?.secondaryPhone}`}
+                      className="flex items-center gap-4 p-6 bg-gray-50 rounded-3xl border border-gray-100 group hover:border-emerald-200 transition-all"
+                    >
+                       <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-gray-400 group-hover:text-emerald-600 shadow-sm transition-all">
+                          <Smartphone size={18} />
+                       </div>
+                       <div className="flex-1">
+                          <p className="text-[9px] font-black uppercase tracking-widest text-gray-300">Communication Terminal</p>
+                          <p className="text-sm font-black text-primary-950 tabular-nums group-hover:text-emerald-600 transition-colors">
+                            {profile?.phone || profile?.secondaryPhone || 'Private Line'}
+                          </p>
+                       </div>
+                    </a>
+                 </div>
+
+                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    {[
+                      { icon: Instagram, label: "Instagram", link: profile?.socialLinks?.instagram, color: "hover:bg-pink-500 hover:text-white" },
+                      { icon: Facebook, label: "Facebook", link: profile?.socialLinks?.facebook, color: "hover:bg-blue-600 hover:text-white" },
+                      { icon: Twitter, label: "Twitter", link: profile?.socialLinks?.twitter, color: "hover:bg-primary-950 hover:text-white" }
+                    ].map((app, i) => {
+                      const getUrl = (val) => {
+                        if (!val) return "#";
+                        if (val.startsWith('http')) return val;
+                        return `https://${val}`;
+                      };
+
+                      return (
+                        <a 
+                          key={i} 
+                          href={getUrl(app.link)}
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className={`overflow-hidden h-24 bg-gray-50 rounded-2xl border border-gray-100 flex flex-col items-center justify-center gap-2 transition-all p-2 ${app.link ? app.color : 'opacity-30 cursor-not-allowed grayscale'}`}
+                          onClick={(e) => !app.link && e.preventDefault()}
+                        >
+                           <app.icon size={20} />
+                           <span className="text-[8px] font-black uppercase tracking-widest">{app.label}</span>
+                        </a>
+                      );
+                    })}
+                 </div>
+                 
+                 <div className="p-8 bg-emerald-950 rounded-[2.5rem] text-white relative overflow-hidden group">
+                    <div className="absolute bottom-0 right-0 w-32 h-32 bg-emerald-500/20 rounded-full translate-x-10 translate-y-10 blur-3xl"></div>
+                    <div className="flex items-center gap-4 relative z-10">
+                       <MapPin size={24} className="text-emerald-400" />
+                       <div>
+                          <p className="text-[9px] font-black uppercase tracking-widest text-emerald-400">Institutional base</p>
+                          <p className="text-sm font-medium leading-relaxed opacity-90 italic">{profile?.address || "Main Campus Cluster"}</p>
+                       </div>
+                    </div>
+                 </div>
+              </div>
            </div>
 
-           <div className="pt-10 border-t border-gray-100 flex flex-col items-center gap-4">
+           <div className="pt-10 border-t border-gray-100 flex flex-col md:flex-row items-center justify-between gap-6">
               <div className="flex items-center gap-2 px-6 py-3 bg-red-50 text-red-600 rounded-full text-[9px] font-black uppercase tracking-widest border border-red-100">
-                 <Shield size={14} />
-                 Read-Only Administrative Record
+                 <Shield size={14} className="animate-pulse" />
+                 Immutable Data Node • Administrative Record
               </div>
-              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">Contact the Central Archive (Admin) for credential modification.</p>
               <button 
                 onClick={() => setIsProfileModalOpen(false)}
-                className="mt-4 px-12 py-5 bg-primary-950 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-xl shadow-primary-950/20"
+                className="px-14 py-5 bg-emerald-600 text-white rounded-[2rem] text-[10px] font-black uppercase tracking-[0.3em] hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-900/10 active:scale-95"
               >
-                Close Record
+                Close Faculty Sheet
               </button>
            </div>
         </div>

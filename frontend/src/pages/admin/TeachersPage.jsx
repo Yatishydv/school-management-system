@@ -43,7 +43,17 @@ const TeachersPage = () => {
         "Name*": "Jane Smith",
         "Email": "jane.smith@school.edu",
         "Phone": "5551234567",
-        "Address": "456 Education Ave"
+        "Address": "456 Education Ave",
+        "Qualification": "Ph.D in Physics",
+        "Experience": "10 Years",
+        "Bio": "Senior Physics Faculty...",
+        "Personal Email": "jane.personal@gmail.com",
+        "Secondary Phone": "5559876543",
+        "WhatsApp": "5551234567",
+        "Instagram": "@jane_phys",
+        "Facebook": "jane.smith.edu",
+        "Twitter": "@janesmith",
+        "Assigned Classes": "Class 10, Class 11 Science"
     }
   ];
 
@@ -53,6 +63,16 @@ const TeachersPage = () => {
           email: row["Email"],
           phone: row["Phone"] ? String(row["Phone"]) : undefined,
           address: row["Address"],
+          qualification: row["Qualification"],
+          experience: row["Experience"],
+          bio: row["Bio"],
+          personalEmail: row["Personal Email"],
+          secondaryPhone: row["Secondary Phone"] ? String(row["Secondary Phone"]) : undefined,
+          whatsapp: row["WhatsApp"] ? String(row["WhatsApp"]) : undefined,
+          instagram: row["Instagram"],
+          facebook: row["Facebook"],
+          twitter: row["Twitter"],
+          assignedClasses: row["Assigned Classes"] ? row["Assigned Classes"].split(',').map(s => s.trim()) : [],
           role: 'teacher'
       })).filter(u => u.name);
 
@@ -84,6 +104,15 @@ const TeachersPage = () => {
         "Email": u.email || '',
         "Phone": u.phone || '',
         "Address": u.address || '',
+        "Qualification": u.qualification || '',
+        "Experience": u.experience || '',
+        "Bio": u.bio || '',
+        "Personal Email": u.personalEmail || '',
+        "Secondary Phone": u.secondaryPhone || '',
+        "WhatsApp": u.socialLinks?.whatsapp || '',
+        "Instagram": u.socialLinks?.instagram || '',
+        "Facebook": u.socialLinks?.facebook || '',
+        "Twitter": u.socialLinks?.twitter || '',
         "Join Date": u.createdAt ? new Date(u.createdAt).toLocaleDateString() : ''
     }));
     const ws = xlsx.utils.json_to_sheet(exportData);

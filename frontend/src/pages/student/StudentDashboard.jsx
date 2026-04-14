@@ -13,6 +13,7 @@ import {
   Star, 
   TrendingUp,
   Layout,
+  Layers,
   Wallet,
   Trophy,
   ChevronRight,
@@ -20,7 +21,12 @@ import {
   Award,
   ClipboardList,
   Shield,
-  Calendar
+  Calendar,
+  Instagram,
+  Facebook,
+  Twitter,
+  MessageSquare,
+  Smartphone
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import Modal from "../../components/shared/Modal";
@@ -429,60 +435,152 @@ const StudentDashboard = () => {
         isOpen={isProfileModalOpen} 
         onClose={() => setIsProfileModalOpen(false)} 
         title="Scholar Data Sheet"
+        size="4xl"
       >
-        <div className="p-10 space-y-12">
-           <div className="flex items-center gap-8">
-              <div className="w-24 h-24 rounded-[2rem] border-4 border-blue-500/20 overflow-hidden shadow-xl">
+        <div className="p-10 space-y-12 bg-white">
+           <div className="flex items-center gap-10">
+              <div className="w-32 h-32 rounded-[2.5rem] border-8 border-blue-50 relative group overflow-hidden shadow-2xl transition-transform hover:scale-105">
                 {(profile?.profileImage || user?.profileImage) ? (
                     <img 
                       src={`http://localhost:5005/${profile?.profileImage || user?.profileImage}`} 
                       alt={profile?.name} 
-                      className="w-full h-full object-cover" 
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                      onError={(e) => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=" + (profile?.name || user?.name) + "&background=1e40af&color=fff"; }}
                     />
                 ) : (
                     <div className="w-full h-full bg-blue-50 flex items-center justify-center text-blue-600">
-                      <User size={40} />
+                      <User size={48} />
                     </div>
                 )}
+                <div className="absolute inset-0 bg-primary-950/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
               </div>
               <div>
-                 <h4 className="text-3xl font-black text-primary-950 uppercase italic leading-none">{profile?.name}</h4>
-                 <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mt-2 bg-blue-50 px-3 py-1 rounded-full inline-block">Registered Scholar</p>
+                 <p className="text-[10px] font-black text-blue-500 uppercase tracking-[0.4em] mb-2">Institutional Entity</p>
+                 <h4 className="text-4xl font-black text-primary-950 uppercase italic leading-none">{profile?.name}</h4>
+                 <div className="flex items-center gap-3 mt-4">
+                    <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest bg-blue-50 px-4 py-1.5 rounded-full border border-blue-100">Verified Scholar</span>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Joined {profile?.createdAt ? new Date(profile.createdAt).getFullYear() : '2024'}</span>
+                 </div>
               </div>
            </div>
+
+           {/* Bio Section */}
+           {(profile?.bio || user?.bio) && (
+             <div className="p-8 bg-blue-50/50 rounded-[2rem] border border-blue-100/50 italic text-primary-900/70 text-sm leading-relaxed">
+                "{profile?.bio || user?.bio}"
+             </div>
+           )}
 
            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-              {[
-                { label: "Unique Identifier", value: profile?.uniqueId, icon: Fingerprint },
-                { label: "Institutional Roll", value: profile?.rollNumber, icon: Hash },
-                { label: "Allocated Class", value: profile?.classId ? `${profile.classId.name} (${profile.classId.stream})` : "N/A", icon: GraduationCap },
-                { label: "Digital Mail", value: profile?.email, icon: Mail },
-                { label: "Mobile Frequency", value: profile?.phone || "+91-XXXXXXXXXX", icon: Phone },
-                { label: "Institutional Base", value: profile?.address || "Main Campus Cluster", icon: MapPin },
-                { label: "Guardian Contact", value: profile?.guardianName || "N/A", icon: User },
-                { label: "Admission date", value: profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString() : "N/A", icon: Calendar }
-              ].map((item, i) => (
-                <div key={i} className="space-y-3 p-6 bg-gray-50 rounded-[1.5rem] border border-gray-100 hover:border-blue-200 transition-colors group">
-                    <div className="flex items-center gap-3 text-gray-400 group-hover:text-blue-600 transition-colors">
-                      <item.icon size={16} />
-                      <span className="text-[9px] font-black uppercase tracking-widest">{item.label}</span>
+              {/* Primary Data Column */}
+              <div className="space-y-8">
+                 <div className="flex items-center gap-3 border-b border-gray-50 pb-4">
+                    <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">Core Matrix</span>
+                 </div>
+                 <div className="grid grid-cols-1 gap-6">
+                    {[
+                      { label: "Unique Identifier", value: profile?.uniqueId, icon: Fingerprint },
+                      { label: "Institutional Roll", value: profile?.rollNumber, icon: Hash },
+                      { label: "Allocated Class", value: profile?.classId ? `${profile.classId.name} (${profile.classId.stream})` : "N/A", icon: GraduationCap },
+                      { label: "Identification (Aadhar)", value: profile?.aadharNumber || "Not Provided", icon: Shield },
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-center gap-4 group">
+                          <div className="p-3 bg-gray-50 rounded-xl text-gray-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-all">
+                             <item.icon size={18} />
+                          </div>
+                          <div>
+                             <p className="text-[9px] font-black uppercase tracking-widest text-gray-300">{item.label}</p>
+                             <p className="text-sm font-black text-primary-950 italic uppercase">{item.value}</p>
+                          </div>
+                      </div>
+                    ))}
+                 </div>
+              </div>
+
+              {/* Personal & Demographic Column */}
+              <div className="space-y-8">
+                 <div className="flex items-center gap-3 border-b border-gray-50 pb-4">
+                    <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">Vitals & Demographics</span>
+                 </div>
+                 <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+                    {[
+                      { label: "Gender", value: profile?.gender || "Specified", icon: User },
+                      { label: "Religion", value: profile?.religion || "N/A", icon: Star },
+                      { label: "Category", value: profile?.category || "General", icon: Layers }, 
+                      { label: "Contact Frequency", value: profile?.phone || "Private", icon: Phone, type: 'tel' },
+                    ].map((item, i) => (
+                      <div key={i} className="space-y-1">
+                          <p className="text-[9px] font-black uppercase tracking-widest text-gray-300">{item.label}</p>
+                          {item.type === 'tel' && item.value !== 'Private' ? (
+                            <a href={`tel:${item.value}`} className="text-xs font-black text-primary-950 hover:text-blue-600 transition-colors uppercase tabular-nums">
+                               {item.value}
+                            </a>
+                          ) : (
+                            <p className="text-xs font-black text-primary-950 uppercase">{item.value}</p>
+                          )}
+                      </div>
+                    ))}
+                 </div>
+                 <div className="pt-4 space-y-4">
+                    <div className="p-6 bg-gradient-to-br from-primary-950 to-blue-900 rounded-3xl text-white shadow-xl">
+                       <p className="text-[9px] font-black uppercase tracking-widest text-blue-400 mb-2">Institutional Hub Base</p>
+                       <p className="text-sm font-medium leading-relaxed opacity-90">{profile?.address || "Main Campus Cluster"}</p>
                     </div>
-                    <p className="text-sm font-black text-primary-950 italic uppercase tracking-tight">{item.value}</p>
-                </div>
-              ))}
+
+                    {/* Social Connectivity */}
+                    <div className="grid grid-cols-3 gap-4">
+                        {[
+                          { icon: Instagram, label: "Instagram", link: profile?.socialLinks?.instagram, color: "hover:bg-pink-500 hover:text-white" },
+                          { icon: Facebook, label: "Facebook", link: profile?.socialLinks?.facebook, color: "hover:bg-blue-600 hover:text-white" },
+                          { icon: Twitter, label: "Twitter", link: profile?.socialLinks?.twitter, color: "hover:bg-primary-950 hover:text-white" }
+                        ].map((app, i) => {
+                          const getUrl = (val) => {
+                            if (!val) return "#";
+                            if (val.startsWith('http')) return val;
+                            return `https://${val}`;
+                          };
+
+                          return (
+                            <a 
+                              key={i} 
+                              href={getUrl(app.link)}
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className={`h-16 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-center gap-2 transition-all p-2 ${app.link ? app.color : 'opacity-30 cursor-not-allowed grayscale'}`}
+                              onClick={(e) => !app.link && e.preventDefault()}
+                            >
+                               <app.icon size={16} />
+                               <span className="text-[8px] font-black uppercase tracking-widest">{app.label}</span>
+                            </a>
+                          );
+                        })}
+                    </div>
+
+                    <div className="flex items-center justify-between p-6 bg-gray-50 rounded-3xl border border-gray-100">
+                       <div className="flex items-center gap-3 text-gray-400">
+                          <Mail size={16} />
+                          <span className="text-[9px] font-black uppercase tracking-widest">Emergency Contact</span>
+                       </div>
+                       <a href={`tel:${profile?.emergencyContact}`} className="text-[10px] font-black text-primary-950 hover:text-blue-600 transition-colors">
+                          {profile?.emergencyContact || "Alert System Ready"}
+                       </a>
+                    </div>
+                 </div>
+              </div>
            </div>
 
-           <div className="pt-10 border-t border-gray-100 flex flex-col items-center gap-4">
-              <div className="flex items-center gap-2 px-6 py-3 bg-red-50 text-red-600 rounded-full text-[9px] font-black uppercase tracking-widest border border-red-100">
-                 <Shield size={14} />
-                 Read-Only Scholar Record
+           <div className="pt-10 border-t border-gray-100 flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="flex items-center gap-3 px-6 py-3 bg-red-50 text-red-600 rounded-full text-[9px] font-black uppercase tracking-widest border border-red-100">
+                 <Shield size={14} className="animate-pulse" />
+                 Immutable Data Node • Read-Only Scholar Record
               </div>
-              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">Contact the Central Archive (Admin) for credential modification.</p>
               <button 
                 onClick={() => setIsProfileModalOpen(false)}
-                className="mt-4 px-12 py-5 bg-primary-950 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl shadow-primary-950/20"
+                className="px-14 py-5 bg-primary-950 text-white rounded-[2rem] text-[10px] font-black uppercase tracking-[0.3em] hover:bg-blue-600 transition-all shadow-2xl shadow-primary-950/20 active:scale-95"
               >
-                Close Record
+                Close Data Sheet
               </button>
            </div>
         </div>

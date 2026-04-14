@@ -10,7 +10,8 @@ const instance = axios.create({
 instance.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response && error.response.status === 401) {
+    // Check if the error is 401 and NOT from the login endpoint
+    if (error.response && error.response.status === 401 && !error.config.url.endsWith("/auth/login")) {
       // Token expired or invalid
       useAuthStore.getState().logout();
       window.location.href = "/login";

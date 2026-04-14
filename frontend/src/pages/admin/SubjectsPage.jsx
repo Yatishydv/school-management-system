@@ -29,7 +29,8 @@ const SubjectsPage = () => {
     {
         "Subject Name*": "Physics",
         "Subject Code*": "PHY-101",
-        "Class": "Class 10"
+        "Class": "Class 10",
+        "Teachers (Comma Separated IDs/Names)": "TEC0001, Jane Smith"
     }
   ];
 
@@ -37,7 +38,8 @@ const SubjectsPage = () => {
       const payload = jsonData.map(row => ({
           name: row["Subject Name*"],
           code: row["Subject Code*"],
-          Class: row["Class"] 
+          Class: row["Class"],
+          Teachers: row["Teachers (Comma Separated IDs/Names)"]
       })).filter(s => s.name && s.code);
 
       if (payload.length === 0) {

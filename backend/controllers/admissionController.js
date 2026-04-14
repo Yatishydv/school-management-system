@@ -7,10 +7,10 @@ export const submitAdmission = async (req, res) => {
     // If files uploaded
     if (req.files) {
       if (req.files.photo) {
-        data.photo = `/uploads/${req.files.photo[0].filename}`;
+        data.photo = `/uploads/photo/${req.files.photo[0].filename}`;
       }
       if (req.files.birthCertificate) {
-        data.birthCertificate = `/uploads/${req.files.birthCertificate[0].filename}`;
+        data.birthCertificate = `/uploads/birthCertificate/${req.files.birthCertificate[0].filename}`;
       }
     }
 
