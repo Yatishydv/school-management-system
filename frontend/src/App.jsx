@@ -15,6 +15,8 @@ import Gallery from "./pages/public/Gallery.jsx";
 import AdmissionsPage from "./pages/public/AdmissionsPage.jsx";
 import ContactPage from "./pages/public/ContactPage.jsx";
 import LoginPage from "./pages/public/LoginPage.jsx";
+import ForgotPassword from "./pages/public/ForgotPassword.jsx";
+import ResetPassword from "./pages/public/ResetPassword.jsx";
 // PROTECTED ROUTE
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 
@@ -100,6 +102,8 @@ const App = () => {
         <Route path="/admissions" element={<AdmissionsPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
 
         {/* ADMIN ROUTES */}
         <Route

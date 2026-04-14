@@ -25,7 +25,11 @@ const userSchema = new mongoose.Schema({
     motherName: { type: String },
     dob: { type: String },
     prevSchool: { type: String },
-    admissionDate: { type: Date, default: Date.now }
+    admissionDate: { type: Date, default: Date.now },
+
+    // Reset Password Fields
+    resetPasswordToken: { type: String },
+    resetPasswordExpire: { type: Date }
 }, { timestamps: true });
 
 // Pre-save middleware for hashing password
