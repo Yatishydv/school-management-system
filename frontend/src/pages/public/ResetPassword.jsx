@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import axios from "../../api/axios";
@@ -27,7 +26,6 @@ const ResetPassword = () => {
       setSuccess(true);
       toast.success("Password reset successful!");
       
-      // Auto redirect after 3 seconds
       setTimeout(() => {
         navigate("/login");
       }, 3000);
@@ -47,7 +45,7 @@ const ResetPassword = () => {
             <CheckCircle className="w-8 h-8" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Password Reset!</h1>
-          <p className="text-gray-600 mb-6">
+          <p className="text-gray-600 mb-6 text-sm">
             Your password has been successfully updated. Redirecting you to login...
           </p>
           <Link
@@ -64,7 +62,9 @@ const ResetPassword = () => {
   return (
     <div className="min-h-screen bg-neutral-bg-subtle flex items-center justify-center p-6">
       <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-xl border animate-fade-in-up">
-        <h1 className="text-3xl font-bold text-primary-900 mb-2">Reset Password</h1>
+        <h1 className="text-3xl font-bold text-primary-900 mb-2">
+          Reset Password
+        </h1>
         <p className="text-gray-600 mb-8 text-sm">
           Please enter your new password below.
         </p>
@@ -79,7 +79,7 @@ const ResetPassword = () => {
                 placeholder="At least 6 characters"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full p-3 border rounded-xl pr-10 focus:ring-2 focus:ring-accent-500 outline-none"
+                className="w-full p-3 border rounded-xl pr-10 outline-none focus:ring-2 focus:ring-accent-500 transition-all text-sm"
                 required
               />
               <button
@@ -101,7 +101,7 @@ const ResetPassword = () => {
                 placeholder="Repeat new password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full p-3 border rounded-xl pr-10 focus:ring-2 focus:ring-accent-500 outline-none"
+                className="w-full p-3 border rounded-xl pr-10 outline-none focus:ring-2 focus:ring-accent-500 transition-all text-sm"
                 required
               />
               <Lock className="w-5 h-5 text-gray-400 absolute right-3 top-3.5" />
@@ -111,7 +111,20 @@ const ResetPassword = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-accent-500 hover:bg-accent-400 text-white font-semibold py-3 rounded-xl shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="
+              w-full
+              bg-accent-500
+              hover:bg-accent-400
+              text-white
+              font-semibold
+              py-3
+              rounded-xl
+              mt-2
+              shadow-lg
+              transition-all
+              disabled:opacity-50
+              disabled:cursor-not-allowed
+            "
           >
             {loading ? "Updating..." : "Update Password"}
           </button>

@@ -67,8 +67,7 @@ const Sidebar = () => {
       { name: "Classes", icon: BookOpen, path: "/teacher/classes" },
       { name: "Assignments", icon: FileText, path: "/teacher/assignments" },
       { name: "Results", icon: Award, path: "/teacher/results" },
-      { name: "Alerts Hub", icon: Bell, path: "/teacher/notifications" },
-      { name: "Inbox", icon: MailOpenIcon, path: "/teacher/inbox", badge: true },
+      { name: "Alert Hub", icon: Bell, path: "/teacher/notifications", badge: true },
     ],
     student: [
       { name: "Dashboard", icon: LayoutDashboard, path: "/student/dashboard" },

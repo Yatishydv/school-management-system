@@ -110,6 +110,10 @@ const teacherService = {
         const response = await axiosInstance.get("/teacher/results", getConfig(token));
         return response.data;
     },
+    getNotices: async () => {
+        const response = await axiosInstance.get("/public/notices");
+        return response.data;
+    },
 };
 
 export default teacherService;

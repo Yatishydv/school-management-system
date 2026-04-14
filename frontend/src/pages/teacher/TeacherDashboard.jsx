@@ -1,9 +1,10 @@
 // frontend/src/pages/teacher/TeacherDashboard.jsx
 
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import useAuthStore from "../../stores/authStore";
 import teacherService from "../../api/teacherService";
+import notificationService from "../../api/notificationService";
 import { 
   User, 
   Mail, 
@@ -11,7 +12,6 @@ import {
   BookOpen, 
   Activity, 
   Users, 
-  ExternalLink,
   Layers,
   Shield,
   Star,
@@ -19,35 +19,46 @@ import {
   Calendar,
   ClipboardList,
   ChevronRight,
-  TrendingUp,
   MapPin,
   Trophy,
   Layout,
-  Hash
+  Bell,
+  MessageSquare
 } from "lucide-react";
 import Spinner from "../../components/ui/Spinner";
+import Modal from "../../components/shared/Modal";
 
 const TeacherDashboard = () => {
   const { user, token } = useAuthStore();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState(user);
   const [subjects, setSubjects] = useState([]);
   const [dashStats, setDashStats] = useState(null);
   const [timetable, setTimetable] = useState([]);
+  const [notices, setNotices] = useState([]);
+  const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // Profile Modal State
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [prof, subs, stats, tt] = await Promise.all([
+        const [prof, subs, stats, tt, noticeData, notifyData] = await Promise.all([
           teacherService.getProfile(token),
           teacherService.getAssignedSubjects(token),
           teacherService.getDashboardSummary(token),
-          teacherService.getTimetable(token)
+          teacherService.getTimetable(token),
+          teacherService.getNotices(),
+          notificationService.getMyNotifications(token)
         ]);
         setProfile(prof);
         setSubjects(subs);
         setDashStats(stats);
         setTimetable(tt);
+        setNotices(noticeData || []);
+        setNotifications(notifyData || []);
       } catch (err) {
         console.error("Failed to sync faculty telemetry", err);
       } finally {
@@ -66,11 +77,11 @@ const TeacherDashboard = () => {
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long' });
 
   return (
-    <div className="min-h-screen bg-gray-50/20 pb-24 font-body">
+    <div className="min-h-screen bg-gray-50/20 pb-24 font-body text-primary-950 px-4 md:px-0">
       {/* ------------------------------------------------------------------ */}
       {/*                        HERO HEADER SECTION                        */}
       {/* ------------------------------------------------------------------ */}
-      <section className="px-8 md:px-14 pt-12">
+      <section className="px-4 md:px-14 pt-12">
         <div className="bg-emerald-600 rounded-[3rem] p-4 border border-emerald-500 shadow-sm overflow-hidden relative group">
            {/* Plain Solid Green Background */}
            <div className="absolute inset-0 bg-emerald-600 opacity-95 transition-all duration-700"></div>
@@ -134,15 +145,15 @@ const TeacherDashboard = () => {
       {/* ------------------------------------------------------------------ */}
       {/*                        KPI & STATS ROW                           */}
       {/* ------------------------------------------------------------------ */}
-      <section className="px-8 md:px-14 mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
+      <section className="px-4 md:px-14 mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
         {[
-          { label: "Active Classes", value: String(dashStats?.totalClasses || '0').padStart(2, '0'), icon: Layers, color: "bg-emerald-600", trend: "Strategic" },
-          { label: "Module Coverage", value: String(dashStats?.totalSubjects || '0').padStart(2, '0'), icon: BookOpen, color: "bg-teal-600", trend: "Full Scope" },
-          { label: "Student Registry", value: String(dashStats?.totalStudents || '0').padStart(2, '0'), icon: Users, color: "bg-green-600", trend: "Impacted" },
-          { label: "Today's Agenda", value: String(dashStats?.todayLectures || '0').padStart(2, '0'), icon: Clock, color: "bg-emerald-500", trend: "Real-time" },
-          { label: "Pending Evaluations", value: String(dashStats?.pendingGrades || '0').padStart(2, '0'), icon: ClipboardList, color: "bg-lime-600", trend: "Action" }
+          { label: "Active Classes", value: String(dashStats?.totalClasses || '0').padStart(2, '0'), icon: Layers, color: "bg-emerald-600", trend: "Strategic", path: "/teacher/classes" },
+          { label: "Module Coverage", value: String(dashStats?.totalSubjects || '0').padStart(2, '0'), icon: BookOpen, color: "bg-teal-600", trend: "Full Scope", path: "/teacher/assignments" },
+          { label: "Student Registry", value: String(dashStats?.totalStudents || '0').padStart(2, '0'), icon: Users, color: "bg-green-600", trend: "Impacted", path: "/teacher/classes" },
+          { label: "Today's Agenda", value: String(dashStats?.todayLectures || '0').padStart(2, '0'), icon: Clock, color: "bg-emerald-500", trend: "Real-time", path: "/teacher/attendance" },
+          { label: "Pending Evaluations", value: String(dashStats?.pendingGrades || '0').padStart(2, '0'), icon: ClipboardList, color: "bg-lime-600", trend: "Action", path: "/teacher/assignments" }
         ].map((stat, i) => (
-          <div key={i} className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm space-y-6 hover:shadow-xl transition-all group">
+          <Link key={i} to={stat.path} className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm space-y-6 hover:shadow-xl transition-all group block">
              <div className="flex justify-between items-center">
                 <div className={`w-12 h-12 rounded-2xl ${stat.color} text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}>
                    <stat.icon size={20} />
@@ -153,14 +164,14 @@ const TeacherDashboard = () => {
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">{stat.label}</p>
                 <p className="text-3xl font-black text-emerald-950 tracking-tighter tabular-nums">{stat.value}</p>
              </div>
-          </div>
+          </Link>
         ))}
       </section>
 
       {/* ------------------------------------------------------------------ */}
       {/*                        MAIN CONTENT GRID                          */}
       {/* ------------------------------------------------------------------ */}
-      <section className="px-8 md:px-14 mt-12 grid grid-cols-1 lg:grid-cols-3 gap-12">
+      <section className="px-4 md:px-14 mt-12 grid grid-cols-1 lg:grid-cols-3 gap-12">
         {/* Profile & Agenda Sidebar */}
         <div className="lg:col-span-1 space-y-8">
            <div className="bg-white rounded-[2.5rem] p-10 border border-gray-100 shadow-sm space-y-10">
@@ -195,15 +206,19 @@ const TeacherDashboard = () => {
               </div>
 
               <div className="pt-8 border-t border-gray-50">
-                 <button className="w-full py-5 bg-emerald-50 text-emerald-600 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 hover:text-white transition-all shadow-sm">
-                    Update Registry Details
+                 <button 
+                  onClick={() => setIsProfileModalOpen(true)}
+                  className="w-full py-5 bg-emerald-50 text-emerald-600 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 hover:text-white transition-all shadow-sm"
+                 >
+                    Faculty Information
                  </button>
               </div>
            </div>
 
-           <div className="bg-emerald-950 rounded-[2.5rem] p-10 text-white space-y-8 relative overflow-hidden group">
+           {/* Today's Schedule Mini-Card */}
+           <div className="bg-emerald-900 rounded-[2.5rem] p-10 text-white space-y-8 relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/20 rounded-full translate-x-20 -translate-y-20 blur-[100px] group-hover:scale-125 transition-transform duration-1000"></div>
-              <h4 className="text-lg font-black uppercase tracking-widest text-emerald-500 italic">Today's Schedule</h4>
+              <h4 className="text-lg font-black uppercase tracking-widest text-emerald-400 italic font-display">Today's Schedule</h4>
               <div className="space-y-4">
                  {timetable && timetable.filter(item => item.day === today).length > 0 ? (
                    timetable.filter(item => item.day === today).sort((a,b) => a.startTime.localeCompare(b.startTime)).map((session, i) => (
@@ -228,10 +243,65 @@ const TeacherDashboard = () => {
                  Full Weekly Roster
               </Link>
            </div>
+
+           {/* Incoming Alerts (NEW) */}
+           <div className="bg-white rounded-[2.5rem] p-10 border border-gray-100 shadow-sm space-y-8">
+              <div className="flex items-center justify-between border-b border-gray-50 pb-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
+                    <MessageSquare size={24} />
+                  </div>
+                  <h3 className="text-xl font-black uppercase italic tracking-tighter text-emerald-950">Alert Hub</h3>
+                </div>
+              </div>
+              <div className="space-y-4">
+                {notifications.length > 0 ? notifications.slice(0, 3).map((note, i) => (
+                  <div key={i} className="p-5 rounded-2xl bg-gray-50 hover:bg-emerald-50 border border-transparent hover:border-emerald-100 transition-all group cursor-pointer" onClick={() => navigate('/teacher/notifications')}>
+                    <div className="flex items-center gap-2 mb-2">
+                       <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+                       <p className="text-[9px] font-black uppercase tracking-widest text-gray-400">{note.sender?.role || 'System'} Dispatch</p>
+                    </div>
+                    <h5 className="text-sm font-black text-emerald-950 group-hover:text-emerald-700 transition-colors uppercase italic truncate">{note.title}</h5>
+                  </div>
+                )) : (
+                  <p className="text-center py-6 text-[10px] font-bold text-gray-300 uppercase tracking-widest italic">Hub signals clear.</p>
+                )}
+              </div>
+              <Link to="/teacher/notifications" className="block w-full py-4 text-center text-[10px] font-black uppercase tracking-widest text-emerald-600 hover:text-emerald-800 transition-colors">Open Inbox</Link>
+           </div>
         </div>
 
-        {/* Subjects Matrix */}
+        {/* Subjects Matrix & notices */}
         <div className="lg:col-span-2 space-y-12">
+            {/* Broadcast Matrix (Notices) (NEW) */}
+            <div className="bg-white rounded-[3rem] border border-gray-100 shadow-sm p-10 space-y-8">
+               <div className="flex items-center justify-between border-b border-gray-50 pb-6">
+                  <div className="flex items-center gap-4">
+                     <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
+                        <Bell size={24} />
+                     </div>
+                     <h3 className="text-xl font-black uppercase italic tracking-tighter text-emerald-950 font-display">Broadcast Matrix</h3>
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Global Archive</span>
+               </div>
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {notices.length > 0 ? notices.slice(0, 4).map((notice, i) => (
+                    <div key={i} className="flex items-start gap-6 p-6 rounded-3xl hover:bg-gray-50 transition-all border border-transparent hover:border-gray-100 group">
+                       <div className="text-center min-w-[50px] space-y-1">
+                          <p className="text-2xl font-black text-emerald-950 tracking-tighter leading-none">{new Date(notice.createdAt).getDate()}</p>
+                          <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">{new Date(notice.createdAt).toLocaleString('default', { month: 'short' })}</p>
+                       </div>
+                       <div className="space-y-1 flex-1 overflow-hidden">
+                          <p className="text-[9px] font-black uppercase tracking-widest text-emerald-400 italic">{notice.role || 'General'} Announcement</p>
+                          <h5 className="text-sm font-black text-emerald-950 group-hover:text-emerald-600 transition-all truncate uppercase italic tracking-tight">{notice.title}</h5>
+                       </div>
+                    </div>
+                  )) : (
+                    <p className="col-span-full text-center py-10 text-[10px] font-bold text-gray-300 uppercase tracking-widest italic">Digital frequencies clear. No broadcasts available.</p>
+                  )}
+               </div>
+            </div>
+
             <div className="flex items-center justify-between">
                <h2 className="text-4xl font-black uppercase italic tracking-tighter text-emerald-950">Academic Jurisdiction</h2>
                <div className="flex items-center gap-2">
@@ -268,7 +338,10 @@ const TeacherDashboard = () => {
                           ></div>
                        </div>
                        <div className="flex justify-between items-center pt-2">
-                         <button className="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-600 hover:text-emerald-800 flex items-center gap-2 transition-colors">
+                         <button 
+                          onClick={() => navigate('/teacher/assignments')}
+                          className="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-600 hover:text-emerald-800 flex items-center gap-2 transition-colors"
+                         >
                             Manage Curriculum <ChevronRight size={14} />
                          </button>
                          <div className="flex gap-2">
@@ -289,6 +362,68 @@ const TeacherDashboard = () => {
             </div>
         </div>
       </section>
+
+      {/* Profile Modal (Read Only) */}
+      <Modal 
+        isOpen={isProfileModalOpen} 
+        onClose={() => setIsProfileModalOpen(false)} 
+        title="Faculty Data Sheet"
+      >
+        <div className="p-4 md:p-10 space-y-12 max-h-[85vh] overflow-y-auto">
+           <div className="flex flex-col md:flex-row items-center gap-8">
+              <div className="w-24 h-24 rounded-[2rem] border-4 border-emerald-500/20 overflow-hidden shadow-xl">
+                 {(profile?.profileImage || user?.profileImage) ? (
+                    <img 
+                      src={`http://localhost:5005/${profile?.profileImage || user?.profileImage}`} 
+                      alt={profile?.name} 
+                      className="w-full h-full object-cover" 
+                    />
+                 ) : (
+                    <div className="w-full h-full bg-emerald-50 flex items-center justify-center text-emerald-600">
+                      <User size={40} />
+                    </div>
+                 )}
+              </div>
+              <div className="text-center md:text-left">
+                 <h4 className="text-3xl font-black text-primary-950 uppercase italic leading-none font-display">{profile?.name}</h4>
+                 <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mt-3 bg-emerald-50 px-4 py-1.5 rounded-full inline-block">Professional Faculty</p>
+              </div>
+           </div>
+
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
+              {[
+                { label: "Unique Identifier", value: profile?.uniqueId, icon: Fingerprint },
+                { label: "Digital Mail", value: profile?.email, icon: Mail },
+                { label: "Mobile Frequency", value: profile?.phone || "+91-XXXXXXXXXX", icon: Activity },
+                { label: "Institutional Base", value: profile?.address || "Main Campus Cluster", icon: MapPin },
+                { label: "Qualification", value: profile?.qualification || "Post Graduate", icon: Star },
+                { label: "Date of Enlistment", value: profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString() : "N/A", icon: Calendar }
+              ].map((item, i) => (
+                <div key={i} className="space-y-3 p-6 bg-gray-50 rounded-[1.5rem] border border-gray-100 hover:border-emerald-200 transition-colors group">
+                    <div className="flex items-center gap-3 text-gray-400 group-hover:text-emerald-600 transition-colors">
+                      <item.icon size={16} />
+                      <span className="text-[9px] font-black uppercase tracking-widest">{item.label}</span>
+                    </div>
+                    <p className="text-sm font-black text-primary-950 italic uppercase tracking-tight">{item.value}</p>
+                </div>
+              ))}
+           </div>
+
+           <div className="pt-10 border-t border-gray-100 flex flex-col items-center gap-4">
+              <div className="flex items-center gap-2 px-6 py-3 bg-red-50 text-red-600 rounded-full text-[9px] font-black uppercase tracking-widest border border-red-100">
+                 <Shield size={14} />
+                 Read-Only Administrative Record
+              </div>
+              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">Contact the Central Archive (Admin) for credential modification.</p>
+              <button 
+                onClick={() => setIsProfileModalOpen(false)}
+                className="mt-4 px-12 py-5 bg-primary-950 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-xl shadow-primary-950/20"
+              >
+                Close Record
+              </button>
+           </div>
+        </div>
+      </Modal>
     </div>
   );
 };

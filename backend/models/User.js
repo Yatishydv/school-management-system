@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs';
 const userSchema = new mongoose.Schema({
     uniqueId: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    email: { type: String, unique: true, sparse: true }, 
+    email: { type: String, sparse: true }, // Removed UNIQ to allow siblings sharing email
     role: { 
         type: String, 
         enum: ['admin', 'teacher', 'student'], 

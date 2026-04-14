@@ -18,10 +18,12 @@ import {
   ChevronRight,
   Bell,
   Award,
-  ClipboardList
+  ClipboardList,
+  Shield,
+  Calendar
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import ProfileEditModal from "../../components/student/ProfileEditModal";
+import Modal from "../../components/shared/Modal";
 
 const StudentDashboard = () => {
   const { user, token } = useAuthStore();
@@ -33,7 +35,7 @@ const StudentDashboard = () => {
   const [notices, setNotices] = useState([]);
   const [recentResults, setRecentResults] = useState([]);
   const [allAssignments, setAllAssignments] = useState([]);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -63,10 +65,14 @@ const StudentDashboard = () => {
     if (token) fetchDashboardData();
   }, [token]);
 
-  if (loading) return <div className="p-10 animate-pulse text-sky-400 font-black uppercase tracking-widest">Waking up the Scholar Portal...</div>;
+  if (loading) return (
+    <div className="p-10 animate-pulse text-sky-400 font-black uppercase tracking-widest flex items-center justify-center h-screen">
+      Waking up the Scholar Portal...
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-blue-50/20 pb-24 font-body relative overflow-hidden">
+    <div className="min-h-screen bg-blue-50/20 pb-24 font-body relative overflow-hidden text-primary-950">
       {/* Vertical Editorial Watermark */}
       <div className="fixed right-[-5%] top-1/2 -translate-y-1/2 rotate-90 pointer-events-none select-none z-0 hidden lg:block">
         <h1 className="text-[18vh] font-black text-transparent uppercase tracking-tighter leading-none opacity-20" 
@@ -96,7 +102,7 @@ const StudentDashboard = () => {
                   <p className="text-[10px] font-bold text-blue-100/60 uppercase tracking-[0.2em] max-w-md">
                      Your academic journey is in full bloom. Explore your modules, track your attendance, and reach for the stars.
                   </p>
-                  <div className="flex flex-wrap gap-4 pt-4">
+                  <div className="flex flex-wrap gap-4 pt-4 justify-center md:justify-start">
                      <Link to="/student/timetable" className="px-8 py-4 bg-white text-blue-600 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-50 transition-all shadow-xl shadow-blue-900/20 flex items-center justify-center">
                         View Timetable
                      </Link>
@@ -107,13 +113,13 @@ const StudentDashboard = () => {
               </div>
 
               <div className="relative">
-                 <div className="w-56 h-56 md:w-64 md:h-64 rounded-full border-[10px] border-white/20 relative overflow-hidden bg-white/10 backdrop-blur-sm">
+                 <div className="w-56 h-56 md:w-64 md:h-64 rounded-full border-[10px] border-white/20 relative overflow-hidden bg-white/10 backdrop-blur-sm shadow-2xl">
                     {(profile?.profileImage || user?.profileImage) ? (
                        <img 
                          src={`http://localhost:5005/${profile?.profileImage || user?.profileImage}`} 
                          alt={profile?.name || user?.name} 
                          className="w-full h-full object-cover" 
-                         onError={(e) => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=" + (profile?.name || user?.name || "Student"); }}
+                         onError={(e) => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=" + (profile?.name || user?.name || "Student") + "&background=1e40af&color=fff"; }}
                        />
                     ) : (
                        <div className="w-full h-full flex items-center justify-center">
@@ -228,10 +234,10 @@ const StudentDashboard = () => {
 
               <div className="pt-8 border-t border-gray-50">
                  <button 
-                   onClick={() => setIsEditModalOpen(true)}
-                   className="w-full py-5 bg-blue-50 text-blue-600 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-sm hover:shadow-xl hover:shadow-blue-500/20"
+                   onClick={() => setIsProfileModalOpen(true)}
+                   className="w-full py-5 bg-blue-50 text-blue-600 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-sm"
                  >
-                    Update Profile Details
+                    Student Information
                  </button>
               </div>
            </div>
@@ -389,7 +395,7 @@ const StudentDashboard = () => {
                         <div className="space-y-2">
                            <h5 className="text-2xl font-black text-primary-950 uppercase italic leading-none">{subject.name}</h5>
                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                              Instructors: {subject.assignedTeachers?.map(t => t.name).join(', ') || 'Staff Allocated'}
+                               Instructors: {subject.assignedTeachers?.map(t => t.name).join(', ') || 'Staff Allocated'}
                            </p>
                         </div>
 
@@ -397,11 +403,11 @@ const StudentDashboard = () => {
                            <div className="h-1.5 w-full bg-gray-50 rounded-full overflow-hidden">
                               <div 
                                  className="h-full bg-blue-600 rounded-full transition-all duration-1000 group-hover:bg-sky-400" 
-                                 style={{ width: `75%` }} // Default progress for demo until we have module tracking
+                                 style={{ width: `75%` }} 
                               ></div>
                            </div>
                            <Link to="/student/subjects" className="w-full py-4 text-[9px] font-black uppercase tracking-[0.2em] text-blue-600 hover:text-blue-800 flex items-center justify-center gap-2 transition-colors">
-                              View Module Content <ChevronRight size={14} />
+                               View Module Content <ChevronRight size={14} />
                            </Link>
                         </div>
                       </div>
@@ -418,13 +424,69 @@ const StudentDashboard = () => {
         </div>
       </section>
 
-      <ProfileEditModal 
-        isOpen={isEditModalOpen} 
-        onClose={() => setIsEditModalOpen(false)} 
-        profile={profile} 
-        token={token} 
-        onUpdate={(updated) => setProfile(updated)} 
-      />
+      {/* Profile Modal (Read Only) */}
+      <Modal 
+        isOpen={isProfileModalOpen} 
+        onClose={() => setIsProfileModalOpen(false)} 
+        title="Scholar Data Sheet"
+      >
+        <div className="p-10 space-y-12">
+           <div className="flex items-center gap-8">
+              <div className="w-24 h-24 rounded-[2rem] border-4 border-blue-500/20 overflow-hidden shadow-xl">
+                {(profile?.profileImage || user?.profileImage) ? (
+                    <img 
+                      src={`http://localhost:5005/${profile?.profileImage || user?.profileImage}`} 
+                      alt={profile?.name} 
+                      className="w-full h-full object-cover" 
+                    />
+                ) : (
+                    <div className="w-full h-full bg-blue-50 flex items-center justify-center text-blue-600">
+                      <User size={40} />
+                    </div>
+                )}
+              </div>
+              <div>
+                 <h4 className="text-3xl font-black text-primary-950 uppercase italic leading-none">{profile?.name}</h4>
+                 <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mt-2 bg-blue-50 px-3 py-1 rounded-full inline-block">Registered Scholar</p>
+              </div>
+           </div>
+
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+              {[
+                { label: "Unique Identifier", value: profile?.uniqueId, icon: Fingerprint },
+                { label: "Institutional Roll", value: profile?.rollNumber, icon: Hash },
+                { label: "Allocated Class", value: profile?.classId ? `${profile.classId.name} (${profile.classId.stream})` : "N/A", icon: GraduationCap },
+                { label: "Digital Mail", value: profile?.email, icon: Mail },
+                { label: "Mobile Frequency", value: profile?.phone || "+91-XXXXXXXXXX", icon: Phone },
+                { label: "Institutional Base", value: profile?.address || "Main Campus Cluster", icon: MapPin },
+                { label: "Guardian Contact", value: profile?.guardianName || "N/A", icon: User },
+                { label: "Admission date", value: profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString() : "N/A", icon: Calendar }
+              ].map((item, i) => (
+                <div key={i} className="space-y-3 p-6 bg-gray-50 rounded-[1.5rem] border border-gray-100 hover:border-blue-200 transition-colors group">
+                    <div className="flex items-center gap-3 text-gray-400 group-hover:text-blue-600 transition-colors">
+                      <item.icon size={16} />
+                      <span className="text-[9px] font-black uppercase tracking-widest">{item.label}</span>
+                    </div>
+                    <p className="text-sm font-black text-primary-950 italic uppercase tracking-tight">{item.value}</p>
+                </div>
+              ))}
+           </div>
+
+           <div className="pt-10 border-t border-gray-100 flex flex-col items-center gap-4">
+              <div className="flex items-center gap-2 px-6 py-3 bg-red-50 text-red-600 rounded-full text-[9px] font-black uppercase tracking-widest border border-red-100">
+                 <Shield size={14} />
+                 Read-Only Scholar Record
+              </div>
+              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">Contact the Central Archive (Admin) for credential modification.</p>
+              <button 
+                onClick={() => setIsProfileModalOpen(false)}
+                className="mt-4 px-12 py-5 bg-primary-950 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl shadow-primary-950/20"
+              >
+                Close Record
+              </button>
+           </div>
+        </div>
+      </Modal>
     </div>
   );
 };

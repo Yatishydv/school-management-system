@@ -1,6 +1,6 @@
 import express from 'express';
 const router = express.Router();
-import { protect } from '../middlewares/authMiddleware.mjs';
+import { protect, authorize } from '../middlewares/authMiddleware.mjs';
 import { 
     getProfile, 
     updateProfile, 
@@ -13,8 +13,10 @@ import upload from '../middlewares/uploadMiddleware.js';
 router.use(protect);
 
 router.get('/profile', getProfile);
-router.put('/profile', upload.single('profileImage'), updateProfile);
-router.put('/change-password', changePassword);
+
+// Lockdown: Only Admin can update profiles or change passwords per user request
+router.put('/profile', authorize('admin'), upload.single('profileImage'), updateProfile);
+router.put('/change-password', authorize('admin'), changePassword);
 
 // Notifications
 router.get('/notifications', getMyNotifications);

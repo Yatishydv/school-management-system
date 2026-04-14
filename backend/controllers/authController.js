@@ -119,36 +119,29 @@ const getMe = async (req, res) => {
 // @route   POST /api/auth/forgot-password
 // @access  Public
 const forgotPassword = async (req, res) => {
-    const { identifier } = req.body; // Can be email or uniqueId
+    const { identifier } = req.body; // Strictly Unique ID now as per user request
 
     try {
-        const user = await User.findOne({
-            $or: [
-                { email: identifier },
-                { uniqueId: identifier }
-            ]
-        });
+        // Find user matching strictly by Unique ID
+        const user = await User.findOne({ uniqueId: identifier });
 
         if (!user) {
-            return res.status(404).json({ message: 'No account found with this Email or Unique ID.' });
+            return res.status(404).json({ message: 'No account found with this Unique ID.' });
         }
 
         if (!user.email) {
-            return res.status(400).json({ message: 'This user does not have a registered email address. Please contact the administrator.' });
+            return res.status(400).json({ message: 'This account does not have a registered email address. Please contact the administrator.' });
         }
 
         // Generate reset token
         const resetToken = crypto.randomBytes(20).toString('hex');
-
-        // Hash token and set to resetPasswordToken field
+        
         user.resetPasswordToken = crypto
             .createHash('sha256')
             .update(resetToken)
             .digest('hex');
-
-        // Set expire (1 hour)
         user.resetPasswordExpire = Date.now() + 60 * 60 * 1000;
-
+        
         await user.save();
 
         // Create reset URL
@@ -168,7 +161,6 @@ const forgotPassword = async (req, res) => {
                     .btn { background-color: #6366f1; color: #ffffff !important; padding: 14px 28px; text-decoration: none; border-radius: 10px; font-weight: 600; display: inline-block; transition: background-color 0.2s; }
                     .footer { text-align: center; font-size: 12px; color: #9ca3af; margin-top: 30px; }
                     .divider { border-top: 1px solid #e5e7eb; margin: 24px 0; }
-                    .link-alt { font-size: 11px; color: #6b7280; word-break: break-all; margin-top: 10px; }
                 </style>
             </head>
             <body>
@@ -178,7 +170,7 @@ const forgotPassword = async (req, res) => {
                     </div>
                     <div class="card">
                         <h1 class="title">Reset Your Password</h1>
-                        <p class="text">Hello ${user.name},<br>We received a request to reset your password. Click the button below to choose a new one.</p>
+                        <p class="text">Hello ${user.name},<br>We received a request to reset your password for account <strong>${user.uniqueId}</strong>. Click the button below to choose a new one.</p>
                         
                         <div class="btn-container">
                             <a href="${resetUrl}" class="btn">Reset Password</a>
@@ -187,7 +179,7 @@ const forgotPassword = async (req, res) => {
                         <div class="divider"></div>
                         
                         <p class="text" style="font-size: 14px;">If the button doesn't work, copy and paste this link into your browser:</p>
-                        <p class="link-alt">${resetUrl}</p>
+                        <p style="font-size: 11px; color: #6b7280; word-break: break-all; margin-top: 10px; text-align: center;">${resetUrl}</p>
                     </div>
                     <div class="footer">
                         <p>&copy; ${new Date().getFullYear()} School Management System. All rights reserved.</p>
@@ -200,7 +192,7 @@ const forgotPassword = async (req, res) => {
 
         try {
             await sendEmail(user.email, 'Password Reset Request', message);
-            res.status(200).json({ message: 'Password reset link sent to your email.' });
+            res.status(200).json({ message: 'Password reset link sent to the registered email address.' });
         } catch (err) {
             user.resetPasswordToken = undefined;
             user.resetPasswordExpire = undefined;

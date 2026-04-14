@@ -225,7 +225,6 @@ const App = () => {
         <Route path="/teacher/classes" element={<ProtectedRoute role="teacher"><AdminLayout><TeacherClasses /></AdminLayout></ProtectedRoute>} />
         <Route path="/teacher/assignments" element={<ProtectedRoute role="teacher"><AdminLayout><TeacherAssignments /></AdminLayout></ProtectedRoute>} />
         <Route path="/teacher/notifications" element={<ProtectedRoute role="teacher"><AdminLayout><TeacherNotifications /></AdminLayout></ProtectedRoute>} />
-        <Route path="/teacher/inbox" element={<ProtectedRoute role="teacher"><AdminLayout><NotificationsPage /></AdminLayout></ProtectedRoute>} />
 
 
         {/* Admin Placeholders */}
