@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Plus, Book, Trash2, User, Search, Layout, Filter, Shield, Edit2, Download, Upload, CheckSquare, XSquare } from "lucide-react";
 import * as xlsx from "xlsx";
+import { saveAs } from 'file-saver';
+import { exportToExcel } from "../../utils/excelExport";
 import useAuthStore from "../../stores/authStore";
 import adminService from "../../api/adminService";
 import { toast } from "react-toastify";
@@ -70,10 +72,7 @@ const SubjectsPage = () => {
         "Class": s.classId ? `${s.classId.name}${s.classId.stream !== 'General' ? ` (${s.classId.stream})` : ''}` : "Universal",
         "Assigned Teachers": s.assignedTeachers?.map(t => t.name).join(', ') || ''
     }));
-    const ws = xlsx.utils.json_to_sheet(exportData);
-    const wb = xlsx.utils.book_new();
-    xlsx.utils.book_append_sheet(wb, ws, "Subjects");
-    xlsx.writeFile(wb, "Subjects_Export.xlsx");
+    exportToExcel(exportData, "Subjects", "Subjects_Export.xlsx");
   };
 
   const [formData, setFormData] = useState({

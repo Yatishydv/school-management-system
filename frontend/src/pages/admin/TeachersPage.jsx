@@ -12,6 +12,8 @@ import {
   XSquare
 } from "lucide-react";
 import * as xlsx from "xlsx";
+import { saveAs } from 'file-saver';
+import { exportToExcel } from "../../utils/excelExport";
 import useAuthStore from "../../stores/authStore";
 import Modal from "../../components/shared/Modal";
 import AddEditUserModal from "../../components/admin/AddEditUserModal";
@@ -53,7 +55,8 @@ const TeachersPage = () => {
         "Instagram": "@jane_phys",
         "Facebook": "jane.smith.edu",
         "Twitter": "@janesmith",
-        "Assigned Classes": "Class 10, Class 11 Science"
+        "Assigned Classes": "Class 10, Class 11 Science",
+        "Base Salary": "50000"
     }
   ];
 
@@ -72,6 +75,7 @@ const TeachersPage = () => {
           instagram: row["Instagram"],
           facebook: row["Facebook"],
           twitter: row["Twitter"],
+          baseSalary: row["Base Salary"] || 0,
           assignedClasses: row["Assigned Classes"] ? row["Assigned Classes"].split(',').map(s => s.trim()) : [],
           role: 'teacher'
       })).filter(u => u.name);
@@ -113,12 +117,10 @@ const TeachersPage = () => {
         "Instagram": u.socialLinks?.instagram || '',
         "Facebook": u.socialLinks?.facebook || '',
         "Twitter": u.socialLinks?.twitter || '',
+        "Base Salary": u.baseSalary || 0,
         "Join Date": u.createdAt ? new Date(u.createdAt).toLocaleDateString() : ''
     }));
-    const ws = xlsx.utils.json_to_sheet(exportData);
-    const wb = xlsx.utils.book_new();
-    xlsx.utils.book_append_sheet(wb, ws, "Teachers");
-    xlsx.writeFile(wb, "Teachers_Export.xlsx");
+    exportToExcel(exportData, "Teachers", "Teachers_Export.xlsx");
   };
 
   const handleDelete = async () => {

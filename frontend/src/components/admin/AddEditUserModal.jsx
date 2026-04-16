@@ -36,6 +36,7 @@ const userFormSchema = z.object({
   emergencyContact: z.string().optional().or(z.literal("")),
   qualification: z.string().optional().or(z.literal("")),
   experience: z.string().optional().or(z.literal("")),
+  baseSalary: z.string().optional().or(z.literal("")),
   bio: z.string().optional().or(z.literal("")),
   personalEmail: z.string().optional().or(z.literal("")),
   secondaryPhone: z.string().optional().or(z.literal("")),
@@ -92,6 +93,7 @@ const AddEditUserModal = ({
       emergencyContact: user?.emergencyContact || "",
       qualification: user?.qualification || "",
       experience: user?.experience || "",
+      baseSalary: user?.baseSalary || "",
       bio: user?.bio || "",
       personalEmail: user?.personalEmail || "",
       secondaryPhone: user?.secondaryPhone || "",
@@ -157,6 +159,7 @@ const AddEditUserModal = ({
         uniqueId: idSequence.trim() !== "" ? fullUniqueId : (isEditing ? user.uniqueId : data.uniqueId),
         classId: data.classId && data.classId.trim() !== "" ? data.classId : undefined,
         admissionId: user?.admissionId || undefined,
+        baseSalary: data.baseSalary ? Number(data.baseSalary) : 0,
         assignedClasses: data.assignedClasses && data.assignedClasses.length > 0
           ? data.assignedClasses.filter(c => c && c.trim() !== "")
           : []
@@ -423,6 +426,10 @@ const AddEditUserModal = ({
                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                   <Input label="Qualification" placeholder="e.g. M.Sc Mathematics" {...register("qualification")} />
                   <Input label="Work Experience" placeholder="e.g. 5 Years" {...register("experience")} />
+               </div>
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                  <Input label="Monthly Base Salary" type="number" placeholder="e.g. 25000" {...register("baseSalary")} />
+                  <div />
                </div>
                <Input label="Professional Bio" placeholder="Short description for portal" {...register("bio")} />
             </div>

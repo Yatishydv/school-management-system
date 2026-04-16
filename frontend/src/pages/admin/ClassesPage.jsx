@@ -16,6 +16,8 @@ import {
   XSquare
 } from "lucide-react";
 import * as xlsx from "xlsx";
+import { saveAs } from 'file-saver';
+import { exportToExcel } from "../../utils/excelExport";
 import useAuthStore from "../../stores/authStore";
 import adminService from "../../api/adminService";
 import { toast } from "react-toastify";
@@ -96,10 +98,7 @@ const ClassesPage = () => {
         "Sections": c.sections?.join(', ') || '',
         "Class Teacher": c.classTeacher?.name || 'Unassigned'
     }));
-    const ws = xlsx.utils.json_to_sheet(exportData);
-    const wb = xlsx.utils.book_new();
-    xlsx.utils.book_append_sheet(wb, ws, "Classes");
-    xlsx.writeFile(wb, "Classes_Export.xlsx");
+    exportToExcel(exportData, "Classes", "Classes_Export.xlsx");
   };
 
   const fetchData = async () => {

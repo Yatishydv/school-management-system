@@ -12,6 +12,8 @@ import {
   XSquare
 } from "lucide-react";
 import * as xlsx from "xlsx";
+import { saveAs } from 'file-saver';
+import { exportToExcel } from "../../utils/excelExport";
 import useAuthStore from "../../stores/authStore";
 import Modal from "../../components/shared/Modal";
 import AddEditUserModal from "../../components/admin/AddEditUserModal";
@@ -154,10 +156,7 @@ const StudentsPage = () => {
         "Admission Date": u.admissionDate ? new Date(u.admissionDate).toLocaleDateString() : '',
         "Bio": u.bio || ''
     }));
-    const ws = xlsx.utils.json_to_sheet(exportData);
-    const wb = xlsx.utils.book_new();
-    xlsx.utils.book_append_sheet(wb, ws, "Students");
-    xlsx.writeFile(wb, "Students_Export.xlsx");
+    exportToExcel(exportData, "Students", "Students_Export.xlsx");
   };
 
   const fetchInitialData = async () => {

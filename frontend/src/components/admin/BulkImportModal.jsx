@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Upload, Download, FileSpreadsheet, X, Loader2 } from 'lucide-react';
 import * as xlsx from 'xlsx';
+import { saveAs } from 'file-saver';
 import { toast } from 'react-toastify';
+import { exportToExcel } from '../../utils/excelExport';
 
 const BulkImportModal = ({ 
     onClose, 
@@ -15,10 +17,7 @@ const BulkImportModal = ({
     const [loading, setLoading] = useState(false);
 
     const downloadTemplate = () => {
-        const ws = xlsx.utils.json_to_sheet(templateData);
-        const wb = xlsx.utils.book_new();
-        xlsx.utils.book_append_sheet(wb, ws, templateName);
-        xlsx.writeFile(wb, expectedFileName);
+        exportToExcel(templateData, templateName, expectedFileName);
     };
 
     const handleFileChange = (e) => {

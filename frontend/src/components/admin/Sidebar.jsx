@@ -16,7 +16,8 @@ import {
   Activity,
   Award,
   DollarSign,
-  Bell
+  Bell,
+  CreditCard
 } from "lucide-react";
 import useAuthStore from "../../stores/authStore.js";
 import notificationService from "../../api/notificationService.js";
@@ -58,6 +59,8 @@ const Sidebar = () => {
       { name: "Timetable", icon: Calendar, path: "/admin/timetable" },
       { name: "Exams", icon: FileText, path: "/admin/exams" },
       { name: "Fees", icon: DollarSign, path: "/admin/fees" },
+      { name: "Accounts", icon: Activity, path: "/admin/finance" },
+      { name: "Salaries", icon: CreditCard, path: "/admin/salaries" },
       { name: "Gallery", icon: Image, path: "/admin/gallery" },
       { name: "My Account", icon: Shield, path: "/admin/profile" },
     ],
@@ -67,6 +70,7 @@ const Sidebar = () => {
       { name: "Classes", icon: BookOpen, path: "/teacher/classes" },
       { name: "Assignments", icon: FileText, path: "/teacher/assignments" },
       { name: "Results", icon: Award, path: "/teacher/results" },
+      { name: "Salaries", icon: CreditCard, path: "/teacher/salaries" },
       { name: "Alert Hub", icon: Bell, path: "/teacher/notifications", badge: true },
     ],
     student: [
@@ -115,7 +119,7 @@ const Sidebar = () => {
               }
             >
               <div className="flex items-center gap-4 relative">
-                <Icon size={18} className={`transition-all duration-300 ${item.path === window.location.pathname ? "text-accent-500" : "group-hover:text-primary-950"}`} />
+                <Icon size={18} className={`transition-all duration-300 ${location.pathname === item.path ? "text-accent-500" : "group-hover:text-primary-950"}`} />
                 <span>{item.name}</span>
                 {hasBadge && (
                     <span className="absolute -top-1 -left-1 w-4 h-4 bg-accent-500 text-white text-[8px] flex items-center justify-center rounded-full animate-bounce shadow-lg shadow-accent-500/20">
@@ -123,7 +127,7 @@ const Sidebar = () => {
                     </span>
                 )}
               </div>
-              <div className={`w-1.5 h-1.5 rounded-full bg-accent-500 transition-opacity duration-300 ${item.path === window.location.pathname ? "opacity-100" : "opacity-0 group-hover:opacity-50"}`}></div>
+              <div className={`w-1.5 h-1.5 rounded-full bg-accent-500 transition-opacity duration-300 ${location.pathname === item.path ? "opacity-100" : "opacity-0 group-hover:opacity-50"}`}></div>
             </NavLink>
           );
         })}

@@ -48,6 +48,7 @@ const userSchema = new mongoose.Schema({
     // Teacher / Professional Fields
     qualification: { type: String },
     experience: { type: String },
+    baseSalary: { type: Number, default: 0 },
 
     // Reset Password Fields
     resetPasswordToken: { type: String },

@@ -23,6 +23,8 @@ import {
   XSquare
 } from 'lucide-react';
 import * as xlsx from 'xlsx';
+import { saveAs } from 'file-saver';
+import { exportToExcel } from '../../utils/excelExport';
 import Spinner from '../../components/ui/Spinner';
 import Button from '../../components/ui/Button';
 import Modal from '../../components/shared/Modal';
@@ -169,10 +171,7 @@ const AdminFees = () => {
             "Status": f.status,
             "Due Date": new Date(f.dueDate).toLocaleDateString()
         }));
-        const ws = xlsx.utils.json_to_sheet(exportData);
-        const wb = xlsx.utils.book_new();
-        xlsx.utils.book_append_sheet(wb, ws, "Fees");
-        xlsx.writeFile(wb, "Fee_Management_Report.xlsx");
+        exportToExcel(exportData, "Fees", "Fee_Management_Report.xlsx");
     };
 
     const toggleSelectAll = () => {

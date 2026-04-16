@@ -19,6 +19,7 @@ import userRoutes from "./routes/userRoutes.js";
 import classRoutes from "./routes/classRoutes.js";
 import admissionRoutes from "./routes/admissionRoutes.js";
 import contactRoutes from "./routes/contactRoutes.js";
+import financeRoutes from "./routes/financeRoutes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -53,6 +54,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/classes", classRoutes);
 app.use("/api/admissions", admissionRoutes);
 app.use("/api/contact", contactRoutes);
+app.use("/api/finance", financeRoutes);
 
 app.get("/", (req, res) => {
   res.send("School Management System API is running.");

@@ -24,6 +24,8 @@ import {
   Upload
 } from "lucide-react";
 import * as xlsx from "xlsx";
+import { saveAs } from 'file-saver';
+import { exportToExcel } from "../../utils/excelExport";
 import adminService from "../../api/adminService";
 import useAuthStore from "../../stores/authStore";
 import { toast } from "react-toastify";
@@ -234,10 +236,7 @@ const ClassDetailsPage = () => {
         "Previous School": u.prevSchool || '',
         "Admission Date": u.admissionDate ? new Date(u.admissionDate).toLocaleDateString() : ''
     }));
-    const ws = xlsx.utils.json_to_sheet(exportData);
-    const wb = xlsx.utils.book_new();
-    xlsx.utils.book_append_sheet(wb, ws, `${cls.name}_Students`);
-    xlsx.writeFile(wb, `${cls.name}_Students_Export.xlsx`);
+    exportToExcel(exportData, `${cls.name}_Students`, `${cls.name}_Students_Export.xlsx`);
   };
 
   return (

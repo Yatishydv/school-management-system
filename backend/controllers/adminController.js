@@ -122,7 +122,8 @@ const addUser = async (req, res) => {
         name, email, password, role, classId, uniqueId: providedId, phone, address, 
         rollNumber, assignedClasses, fatherName, motherName, dob, prevSchool,
         admissionId, gender, religion, category, aadharNumber, emergencyContact,
-        qualification, experience, bio, personalEmail, secondaryPhone, socialLinks
+        qualification, experience, bio, personalEmail, secondaryPhone, socialLinks,
+        baseSalary
     } = req.body;
 
     try {
@@ -192,6 +193,7 @@ const addUser = async (req, res) => {
             bio,
             personalEmail,
             secondaryPhone,
+            baseSalary: baseSalary ? Number(baseSalary) : 0,
             socialLinks: (typeof socialLinks === 'string') ? JSON.parse(socialLinks) : socialLinks
         });
 
@@ -330,6 +332,7 @@ const addUsersBulk = async (req, res) => {
                     bio: userData.Bio || userData.bio,
                     personalEmail: userData["Personal Email"] || userData.personalEmail,
                     secondaryPhone: userData["Secondary Phone"] || userData.secondaryPhone,
+                    baseSalary: userData["Base Salary"] || userData.Salary || userData.baseSalary || 0,
                     socialLinks: userData.socialLinks || {
                         whatsapp: userData.WhatsApp,
                         instagram: userData.Instagram,
@@ -411,6 +414,7 @@ const updateUser = async (req, res) => {
             if (bio !== undefined) user.bio = bio;
             if (personalEmail !== undefined) user.personalEmail = personalEmail;
             if (secondaryPhone !== undefined) user.secondaryPhone = secondaryPhone;
+            if (baseSalary !== undefined) user.baseSalary = Number(baseSalary);
             if (socialLinks !== undefined) {
                 user.socialLinks = (typeof socialLinks === 'string') ? JSON.parse(socialLinks) : socialLinks;
             }
