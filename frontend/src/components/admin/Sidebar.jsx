@@ -17,7 +17,9 @@ import {
   Award,
   DollarSign,
   Bell,
-  CreditCard
+  CreditCard,
+  TrendingUp,
+  TrendingDown
 } from "lucide-react";
 import useAuthStore from "../../stores/authStore.js";
 import notificationService from "../../api/notificationService.js";
@@ -59,7 +61,8 @@ const Sidebar = () => {
       { name: "Timetable", icon: Calendar, path: "/admin/timetable" },
       { name: "Exams", icon: FileText, path: "/admin/exams" },
       { name: "Fees", icon: DollarSign, path: "/admin/fees" },
-      { name: "Accounts", icon: Activity, path: "/admin/finance" },
+      { name: "Money Center", icon: TrendingUp, path: "/admin/revenue" },
+      { name: "Bills & Payments", icon: TrendingDown, path: "/admin/expenses" },
       { name: "Salaries", icon: CreditCard, path: "/admin/salaries" },
       { name: "Gallery", icon: Image, path: "/admin/gallery" },
       { name: "My Account", icon: Shield, path: "/admin/profile" },

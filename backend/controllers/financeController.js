@@ -131,14 +131,22 @@ export const getAllSalaries = async (req, res) => {
 // @route   PUT /api/finance/salaries/:id
 // @access  Private/Admin
 export const updateSalary = async (req, res) => {
-    const { bonus, deductions, paidAmount, status, paymentDate, paymentMethod, remarks, baseSalary } = req.body;
     try {
+        const { bonus, deductions, status, paymentDate, paymentMethod, remarks, baseSalary } = req.body;
         const salary = await Salary.findById(req.params.id);
+        
         if (salary) {
-            salary.baseSalary = baseSalary ?? salary.baseSalary;
-            salary.bonus = bonus ?? salary.bonus;
-            salary.deductions = deductions ?? salary.deductions;
-            salary.paidAmount = paidAmount ?? salary.paidAmount;
+            // Force numeric types for precision
+            const activeBase = Number(baseSalary ?? salary.baseSalary);
+            const activeBonus = Number(bonus ?? salary.bonus ?? 0);
+            const activeDeductions = Number(deductions ?? salary.deductions ?? 0);
+
+            // Precision calculation on server side with 2-decimal rounding
+            salary.baseSalary = Math.round(activeBase * 100) / 100;
+            salary.bonus = Math.round(activeBonus * 100) / 100;
+            salary.deductions = Math.round(activeDeductions * 100) / 100;
+            salary.paidAmount = Math.round((activeBase + activeBonus - activeDeductions) * 100) / 100;
+            
             salary.status = status ?? salary.status;
             salary.paymentDate = paymentDate ?? salary.paymentDate;
             salary.paymentMethod = paymentMethod ?? salary.paymentMethod;
@@ -151,6 +159,100 @@ export const updateSalary = async (req, res) => {
         }
     } catch (error) {
         res.status(400).json({ message: error.message });
+    }
+};
+
+// @desc    Get detailed revenue history (Fee payments)
+// @route   GET /api/finance/revenue/history
+// @access  Private/Admin
+export const getRevenueHistory = async (req, res) => {
+    try {
+        const fees = await Fee.find({}).populate('student', 'name uniqueId');
+        let history = [];
+
+        fees.forEach(fee => {
+            fee.paymentHistory.forEach(payment => {
+                history.push({
+                    _id: payment._id,
+                    student: fee.student,
+                    feeType: fee.feeType,
+                    amount: payment.amount,
+                    date: payment.date,
+                    paymentMethod: payment.paymentMethod,
+                    referenceNumber: payment.referenceNumber,
+                    month: fee.month,
+                    year: fee.year
+                });
+            });
+        });
+
+        // Sort by date descending
+        history.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        res.json(history);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Get all transactions (Unified Ledger)
+// @route   GET /api/finance/transactions
+// @access  Private/Admin
+export const getAllTransactions = async (req, res) => {
+    try {
+        // 1. Get Fee Payments (Income)
+        const fees = await Fee.find({}).populate('student', 'name uniqueId');
+        let income = [];
+        fees.forEach(fee => {
+            fee.paymentHistory.forEach(payment => {
+                income.push({
+                    _id: payment._id,
+                    type: 'Income',
+                    category: 'Student Fees',
+                    title: fee.student?.name || 'Unknown Student',
+                    subtitle: fee.feeType,
+                    amount: payment.amount,
+                    date: payment.date,
+                    paymentMethod: payment.paymentMethod,
+                    reference: payment.referenceNumber
+                });
+            });
+        });
+
+        // 2. Get Expenses (Outflow)
+        const expenses = await Expense.find({}).populate('addedBy', 'name');
+        let outflows = expenses.map(ex => ({
+            _id: ex._id,
+            type: 'Expense',
+            category: ex.category,
+            title: ex.title,
+            subtitle: ex.paidTo,
+            amount: ex.amount,
+            date: ex.date,
+            paymentMethod: ex.paymentMethod,
+            reference: ex.referenceNumber
+        }));
+
+        // 3. Get Paid Salaries (Outflow)
+        const salaries = await Salary.find({ status: 'Paid' }).populate('teacher', 'name uniqueId');
+        let staffPayments = salaries.map(s => ({
+            _id: s._id,
+            type: 'Expense',
+            category: 'Staff Salary',
+            title: s.teacher?.name || 'Unknown Teacher',
+            subtitle: `${s.month} ${s.year}`,
+            amount: s.paidAmount,
+            date: s.paymentDate || s.updatedAt,
+            paymentMethod: s.paymentMethod,
+            reference: s.invoiceNumber
+        }));
+
+        // Combine and Sort
+        const allTransactions = [...income, ...outflows, ...staffPayments].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        res.json(allTransactions);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
 };
 

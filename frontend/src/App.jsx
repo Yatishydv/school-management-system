@@ -55,7 +55,8 @@ import AdminNotifications from "./pages/admin/AdminNotifications.jsx";
 import TeacherNotifications from "./pages/teacher/TeacherNotifications.jsx";
 import NotificationsPage from "./pages/shared/NotificationsPage.jsx";
 import StudentNotifications from "./pages/student/StudentNotifications.jsx";
-import AdminFinance from "./pages/admin/AdminFinance.jsx";
+import AdminRevenue from "./pages/admin/AdminRevenue.jsx";
+import AdminExpenses from "./pages/admin/AdminExpenses.jsx";
 import AdminSalaries from "./pages/admin/AdminSalaries.jsx";
 import TeacherSalary from "./pages/teacher/TeacherSalary.jsx";
 import useAutoLogout from "./hooks/useAutoLogout";
@@ -248,7 +249,8 @@ const App = () => {
         <Route path="/admin/timetable" element={<ProtectedRoute role="admin"><AdminLayout><AdminTimetable /></AdminLayout></ProtectedRoute>} />
         <Route path="/admin/exams" element={<ProtectedRoute role="admin"><AdminLayout><ExamsPage /></AdminLayout></ProtectedRoute>} />
         <Route path="/admin/fees" element={<ProtectedRoute role="admin"><AdminLayout><AdminFees /></AdminLayout></ProtectedRoute>} />
-        <Route path="/admin/finance" element={<ProtectedRoute role="admin"><AdminLayout><AdminFinance /></AdminLayout></ProtectedRoute>} />
+        <Route path="/admin/revenue" element={<ProtectedRoute role="admin"><AdminLayout><AdminRevenue /></AdminLayout></ProtectedRoute>} />
+        <Route path="/admin/expenses" element={<ProtectedRoute role="admin"><AdminLayout><AdminExpenses /></AdminLayout></ProtectedRoute>} />
         <Route path="/admin/salaries" element={<ProtectedRoute role="admin"><AdminLayout><AdminSalaries /></AdminLayout></ProtectedRoute>} />
         
         {/* CATCH ALL - 404 */}

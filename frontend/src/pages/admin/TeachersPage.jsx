@@ -9,7 +9,9 @@ import {
   Download,
   Upload,
   CheckSquare,
-  XSquare
+  XSquare,
+  IndianRupee,
+  Edit3
 } from "lucide-react";
 import * as xlsx from "xlsx";
 import { saveAs } from 'file-saver';
@@ -27,6 +29,10 @@ const TeachersPage = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showQuickSalaryModal, setShowQuickSalaryModal] = useState(false);
+  const [selectedTeacher, setSelectedTeacher] = useState(null);
+  const [newSalary, setNewSalary] = useState("");
+  const [updatingSalary, setUpdatingSalary] = useState(false);
   
   // Selection state
   const [selectedIds, setSelectedIds] = useState([]);
@@ -178,6 +184,28 @@ const TeachersPage = () => {
     setShowModal(true);
   };
 
+  const handleOpenQuickSalary = (teacher) => {
+    setSelectedTeacher(teacher);
+    setNewSalary(teacher.baseSalary || "");
+    setShowQuickSalaryModal(true);
+  };
+
+  const handleUpdateSalary = async () => {
+    setUpdatingSalary(true);
+    try {
+      const formData = new FormData();
+      formData.append('baseSalary', newSalary);
+      await adminService.updateUser(selectedTeacher._id, formData, token);
+      toast.success("Compensation Adjusted.");
+      setShowQuickSalaryModal(false);
+      fetchTeachers();
+    } catch (err) {
+      toast.error("Adjustment failed.");
+    } finally {
+      setUpdatingSalary(false);
+    }
+  };
+
   const filteredUsers = users.filter(u => 
     u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     u.uniqueId.toLowerCase().includes(searchTerm.toLowerCase())
@@ -322,10 +350,11 @@ const TeachersPage = () => {
                        <span className="text-xs font-bold text-gray-500">{u.email}</span>
                     </td>
                     <td className="px-8 py-7 rounded-r-2xl text-right border-y border-r border-transparent group-hover:border-gray-100">
-                       <div className="flex gap-2 justify-end opacity-0 group-hover:opacity-100 transition-all">
-                          <button onClick={() => { setEditingUser(u); setShowModal(true); }} className="p-3 bg-white border border-gray-100 rounded-xl text-primary-950 hover:bg-primary-950 hover:text-white transition-all shadow-sm"><Edit2 size={14}/></button>
-                          <button onClick={() => setDeleteTarget(u)} className="p-3 bg-white border border-gray-100 rounded-xl text-red-500 hover:bg-red-500 hover:text-white transition-all shadow-sm"><Trash2 size={14}/></button>
-                       </div>
+                        <div className="flex gap-2 justify-end opacity-0 group-hover:opacity-100 transition-all">
+                           <button onClick={() => handleOpenQuickSalary(u)} className="p-3 bg-white border border-gray-100 rounded-xl text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all shadow-sm" title="Quick Salary Adjust"><IndianRupee size={14}/></button>
+                           <button onClick={() => { setEditingUser(u); setShowModal(true); }} className="p-3 bg-white border border-gray-100 rounded-xl text-primary-950 hover:bg-primary-950 hover:text-white transition-all shadow-sm"><Edit2 size={14}/></button>
+                           <button onClick={() => setDeleteTarget(u)} className="p-3 bg-white border border-gray-100 rounded-xl text-red-500 hover:bg-red-500 hover:text-white transition-all shadow-sm"><Trash2 size={14}/></button>
+                        </div>
                     </td>
                   </tr>
                 ))}
@@ -333,6 +362,55 @@ const TeachersPage = () => {
            </table>
         </section>
       </div>
+
+      <Modal
+        isOpen={showQuickSalaryModal}
+        onClose={() => setShowQuickSalaryModal(false)}
+        title="Adjust Personnel Compensation"
+        size="lg"
+      >
+        <div className="p-10 space-y-8">
+            <div className="flex items-center gap-4 p-6 bg-gray-50 rounded-3xl border border-gray-100">
+                <div className="w-12 h-12 rounded-2xl bg-primary-950 text-white flex items-center justify-center font-black">
+                    {selectedTeacher?.name.substring(0, 1)}
+                </div>
+                <div>
+                    <h4 className="font-black text-primary-950 tracking-tight">{selectedTeacher?.name}</h4>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{selectedTeacher?.uniqueId}</p>
+                </div>
+            </div>
+
+            <div className="space-y-4">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 italic">Institutional Base Salary (Monthly)</label>
+                <input 
+                   type="number"
+                   placeholder="e.g. 55000"
+                   className="w-full px-6 py-4 bg-white rounded-2xl border border-gray-100 text-sm font-black text-primary-950 focus:ring-4 focus:ring-accent-50 outline-none transition-all"
+                   value={newSalary}
+                   onChange={(e) => setNewSalary(e.target.value)}
+                />
+                <p className="text-[9px] font-bold text-gray-300 uppercase tracking-widest ml-1 italic">
+                    Changes will reflect in the next payroll generation cycle.
+                </p>
+            </div>
+
+            <div className="pt-4 flex gap-4">
+                <button 
+                  onClick={() => setShowQuickSalaryModal(false)}
+                  className="px-8 py-4 bg-gray-50 text-gray-500 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-100 transition-all"
+                >
+                  Cancel
+                </button>
+                <button 
+                    className="flex-1 py-4 bg-primary-950 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-primary-950/20 hover:bg-accent-500 transition-all disabled:opacity-50"
+                    onClick={handleUpdateSalary}
+                    disabled={updatingSalary}
+                >
+                    {updatingSalary ? "Applying..." : "Confirm Adjustment"}
+                </button>
+            </div>
+        </div>
+      </Modal>
 
       <Modal 
         isOpen={showModal} 

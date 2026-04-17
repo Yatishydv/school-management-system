@@ -134,6 +134,39 @@ const TeacherSalary = () => {
             </div>
         )}
 
+        {/* Institutional Agreement Overlay */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+            <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm flex items-center justify-between group hover:border-accent-500 transition-all">
+                <div className="space-y-1">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest italic">Institutional Agreement</p>
+                    <h4 className="text-2xl font-black text-primary-950 tracking-tighter italic">Base Allocation.</h4>
+                </div>
+                <div className="text-right">
+                    <span className="text-3xl font-black text-primary-950 tracking-tighter">₹{(user?.baseSalary || 0).toLocaleString()}</span>
+                </div>
+            </div>
+
+            <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm flex items-center justify-between group hover:border-accent-500 transition-all">
+                <div className="space-y-1">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest italic">Contractual Cycle</p>
+                    <h4 className="text-2xl font-black text-primary-950 tracking-tighter italic">Monthly.</h4>
+                </div>
+                <div className="text-right">
+                    <span className="text-xs font-black text-gray-400 uppercase tracking-widest">Post-Paid Disbursement</span>
+                </div>
+            </div>
+
+            <div className="bg-accent-500/5 p-8 rounded-[2.5rem] border border-accent-500/20 flex items-center justify-between group">
+                <div className="space-y-1">
+                    <p className="text-[10px] font-black text-accent-600 uppercase tracking-widest italic">Disbursement Hub</p>
+                    <h4 className="text-2xl font-black text-primary-950 tracking-tighter italic">Account Status.</h4>
+                </div>
+                <div className="px-4 py-2 bg-accent-500 text-white text-[10px] font-black rounded-full uppercase tracking-widest">
+                   ACTIVE
+                </div>
+            </div>
+        </div>
+
         {/* History Ledger */}
         <section className="bg-white rounded-[3rem] p-8 md:p-12 border border-gray-100 shadow-sm overflow-hidden animate-fade-up">
            <div className="flex justify-between items-center mb-12">

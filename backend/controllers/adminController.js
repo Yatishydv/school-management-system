@@ -377,7 +377,8 @@ const updateUser = async (req, res) => {
         name, email, password, role, classId, uniqueId, phone, address, 
         rollNumber, assignedClasses, fatherName, motherName, dob, prevSchool,
         gender, religion, category, aadharNumber, emergencyContact,
-        qualification, experience, bio, personalEmail, secondaryPhone, socialLinks
+        qualification, experience, bio, personalEmail, secondaryPhone, socialLinks,
+        baseSalary
     } = req.body;
 
     try {

@@ -12,11 +12,15 @@ import {
     getMySalaries,
     deleteExpense,
     updateExpense,
-    deleteSalary
+    deleteSalary,
+    getRevenueHistory,
+    getAllTransactions
 } from '../controllers/financeController.js';
 
 // Admin Routes
 router.get('/summary', protect, authorize(['admin']), getFinancialSummary);
+router.get('/revenue/history', protect, authorize(['admin']), getRevenueHistory);
+router.get('/transactions', protect, authorize(['admin']), getAllTransactions);
 router.post('/expenses', protect, authorize(['admin']), addExpense);
 router.get('/expenses', protect, authorize(['admin']), getExpenses);
 router.put('/expenses/:id', protect, authorize(['admin']), updateExpense);

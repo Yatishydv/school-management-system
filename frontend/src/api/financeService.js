@@ -8,6 +8,18 @@ const financeService = {
     });
     return res.data;
   },
+  getRevenueHistory: async (token) => {
+    const res = await axiosInstance.get(`/finance/revenue/history`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.data;
+  },
+  getAllTransactions: async (token) => {
+    const res = await axiosInstance.get(`/finance/transactions`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.data;
+  },
 
   // Expenses
   getExpenses: async (token) => {
