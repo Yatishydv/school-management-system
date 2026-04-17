@@ -115,7 +115,7 @@ const Gallery = () => {
             </h1>
           </div>
           <p className="max-w-md text-gray-400 font-medium text-lg leading-snug">
-            A window into the vibrant life at SBS School—where every frame tells a story of discovery and growth.
+            A window into the vibrant life at SBS Badhwana—where every frame tells a story of discovery and growth.
           </p>
         </div>
 
@@ -220,7 +220,7 @@ const Gallery = () => {
                        {selected.title}
                     </h2>
                     <p className="text-gray-500 text-lg leading-relaxed font-medium">
-                       {selected.caption || "A special moment captured at SBS School, reflecting our commitment to excellence and vibrant student life."}
+                       {selected.caption || "A special moment captured at SBS Badhwana, reflecting our commitment to excellence and vibrant student life."}
                     </p>
                   </div>
 

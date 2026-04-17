@@ -45,6 +45,7 @@ import {
     getSentNotifications,
     deleteNotification
 } from '../controllers/adminController.js';
+import { getSettings, updateSettings, uploadSiteMedia } from '../controllers/settingsController.js';
 
 // All routes here require ADMIN role
 router.use(protect);
@@ -107,6 +108,11 @@ router.delete('/notifications/:id', deleteNotification);
 router.get('/gallery', getGalleryImages);
 router.post('/gallery', upload.single('image'), uploadGalleryImage);
 router.delete('/gallery/:id', deleteGalleryImage);
+
+// --- Site Customization Engine ---
+router.get('/settings', getSettings);
+router.put('/settings', updateSettings);
+router.post('/settings/upload', upload.single('image'), uploadSiteMedia);
 
 
 export default router;

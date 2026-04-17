@@ -230,6 +230,25 @@ const adminService = {
         const response = await axiosInstance.delete(`/admin/notifications/${notifId}`, getConfig(token));
         return response.data;
     },
+    // --- Site Customization Engine ---
+    getSiteSettings: async (token) => {
+        const response = await axiosInstance.get(`/admin/settings`, getConfig(token));
+        return response.data;
+    },
+    updateSiteSettings: async (settingsData, token) => {
+        const response = await axiosInstance.put(`/admin/settings`, settingsData, getConfig(token));
+        return response.data;
+    },
+    uploadSiteImage: async (formData, token) => {
+        const response = await axiosInstance.post(`/admin/settings/upload`, formData, {
+            ...getConfig(token),
+            headers: {
+                ...getConfig(token).headers,
+                "Content-Type": "multipart/form-data",
+            },
+        });
+        return response.data;
+    },
 };
 
 export default adminService;

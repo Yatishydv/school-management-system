@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
-import axios from "../../api/axios";
 import { 
   Facebook, 
   Instagram, 
@@ -10,103 +9,89 @@ import {
   Phone, 
   MapPin, 
   ArrowRight,
-  MessageCircle
+  MessageCircle,
+  Youtube
 } from "lucide-react";
+import { useSiteSettings } from "../../context/SiteSettingsContext";
 
 const Footer = () => {
-  const [schoolInfo, setSchoolInfo] = useState(null);
+    const { settings, loading } = useSiteSettings();
 
-  useEffect(() => {
-    const fetchInfo = async () => {
-      try {
-        const res = await axios.get("/public/school-info");
-        setSchoolInfo(res.data);
-      } catch (err) {
-        console.error("Failed to fetch school footer info");
-      }
+    const getSocialHref = (platform, handle) => {
+        if (!handle || typeof handle !== 'string') return "";
+        if (handle.startsWith("http")) return handle;
+        
+        const cleanHandle = handle.startsWith("@") ? handle.substring(1) : handle;
+        
+        switch (platform) {
+            case "facebook":
+                return handle.includes("facebook.com") ? `https://${handle}` : `https://facebook.com/${cleanHandle}`;
+            case "instagram":
+                return handle.includes("instagram.com") ? `https://${handle}` : `https://instagram.com/${cleanHandle}`;
+            case "twitter":
+                return (handle.includes("twitter.com") || handle.includes("x.com")) ? `https://${handle}` : `https://x.com/${cleanHandle}`;
+            case "whatsapp":
+                return `https://wa.me/${handle.replace(/\s+/g, "")}`;
+            case "youtube":
+                return handle.includes("youtube.com") ? `https://${handle}` : `https://youtube.com/${cleanHandle}`;
+            default:
+                return handle;
+        }
     };
-    fetchInfo();
-  }, []);
 
-  const socials = schoolInfo?.socialLinks || {};
+    if (loading || !settings) return null;
 
-  const getSocialHref = (platform, handle) => {
-    if (!handle) return "";
-    if (handle.startsWith("http")) return handle;
-    
-    // Remove @ if present
-    const cleanHandle = handle.startsWith("@") ? handle.substring(1) : handle;
-    
-    switch (platform) {
-      case "facebook":
-        return handle.includes("facebook.com") ? `https://${handle}` : `https://facebook.com/${cleanHandle}`;
-      case "instagram":
-        return handle.includes("instagram.com") ? `https://${handle}` : `https://instagram.com/${cleanHandle}`;
-      case "twitter":
-        return handle.includes("twitter.com") || handle.includes("x.com") ? `https://${handle}` : `https://x.com/${cleanHandle}`;
-      case "whatsapp":
-        return `https://wa.me/${handle.replace(/\s+/g, "")}`;
-      default:
-        return handle;
-    }
-  };
+    const socialData = settings.socialLinks || {};
+    const footerMeta = settings.global || {};
 
   return (
-    <footer className="relative bg-black text-gray-400 pt-20 pb-10 overflow-hidden border-t border-white/5">
-      {/* Background Accents */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary-900/10 rounded-full blur-3xl -translate-y-1/2"></div>
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-accent-900/10 rounded-full blur-3xl translate-y-1/2"></div>
+    <footer className="relative bg-black text-gray-400 pt-12 pb-8 overflow-hidden border-t border-white/5 font-body">
+      {/* High-Fidelity Background Accents */}
+      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-primary-900/10 rounded-full blur-[120px] -translate-y-1/2"></div>
+      <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-accent-900/10 rounded-full blur-[120px] translate-y-1/2"></div>
+      <div className="absolute top-1/2 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/5 to-transparent"></div>
 
       <div className="container mx-auto px-6 max-w-7xl relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-16">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-16">
           
-          {/* Brand & Mission */}
-          <div className="md:col-span-4 space-y-6">
-            <Link to="/" className="inline-block">
-              <h3 className="text-3xl font-heading font-black text-white tracking-tighter">
-                SBS <span className="text-accent-500">BADHWANA</span>
+          {/* Column 1: Brand & Mission */}
+          <div className="md:col-span-12 lg:col-span-4 space-y-4">
+            <Link to="/" className="inline-block group">
+              <h3 className="text-2xl font-black text-white tracking-tighter uppercase leading-none group-hover:text-accent-500 transition-colors">
+                {settings.schoolName || "SBS INSTITUTION"}
               </h3>
+              <div className="flex items-center gap-2 mt-4">
+                  <div className="h-1 w-12 bg-accent-500 rounded-full"></div>
+                  <span className="text-[9px] font-black uppercase tracking-[0.4em] text-gray-500">Established 2004</span>
+              </div>
             </Link>
-            <p className="text-lg leading-relaxed text-gray-400 max-w-sm">
-              Empowering the next generation with excellence in education, ethics, and innovation since 2004.
+            
+            <p className="text-sm leading-relaxed text-gray-500 font-medium italic opacity-80 max-w-sm">
+                "{footerMeta.footerMission || "Empowering the next generation with excellence in education, ethics, and innovation since 2004."}"
             </p>
+
             <div className="flex items-center gap-4">
-              {socials.facebook && (
-                <a href={getSocialHref("facebook", socials.facebook)} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-accent-500 hover:text-white transition-all duration-300">
-                  <Facebook size={18} />
-                </a>
-              )}
-              {socials.instagram && (
-                <a href={getSocialHref("instagram", socials.instagram)} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-accent-500 hover:text-white transition-all duration-300">
-                  <Instagram size={18} />
-                </a>
-              )}
-              {socials.twitter && (
-                <a href={getSocialHref("twitter", socials.twitter)} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-accent-500 hover:text-white transition-all duration-300">
-                  <Twitter size={18} />
-                </a>
-              )}
-              {socials.whatsapp && (
-                <a href={getSocialHref("whatsapp", socials.whatsapp)} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-accent-500 hover:text-white transition-all duration-300">
-                  <MessageCircle size={18} />
-                </a>
-              )}
+              {[{ id: "facebook", icon: Facebook }, { id: "instagram", icon: Instagram }, { id: "twitter", icon: Twitter }, { id: "whatsapp", icon: MessageCircle }, { id: "youtube", icon: Youtube }, { id: "linkedin", icon: Linkedin }].map(({ id, icon: Icon }) => (
+                socialData[id] && (
+                  <a key={id} href={getSocialHref(id, socialData[id])} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-accent-500 hover:text-white transition-all duration-300">
+                      <Icon size={16} />
+                  </a>
+                )
+              ))}
             </div>
           </div>
 
-          {/* Quick Navigation */}
-          <div className="md:col-span-2 space-y-6">
-            <h4 className="text-white font-bold tracking-wider uppercase text-sm">Explore</h4>
-            <ul className="space-y-4">
+          {/* Column 2: Digital Navigation */}
+          <div className="md:col-span-4 lg:col-span-2 space-y-4">
+            <h4 className="text-white font-black tracking-[0.3em] uppercase text-[9px] opacity-60">Explore Hub</h4>
+            <ul className="space-y-2">
               {["About", "Gallery", "Admissions", "Contact"].map((item) => (
                 <li key={item}>
                   <Link 
                     to={`/${item.toLowerCase()}`} 
-                    className="hover:text-accent-400 transition-colors flex items-center group"
+                    className="text-gray-400 hover:text-accent-500 transition-all font-bold text-sm flex items-center group"
                   >
-                    <span className="w-0 group-hover:w-4 overflow-hidden transition-all duration-300 opacity-0 group-hover:opacity-100">
-                      <ArrowRight size={12} className="mr-2" />
-                    </span>
+                    <ArrowRight size={14} className="mr-3 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 text-accent-500" />
                     {item}
                   </Link>
                 </li>
@@ -114,54 +99,80 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Contact Details */}
-          <div className="md:col-span-3 space-y-6">
-            <h4 className="text-white font-bold tracking-wider uppercase text-sm">Contact Us</h4>
-            <ul className="space-y-4">
-              <li className="flex items-start gap-4">
-                <MapPin size={22} className="text-accent-500 mt-1 shrink-0" />
-                <span className="text-sm leading-relaxed">{schoolInfo?.address || "Main Street, Badhwana, Haryana 127308"}</span>
+          {/* Column 3: Geospatial Hub */}
+          <div className="md:col-span-4 lg:col-span-3 space-y-4">
+            <h4 className="text-white font-black tracking-[0.3em] uppercase text-[9px] opacity-60">Contact Us</h4>
+            <ul className="space-y-3">
+              <li className="flex items-start gap-4 group">
+                <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-accent-500 shrink-0 group-hover:bg-accent-500 group-hover:text-white transition-all">
+                    <MapPin size={22} />
+                </div>
+                <div className="space-y-1">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-gray-600">Institutional Hub</p>
+                    <span className="text-sm font-bold leading-relaxed block text-gray-300">
+                        {settings.contact?.location?.address || "Main Street, Badhwana, Haryana 127308"}
+                    </span>
+                </div>
               </li>
-              <li className="flex items-center gap-4">
-                <Mail size={20} className="text-accent-500 shrink-0" />
-                <a href={`mailto:${schoolInfo?.email || "info@sbsbadhwana.edu"}`} className="text-sm hover:text-accent-400 transition-colors">
-                  {schoolInfo?.email || "info@sbsbadhwana.edu"}
-                </a>
+              <li className="flex items-center gap-4 group">
+                <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-accent-500 shrink-0 group-hover:bg-accent-500 group-hover:text-white transition-all">
+                    <Mail size={20} />
+                </div>
+                <div className="space-y-1">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-gray-600">Digital Mail</p>
+                    <a href={`mailto:${(settings.contact?.cards || []).find(c => c.title.toLowerCase().includes('email'))?.details?.[0] || "info@sbsbadhwana.edu"}`} className="text-sm font-bold text-gray-300 hover:text-accent-500 transition-colors">
+                        {(settings.contact?.cards || []).find(c => c.title.toLowerCase().includes('email'))?.details?.[0] || "info@sbsbadhwana.edu"}
+                    </a>
+                </div>
               </li>
-              <li className="flex items-center gap-4">
-                <Phone size={20} className="text-accent-500 shrink-0" />
-                <a href={`tel:${schoolInfo?.phone || "+911234567890"}`} className="text-sm hover:text-accent-400 transition-colors tabular-nums">
-                  {schoolInfo?.phone || "+91 123 456 7890"}
-                </a>
+              <li className="flex items-center gap-4 group">
+                <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-accent-500 shrink-0 group-hover:bg-accent-500 group-hover:text-white transition-all">
+                    <Phone size={20} />
+                </div>
+                <div className="space-y-1">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-gray-600">Voice Line</p>
+                    <a href={`tel:${(settings.contact?.cards || []).find(c => c.title.toLowerCase().includes('phone'))?.details?.[0] || "+911234567890"}`} className="text-sm font-bold text-gray-300 hover:text-accent-400 transition-colors tabular-nums">
+                        {(settings.contact?.cards || []).find(c => c.title.toLowerCase().includes('phone'))?.details?.[0] || "+91 123 456 7890"}
+                    </a>
+                </div>
               </li>
             </ul>
           </div>
 
-          {/* Newsletter / CTA */}
-          <div className="md:col-span-3 space-y-6">
-            <h4 className="text-white font-bold tracking-wider uppercase text-sm">Stay Updated</h4>
-            <p>Get the latest news and updates from SBS directly in your inbox.</p>
-            <div className="relative group">
+          {/* Column 4: Newsletter / CTA */}
+          <div className="md:col-span-12 lg:col-span-3 space-y-4">
+            <h4 className="text-white font-black tracking-[0.3em] uppercase text-[9px] opacity-60">Newsletter</h4>
+            <p className="text-[11px] font-medium leading-relaxed opacity-60">
+                Join our digital network for real-time institutional updates.
+            </p>
+            <div className="relative group max-w-xs">
               <input 
                 type="email" 
-                placeholder="Your email address" 
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500 transition-all placeholder:text-gray-600"
+                placeholder="Institutional email" 
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-accent-500 focus:ring-4 focus:ring-accent-500/10 transition-all placeholder:text-gray-600 font-bold text-[11px]"
               />
-              <button className="absolute right-2 top-2 bottom-2 bg-accent-600 hover:bg-accent-500 text-white px-4 rounded-lg transition-colors flex items-center">
-                <ArrowRight size={18} />
+              <button className="absolute right-1.5 top-1.5 bottom-1.5 bg-accent-600 hover:bg-accent-500 text-white px-3 rounded-lg transition-all flex items-center shadow-lg active:scale-95">
+                <ArrowRight size={16} />
               </button>
             </div>
           </div>
         </div>
 
-        {/* Footer Bottom */}
-        <div className="mt-20 pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 text-sm">
-          <p>© {new Date().getFullYear()} SBS Badhwana. All Rights Reserved.</p>
-          <div className="flex items-center gap-8">
-            <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
-            <a href="#" className="hover:text-white transition-colors">Cookie Policy</a>
-          </div>
+        {/* Footer Bottom: High Fidelity Precision */}
+        <div className="mt-12 pt-8 border-t border-white/5 flex flex-col lg:flex-row justify-between items-center gap-6">
+            <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8">
+                <p className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-500">
+                    {footerMeta.footerCopyright || `© ${new Date().getFullYear()} ${settings.schoolName || "SBS Badhwana"}. Institutional Excellence Portal.`}
+                </p>
+            </div>
+            
+            <div className="flex items-center gap-10">
+                {["Privacy Architecture", "Terms of Use", "System Status"].map(link => (
+                    <a key={link} href="#" className="text-[10px] font-black uppercase tracking-widest text-gray-600 hover:text-white transition-colors">
+                        {link}
+                    </a>
+                ))}
+            </div>
         </div>
       </div>
     </footer>

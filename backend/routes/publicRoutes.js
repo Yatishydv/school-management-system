@@ -7,8 +7,10 @@ import {
     getSchoolStats,
     getSchoolInfo
 } from '../controllers/publicController.js';
+import { getSettings } from '../controllers/settingsController.js';
 
 // Routes for the public-facing website (no auth required)
+router.get('/settings', getSettings);
 router.get('/notices', getPublicNotices);
 router.get('/gallery', getGallery);
 router.get('/teachers', getPublicTeachers);

@@ -44,13 +44,7 @@ const AdminProfile = () => {
     address: "",
     bio: "",
     personalEmail: "",
-    secondaryPhone: "",
-    socialLinks: {
-      whatsapp: "",
-      instagram: "",
-      facebook: "",
-      twitter: ""
-    }
+    secondaryPhone: ""
   });
 
   const [passwords, setPasswords] = useState({
@@ -90,13 +84,7 @@ const AdminProfile = () => {
           address: res.data.address || "",
           bio: res.data.bio || "",
           personalEmail: res.data.personalEmail || "",
-          secondaryPhone: res.data.secondaryPhone || "",
-          socialLinks: {
-            whatsapp: res.data.socialLinks?.whatsapp || "",
-            instagram: res.data.socialLinks?.instagram || "",
-            facebook: res.data.socialLinks?.facebook || "",
-            twitter: res.data.socialLinks?.twitter || ""
-          }
+          secondaryPhone: res.data.secondaryPhone || ""
         });
         if (res.data.profileImage) {
           setImagePreview(`http://localhost:5005/${res.data.profileImage}`);
@@ -112,18 +100,7 @@ const AdminProfile = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    if (name.startsWith("social_")) {
-      const socialName = name.split("_")[1];
-      setTempProfileData(prev => ({
-        ...prev,
-        socialLinks: {
-          ...prev.socialLinks,
-          [socialName]: value
-        }
-      }));
-    } else {
-      setTempProfileData(prev => ({ ...prev, [name]: value }));
-    }
+    setTempProfileData(prev => ({ ...prev, [name]: value }));
   };
 
   const handlePasswordChange = (e) => {
@@ -143,11 +120,7 @@ const AdminProfile = () => {
     try {
       const formData = new FormData();
       Object.keys(tempProfileData).forEach(key => {
-        if (key === "socialLinks") {
-          formData.append(key, JSON.stringify(tempProfileData[key]));
-        } else {
-          formData.append(key, tempProfileData[key]);
-        }
+        formData.append(key, tempProfileData[key]);
       });
       if (selectedFile) {
         formData.append("profileImage", selectedFile);
@@ -334,26 +307,27 @@ const AdminProfile = () => {
             </div>
          </div>
 
-         {/* SOCIAL PRESENCE */}
-         <div className="lg:col-span-12 grid grid-cols-1 md:grid-cols-4 gap-8">
-            {[
-              { id: "whatsapp", name: "WhatsApp", icon: MessageCircle, value: profileData.socialLinks.whatsapp, color: "bg-emerald-50 text-emerald-600" },
-              { id: "instagram", name: "Instagram", icon: Instagram, value: profileData.socialLinks.instagram, color: "bg-pink-50 text-pink-600" },
-              { id: "facebook", name: "Facebook", icon: Facebook, value: profileData.socialLinks.facebook, color: "bg-blue-50 text-blue-600" },
-              { id: "twitter", name: "Twitter", icon: Twitter, value: profileData.socialLinks.twitter, color: "bg-gray-50 text-gray-950" },
-            ].map((social) => (
-              <div key={social.id} className={`p-8 rounded-[2rem] border border-gray-100 flex items-center gap-6 group hover:shadow-xl transition-all cursor-default ${social.value ? "opacity-100" : "opacity-40 grayscale"}`}>
-                 <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform ${social.color}`}>
-                   <social.icon size={24} />
-                 </div>
-                 <div className="min-w-0">
-                    <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-400">{social.name} Matrix</h4>
-                    <p className="text-sm font-black text-primary-950 truncate max-w-full">
-                       {social.value || "Not Connected"}
-                    </p>
-                 </div>
-              </div>
-            ))}
+         {/* SITE MANAGEMENT REDIRECT */}
+         <div className="lg:col-span-12 bg-accent-50/50 rounded-[3rem] p-10 md:p-14 border border-accent-100 flex flex-col md:flex-row items-center justify-between gap-8 group">
+            <div className="flex items-center gap-8">
+               <div className="w-20 h-20 rounded-[2rem] bg-accent-100 flex items-center justify-center text-accent-600 group-hover:scale-110 transition-transform">
+                 <Globe size={40} />
+               </div>
+               <div className="space-y-2">
+                  <h3 className="text-2xl font-black text-primary-950 uppercase italic tracking-tight">Institutional Site Editor</h3>
+                  <p className="text-sm font-bold text-gray-500 uppercase tracking-widest italic">
+                     Manage school socials, address, and every word on the public website.
+                  </p>
+               </div>
+            </div>
+            <Button 
+               onClick={() => window.location.href = '/admin/site-editor'}
+               variant="accent" 
+               className="px-12 py-5 rounded-2xl flex items-center gap-3 shadow-xl"
+            >
+               <span className="text-xs font-black uppercase tracking-widest">Open Site Editor</span>
+               <ArrowRight size={20} />
+            </Button>
          </div>
 
          {/* SECURITY DATA OVERVIEW */}
@@ -408,8 +382,7 @@ const AdminProfile = () => {
           <div className="px-8 pt-4 pb-2 border-b border-gray-50 flex gap-8">
              {[
                { id: "general", label: "Profile Identity", icon: User },
-               { id: "security", label: "Security Keys", icon: Shield },
-               { id: "social", label: "Digital Presence", icon: Globe }
+               { id: "security", label: "Security Keys", icon: Shield }
              ].map(tab => (
                <button
                  key={tab.id}
@@ -525,84 +498,6 @@ const AdminProfile = () => {
               </form>
             )}
 
-            {/* TAB: SOCIAL */}
-            {modalTab === "social" && (
-              <form onSubmit={updateProfile} className="space-y-12 animate-fade-in">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                   <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">WhatsApp Frequency</label>
-                      <div className="relative group">
-                         <div className="absolute left-6 top-1/2 -translate-y-1/2 text-emerald-500">
-                            <MessageCircle size={20} />
-                         </div>
-                         <input 
-                           name="social_whatsapp"
-                           value={tempProfileData?.socialLinks?.whatsapp || ""}
-                           onChange={handleInputChange}
-                           className="w-full pl-16 pr-8 py-5 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-bold text-primary-950 outline-none focus:ring-4 focus:ring-emerald-50 focus:border-emerald-200 transition-all"
-                           placeholder="+91 00000 00000"
-                         />
-                      </div>
-                   </div>
-                   <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Instagram Identity</label>
-                      <div className="relative group">
-                         <div className="absolute left-6 top-1/2 -translate-y-1/2 text-pink-500">
-                            <Instagram size={20} />
-                         </div>
-                         <input 
-                           name="social_instagram"
-                           value={tempProfileData?.socialLinks?.instagram || ""}
-                           onChange={handleInputChange}
-                           className="w-full pl-16 pr-8 py-5 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-bold text-primary-950 outline-none focus:ring-4 focus:ring-pink-50 focus:border-pink-200 transition-all"
-                           placeholder="@username"
-                         />
-                      </div>
-                   </div>
-                   <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Facebook Identity</label>
-                      <div className="relative group">
-                         <div className="absolute left-6 top-1/2 -translate-y-1/2 text-blue-600">
-                            <Facebook size={20} />
-                         </div>
-                         <input 
-                           name="social_facebook"
-                           value={tempProfileData?.socialLinks?.facebook || ""}
-                           onChange={handleInputChange}
-                           className="w-full pl-16 pr-8 py-5 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-bold text-primary-950 outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-200 transition-all"
-                           placeholder="facebook.com/username"
-                         />
-                      </div>
-                   </div>
-                   <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Twitter (X) Protocol</label>
-                      <div className="relative group">
-                         <div className="absolute left-6 top-1/2 -translate-y-1/2 text-primary-950">
-                            <Twitter size={20} />
-                         </div>
-                         <input 
-                           name="social_twitter"
-                           value={tempProfileData?.socialLinks?.twitter || ""}
-                           onChange={handleInputChange}
-                           className="w-full pl-16 pr-8 py-5 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-bold text-primary-950 outline-none focus:ring-4 focus:ring-gray-100 focus:border-gray-300 transition-all"
-                           placeholder="@handle or x.com/user"
-                         />
-                      </div>
-                   </div>
-                </div>
-
-                <div className="pt-8 border-t border-gray-50 flex justify-end">
-                  <Button type="submit" variant="accent" disabled={submitting} className="px-12 py-5 rounded-2xl group shadow-xl">
-                    {submitting ? <Spinner size="sm" /> : (
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs font-black uppercase tracking-widest">Sync Digital Presence</span>
-                        <Globe size={18} />
-                      </div>
-                    )}
-                  </Button>
-                </div>
-              </form>
-            )}
 
           </div>
         </div>

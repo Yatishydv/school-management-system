@@ -64,6 +64,7 @@ const Sidebar = () => {
       { name: "Money Center", icon: TrendingUp, path: "/admin/revenue" },
       { name: "Bills & Payments", icon: TrendingDown, path: "/admin/expenses" },
       { name: "Salaries", icon: CreditCard, path: "/admin/salaries" },
+      { name: "Site Editor", icon: LayoutDashboard, path: "/admin/site-editor" },
       { name: "Gallery", icon: Image, path: "/admin/gallery" },
       { name: "My Account", icon: Shield, path: "/admin/profile" },
     ],

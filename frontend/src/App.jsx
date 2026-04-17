@@ -58,6 +58,8 @@ import StudentNotifications from "./pages/student/StudentNotifications.jsx";
 import AdminRevenue from "./pages/admin/AdminRevenue.jsx";
 import AdminExpenses from "./pages/admin/AdminExpenses.jsx";
 import AdminSalaries from "./pages/admin/AdminSalaries.jsx";
+import AdminSiteEditor from "./pages/admin/AdminSiteEditor.jsx";
+import { SiteSettingsProvider } from "./context/SiteSettingsContext.jsx";
 import TeacherSalary from "./pages/teacher/TeacherSalary.jsx";
 import useAutoLogout from "./hooks/useAutoLogout";
 
@@ -83,7 +85,7 @@ const App = () => {
     location.pathname.startsWith("/student");
 
   return (
-    <>
+    <SiteSettingsProvider>
       <ScrollToTop />
       <ToastContainer 
         position="top-right" 
@@ -252,6 +254,7 @@ const App = () => {
         <Route path="/admin/revenue" element={<ProtectedRoute role="admin"><AdminLayout><AdminRevenue /></AdminLayout></ProtectedRoute>} />
         <Route path="/admin/expenses" element={<ProtectedRoute role="admin"><AdminLayout><AdminExpenses /></AdminLayout></ProtectedRoute>} />
         <Route path="/admin/salaries" element={<ProtectedRoute role="admin"><AdminLayout><AdminSalaries /></AdminLayout></ProtectedRoute>} />
+        <Route path="/admin/site-editor" element={<ProtectedRoute role="admin"><AdminLayout><AdminSiteEditor /></AdminLayout></ProtectedRoute>} />
         
         {/* CATCH ALL - 404 */}
         <Route path="*" element={<NotFound />} />
@@ -259,7 +262,7 @@ const App = () => {
 
       {/* Footer only on public pages */}
       {!isDashboardRoute && <Footer />}
-    </>
+    </SiteSettingsProvider>
   );
 };
 

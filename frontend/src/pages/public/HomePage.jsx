@@ -1,9 +1,25 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import Button from "../../components/ui/Button";
-import { BookOpen, Users, Award, Shield, Sparkles, ArrowRight, CheckCircle, Trophy, Star } from "lucide-react";
-import schoolImage from "../../assets/school.png";
-import principalImage from "../../assets/principal.png";
+import { 
+  BookOpen, 
+  Users, 
+  Award, 
+  Shield, 
+  Sparkles, 
+  ArrowRight, 
+  CheckCircle, 
+  Trophy, 
+  Star, 
+  Loader2,
+  Zap,
+  Search,
+  FileText,
+  Quote
+} from "lucide-react";
+import { useSiteSettings } from "../../context/SiteSettingsContext";
+import schoolImageDefault from "../../assets/school.png";
+import principalImageDefault from "../../assets/principal.png";
 
 /* ------------------------ Counting Stat Component ------------------------ */
 const CountingStat = ({ value, label, duration = 2500 }) => {
@@ -95,30 +111,52 @@ const CountingStat = ({ value, label, duration = 2500 }) => {
 };
 
 const HomePage = () => {
-  const [scrolled, setScrolled] = useState(false);
+  const { settings, loading } = useSiteSettings();
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 50);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  const getImageUrl = (url, fallback) => {
+    if (!url) return fallback;
+    if (url.startsWith('http')) return url;
+    const cleanPath = url.replace(/\\/g, '/');
+    return `http://localhost:5005/${cleanPath}`;
+  };
 
-  const features = [
+  if (loading || !settings) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white space-y-4">
+        <Loader2 className="w-12 h-12 text-accent-500 animate-spin" />
+        <p className="text-[10px] font-black uppercase tracking-[0.5em] text-gray-400">Restoring Institutional Portal...</p>
+      </div>
+    );
+  }
+
+  // Combine Settings with "Good" Layout Structure
+  const defaultStats = [
+    { label: "Alumni", value: "1,200+" },
+    { label: "Ratio", value: "15:1" },
+    { label: "Experience", value: "45+" },
+    { label: "Security", value: "100%" }
+  ];
+
+  const stats = (settings.home?.stats && settings.home.stats.length > 0)
+    ? settings.home.stats
+    : defaultStats;
+
+  const IconMap = { BookOpen, Users, Shield, Sparkles, Award, Star, Zap, Search, FileText, Trophy };
+  
+  const defaultFeatures = [
     {
       icon: BookOpen,
       title: "Smart Learning",
-      desc: "Interactive pedagogy for the 21st century. We focus on critical thinking and real-world application through modern technology.",
+      desc: "Interactive pedagogy for the 21st century. We focus on critical thinking and real-world application.",
       color: "bg-blue-50 text-blue-600",
       gridSpan: "md:col-span-1 md:row-span-2",
       badge: "Innovative",
-      details: ["Digital First Curricula", "Lego Robotics Lab", "Research-led Teaching"],
+      details: ["Digital First Curricula", "Lego Robotics Lab"],
     },
     {
       icon: Users,
       title: "Elite Alumni Network",
-      desc: "Our graduates serve with distinction in the Indian Army, Air Force, and leading global corporations, embodying excellence in every profession.",
+      desc: "Our graduates serve with distinction in the Indian Armed Forces and global corporations.",
       color: "bg-accent-100 text-accent-700",
       gridSpan: "md:col-span-2 md:row-span-1",
       badge: "Professional",
@@ -141,6 +179,15 @@ const HomePage = () => {
     },
   ];
 
+  const features = (settings.home?.advantage?.features || []).length > 0
+    ? settings.home.advantage.features.map((f, i) => ({
+        ...f,
+        icon: IconMap[f.icon] || defaultFeatures[i % defaultFeatures.length].icon,
+        color: defaultFeatures[i % defaultFeatures.length].color,
+        gridSpan: defaultFeatures[i % defaultFeatures.length].gridSpan,
+      }))
+    : defaultFeatures;
+
   return (
     <div className="min-h-screen bg-neutral-bg-subtle text-gray-900 font-body overflow-x-hidden">
       
@@ -156,18 +203,21 @@ const HomePage = () => {
           <div className="relative z-10 space-y-8 text-center lg:text-left">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent-100/50 text-accent-700 text-sm font-bold border border-accent-200 shadow-sm animate-fade-in">
               <Sparkles size={16} />
-              <span>Admissions Open for 2024-25</span>
+              <span>{settings.home?.hero?.badge || "Admissions Open for 2024-25"}</span>
             </div>
             
             <h1 className="text-5xl md:text-7xl xl:text-8xl font-black tracking-tight leading-[0.9] text-primary-950">
-              Elevate <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-500 to-accent-400">Education</span> <br />
-              Experience.
+              {settings.home?.hero?.title?.includes("Education") 
+                ? <>
+                    {settings.home.hero.title.split("Education")[0]}
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-500 to-accent-400">Education</span>
+                    {settings.home.hero.title.split("Education")[1]}
+                  </>
+                : settings.home?.hero?.title || "Elevate Education Experience."}
             </h1>
 
             <p className="text-lg md:text-xl text-gray-600 max-w-xl mx-auto lg:mx-0 leading-relaxed">
-              At SBS, we bridge the gap between curiosity and competence. 
-              Modern facilities meet timeless values for a holistic growth journey.
+              {settings.home?.hero?.subtitle || "At SBS, we bridge the gap between curiosity and competence. Modern facilities meet timeless values for a holistic growth journey."}
             </p>
 
             <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">
@@ -187,19 +237,19 @@ const HomePage = () => {
 
           <div className="relative hidden lg:block">
             <div className="relative rounded-[3rem] overflow-hidden shadow-2xl transform rotate-2 hover:rotate-0 transition-all duration-700 scale-105 border-[12px] border-white ring-1 ring-gray-200">
-              <img src={schoolImage} alt="School" className="w-full h-[600px] object-cover" />
+              <img src={getImageUrl(settings.home?.hero?.image, schoolImageDefault)} alt="School" className="w-full h-[600px] object-cover" />
               <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/60 to-transparent"></div>
               
               {/* Floating Stat Card */}
               <div className="absolute bottom-8 left-8 right-8 p-6 bg-white/10 backdrop-blur-xl rounded-3xl border border-white/20 shadow-2xl flex justify-between items-center text-white">
                 <div>
-                  <p className="text-3xl font-black">98.5%</p>
-                  <p className="text-xs uppercase font-bold tracking-widest opacity-80">Annual Success</p>
+                  <p className="text-3xl font-black">{stats[0]?.value || "98.5%"}</p>
+                  <p className="text-xs uppercase font-bold tracking-widest opacity-80">{stats[0]?.label || "Annual Success"}</p>
                 </div>
                 <div className="h-10 w-[1px] bg-white/20"></div>
                 <div>
-                  <p className="text-3xl font-black">50+</p>
-                  <p className="text-xs uppercase font-bold tracking-widest opacity-80">Awards Won</p>
+                  <p className="text-3xl font-black">{stats[1]?.value || "50+"}</p>
+                  <p className="text-xs uppercase font-bold tracking-widest opacity-80">{stats[1]?.label || "Awards Won"}</p>
                 </div>
               </div>
             </div>
@@ -211,10 +261,9 @@ const HomePage = () => {
       <section className="py-12 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 py-10 px-8 bg-neutral-bg-subtle/50 rounded-[3rem] border border-gray-100 shadow-inner">
-            <CountingStat value="1,200+" label="Alumni" />
-            <CountingStat value="15:1" label="Ratio" />
-            <CountingStat value="45+" label="Experience" />
-            <CountingStat value="100%" label="Security" />
+            {stats.map((s, idx) => (
+              <CountingStat key={idx} value={s.value} label={s.label} />
+            ))}
           </div>
         </div>
       </section>
@@ -228,14 +277,20 @@ const HomePage = () => {
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
             <div className="space-y-4">
               <div className="inline-block px-4 py-1.5 bg-accent-100/50 text-accent-700 text-xs font-black uppercase tracking-[0.2em] rounded-lg border border-accent-200">
-                Core Value Proposition
+                {settings.home?.advantage?.badge || "Core Value Proposition"}
               </div>
               <h2 className="text-4xl md:text-6xl font-black text-primary-950 leading-tight">
-                The SBS <br /> <span className="text-accent-500">Advantage.</span>
+                {settings.home?.advantage?.title?.includes("Advantage")
+                  ? <>
+                      {settings.home.advantage.title.split("Advantage")[0]}
+                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-500 to-accent-400">Advantage</span>
+                      {settings.home.advantage.title.split("Advantage")[1]}
+                    </>
+                  : settings.home?.advantage?.title || "The SBS Advantage."}
               </h2>
             </div>
             <p className="max-w-md text-gray-500 font-medium leading-relaxed">
-              We've spent 20 years perfecting an educational model that works. Modern in approach, historical in results.
+              {settings.home?.advantage?.subtitle || "We've spent 20 years perfecting an educational model that works. Modern in approach, historical in results."}
             </p>
           </div>
 
@@ -264,7 +319,7 @@ const HomePage = () => {
                           <Icon size={24} />
                         </div>
                         <span className="text-[9px] uppercase font-black tracking-widest text-primary-950/40 bg-gray-50 px-2 py-1 rounded-full border border-gray-100">
-                          {f.badge}
+                          {f.badge || "Elite"}
                         </span>
                       </div>
                       <h3 className="text-xl md:text-2xl font-black mb-2 text-primary-950 group-hover:text-accent-600 transition-colors leading-tight tracking-tight">
@@ -274,7 +329,7 @@ const HomePage = () => {
                         {f.desc}
                       </p>
                       
-                      {f.details && (
+                      {f.details && f.details.length > 0 && (
                         <div className="space-y-2 mt-4 border-t border-gray-100 pt-4">
                           {f.details.map((detail, idx) => (
                             <div key={idx} className="flex items-center gap-2 text-[11px] font-bold text-primary-950/80">
@@ -310,35 +365,31 @@ const HomePage = () => {
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div className="order-2 lg:order-1 relative">
             <div className="relative z-10 rounded-[3rem] overflow-hidden border-8 border-white/10 shadow-3xl">
-              <img src={principalImage} alt="Principal" className="w-full grayscale hover:grayscale-0 transition-all duration-700 h-[500px] object-cover object-top" />
+              <img src={getImageUrl(settings.home?.principal?.image, principalImageDefault)} alt="Principal" className="w-full grayscale hover:grayscale-0 transition-all duration-700 h-[500px] object-cover object-top" />
             </div>
             {/* Decoration */}
             <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-accent-500 rounded-full blur-[80px] opacity-30"></div>
           </div>
 
           <div className="text-white space-y-8 order-1 lg:order-2">
-            <h2 className="text-4xl md:text-5xl font-black">Leadership <br /> with Vision.</h2>
+            <h2 className="text-4xl md:text-5xl font-black">
+              {settings.home?.principal?.title || "Leadership with Vision."}
+            </h2>
             <p className="text-xl text-accent-100/80 italic leading-relaxed font-medium">
-              "We believe that every child is a unique universe. Our mission is to provide the light that helps them discover their own path to excellence."
+              "{settings.home?.principal?.quote || "We believe that every child is a unique universe. Our mission is to provide the light that helps them discover their own path to excellence."}"
             </p>
             <div className="space-y-2">
-              <p className="text-2xl font-bold text-accent-400">Mr. Sanjay Sharma</p>
-              <p className="uppercase tracking-[0.3em] text-xs font-black opacity-40">Principal & Founder</p>
+              <p className="text-2xl font-bold text-accent-400">{settings.home?.principal?.name || "Mr. Sanjay Sharma"}</p>
+              <p className="uppercase tracking-[0.3em] text-[10px] font-black opacity-40">{settings.home?.principal?.designation || "Principal & Founder"}</p>
             </div>
             
             <div className="flex items-center gap-6 pt-6">
-              <div className="flex items-center gap-2">
-                <CheckCircle size={20} className="text-accent-400" />
-                <span className="text-sm font-bold opacity-80 uppercase tracking-wider">Expertise</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle size={20} className="text-accent-400" />
-                <span className="text-sm font-bold opacity-80 uppercase tracking-wider">Integrity</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle size={20} className="text-accent-400" />
-                <span className="text-sm font-bold opacity-80 uppercase tracking-wider">Results</span>
-              </div>
+              {(settings.home?.principal?.points || ["Expertise", "Integrity", "Results"]).map((p, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <CheckCircle size={20} className="text-accent-400" />
+                  <span className="text-sm font-bold opacity-80 uppercase tracking-wider">{p}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -356,30 +407,34 @@ const HomePage = () => {
               <div className="lg:col-span-8 space-y-8">
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent-50 text-accent-700 text-xs font-black uppercase tracking-[0.3em] border border-accent-100">
                   <Trophy size={14} className="text-accent-500" />
-                  20 Years of Educational Leadership
+                  {settings.home?.cta?.badge || "20 Years of Educational Leadership"}
                 </div>
                 
                 <h2 className="text-5xl md:text-8xl font-black text-primary-950 leading-[0.9] tracking-tighter">
-                  Start your <br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-600 to-accent-400">Elite</span> <br />
-                  Journey.
+                  {settings.home?.cta?.title?.includes("Elite")
+                    ? <>
+                        {settings.home.cta.title.split("Elite")[0]}
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-600 to-accent-400">Elite</span>
+                        {settings.home.cta.title.split("Elite")[1]}
+                      </>
+                    : settings.home?.cta?.title || "Start your Elite Journey."}
                 </h2>
                 
                 <p className="text-gray-600 text-lg md:text-xl font-medium max-w-xl leading-relaxed">
-                  Join a tradition of excellence where we nurture future leaders for the Indian Armed Forces and global corporate spaces.
+                  {settings.home?.cta?.subtitle || "Join a tradition of excellence where we nurture future leaders for the Indian Armed Forces and global corporate spaces."}
                 </p>
 
                 <div className="flex flex-col sm:flex-row items-center gap-6 pt-4">
                   <Link to="/admissions" className="w-full sm:w-auto">
                     <Button className="w-full px-10 py-5 rounded-full bg-accent-500 text-white hover:bg-accent-600 active:scale-95 shadow-2xl shadow-accent-500/20 transition-all duration-300 font-black uppercase tracking-widest text-sm flex items-center justify-center gap-3 relative overflow-hidden group">
                       <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full animate-shimmer"></div>
-                      <span className="relative">Apply for Admission</span>
+                      <span className="relative">{settings.home?.cta?.primaryBtn || "Apply for Admission"}</span>
                       <ArrowRight size={18} className="relative group-hover:translate-x-2 transition-transform" />
                     </Button>
                   </Link>
                   <Link to="/gallery" className="w-full sm:w-auto">
                     <Button variant="ghost" className="w-full px-10 py-5 rounded-full border-2 border-primary-950/10 text-primary-950 hover:bg-gray-50 transition-all font-black uppercase tracking-widest text-sm flex items-center gap-2">
-                      <span>Virtual Tour</span>
+                      <span>{settings.home?.cta?.secondaryBtn || "Virtual Tour"}</span>
                       <div className="w-2 h-2 rounded-full bg-accent-500 animate-pulse"></div>
                     </Button>
                   </Link>
@@ -390,7 +445,7 @@ const HomePage = () => {
               <div className="lg:col-span-4 hidden lg:flex flex-col items-center justify-center relative">
                 {/* Massive Watermark */}
                 <div className="absolute inset-0 flex items-center justify-center -z-10 pointer-events-none">
-                  <span className="text-[25rem] font-black text-gray-100/70 leading-none select-none">SBS</span>
+                  <span className="text-[25rem] font-black text-gray-100/70 leading-none select-none uppercase">{settings.schoolName?.substring(0, 3) || "SBS"}</span>
                 </div>
                 
                 <div className="p-8 rounded-[3rem] bg-white border border-gray-100 shadow-2xl space-y-6 transform rotate-3 hover:rotate-0 transition-all duration-700">
@@ -405,8 +460,7 @@ const HomePage = () => {
                     </div>
                   </div>
                   <p className="text-primary-950 font-bold leading-tight">
-                    Trusted by <span className="text-accent-500">5000+</span> <br /> 
-                    parents across India.
+                    {settings.home?.cta?.trustText || "Trusted by 5000+ parents across India."}
                   </p>
                   <div className="pt-4 border-t border-gray-100 flex items-center gap-3">
                     <Star className="text-yellow-400 fill-yellow-400" size={16} />

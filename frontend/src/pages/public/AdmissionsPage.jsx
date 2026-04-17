@@ -18,14 +18,16 @@ import {
   Mail,
   MapPin,
   ClipboardList,
-  ChevronDown,
-  Info,
   Trophy,
-  ShieldCheck
+  ShieldCheck,
+  Loader2,
+  Zap
 } from "lucide-react";
-import schoolImage from "../../assets/school.png";
+import { useSiteSettings } from "../../context/SiteSettingsContext";
+import schoolImageDefault from "../../assets/school.png";
 
 const AdmissionsPage = () => {
+  const { settings, loading } = useSiteSettings();
   const [form, setForm] = useState({
     studentName: "",
     fatherName: "",
@@ -40,22 +42,16 @@ const AdmissionsPage = () => {
 
   const [photo, setPhoto] = useState(null);
   const [birthCertificate, setBirthCertificate] = useState(null);
-  const [schoolInfo, setSchoolInfo] = useState(null);
-
-  useEffect(() => {
-    const fetchInfo = async () => {
-      try {
-        const res = await axios.get("/public/school-info");
-        setSchoolInfo(res.data);
-      } catch (err) {
-        console.error("Failed to fetch group info");
-      }
-    };
-    fetchInfo();
-  }, []);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const getImageUrl = (url, fallback) => {
+    if (!url) return fallback;
+    if (url.startsWith('http')) return url;
+    const cleanPath = url.replace(/\\/g, '/');
+    return `http://localhost:5005/${cleanPath}`;
   };
 
   const submitForm = async (e) => {
@@ -90,7 +86,18 @@ const AdmissionsPage = () => {
     }
   };
 
-  const bentoProcess = [
+  if (loading || !settings) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white space-y-4">
+        <Loader2 className="w-12 h-12 text-accent-500 animate-spin" />
+        <p className="text-[10px] font-black uppercase tracking-[0.5em] text-gray-400">Restoring Admission Portal...</p>
+      </div>
+    );
+  }
+
+  const IconMap = { Search, FileText, Users, Trophy, BookOpen, ShieldCheck, ClipboardList, Star, Award, Sparkles, Phone, Mail, MapPin, CheckCircle, Zap };
+  
+  const defaultProcess = [
     { 
       title: "Discovery", 
       desc: "Connect with our admissions office to understand our unique vision.", 
@@ -125,6 +132,16 @@ const AdmissionsPage = () => {
     },
   ];
 
+  const bentoProcess = (settings.admissions?.process?.steps || []).length > 0
+    ? settings.admissions.process.steps.map((s, i) => ({
+        ...s,
+        icon: IconMap[s.icon] || defaultProcess[i % defaultProcess.length].icon,
+        color: defaultProcess[i % defaultProcess.length].color,
+        gridSpan: defaultProcess[i % defaultProcess.length].gridSpan,
+        badge: s.badge || defaultProcess[i % defaultProcess.length].badge
+      }))
+    : defaultProcess;
+
   return (
     <div className="min-h-screen bg-neutral-bg-subtle text-gray-900 font-body overflow-x-hidden">
 
@@ -142,18 +159,21 @@ const AdmissionsPage = () => {
         <div className="max-w-4xl mx-auto text-center space-y-10 relative z-10 animate-fade-up">
            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent-50 text-accent-700 text-xs font-black uppercase tracking-[0.3em] border border-accent-100 shadow-accent-glow">
               <Sparkles size={14} className="animate-pulse" />
-              <span>Session 2024-25 Open</span>
+              <span>{settings.admissions?.hero?.badge || "Session 2024-25 Open"}</span>
            </div>
 
            <h1 className="text-6xl md:text-8xl xl:text-9xl font-black tracking-tighter leading-[0.8] text-primary-950">
-             Shape Their <br />
-             <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-600 via-accent-500 to-accent-400">Elite</span> <br />
-             Future.
+             {settings.admissions?.hero?.title?.includes("Elite") 
+               ? <>
+                   {settings.admissions.hero.title.split("Elite")[0]}
+                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-600 via-accent-500 to-accent-400">Elite</span>
+                   {settings.admissions.hero.title.split("Elite")[1]}
+                 </>
+               : settings.admissions?.hero?.title || "Shape Their Elite Future."}
            </h1>
 
            <p className="text-xl md:text-2xl text-gray-500 max-w-2xl mx-auto leading-relaxed font-medium">
-             Bridge the gap between potential and excellence. 
-             Admissions are now open for visionary students.
+             {settings.admissions?.hero?.subtitle || "Bridge the gap between potential and excellence. Admissions are now open for visionary students."}
            </p>
 
            <div className="flex flex-col sm:flex-row items-center gap-6 justify-center pt-6">
@@ -176,14 +196,14 @@ const AdmissionsPage = () => {
         <div className="mt-20 relative w-full max-w-5xl mx-auto px-6 hidden md:block">
            <div className="absolute -top-10 -right-10 w-40 h-40 bg-accent-500/10 rounded-full blur-3xl"></div>
            <div className="relative rounded-[4rem] overflow-hidden shadow-3xl border-[20px] border-white ring-1 ring-gray-100 transform -rotate-1 hover:rotate-0 transition-all duration-1000">
-              <img src={schoolImage} alt="Admission Portal" className="w-full h-[400px] object-cover" />
+              <img src={getImageUrl(settings.admissions?.hero?.image, schoolImageDefault)} alt="Admission Portal" className="w-full h-[400px] object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-primary-950/60 to-transparent"></div>
               
               {/* Glass info tag */}
               <div className="absolute bottom-12 left-12 flex items-center gap-6 text-white">
                  <div className="p-6 bg-white/10 backdrop-blur-xl rounded-3xl border border-white/20">
-                    <p className="text-4xl font-black">15:1</p>
-                    <p className="text-[10px] uppercase font-bold tracking-widest opacity-60">Faculty Ratio</p>
+                    <p className="text-4xl font-black">{settings.home?.stats?.[3]?.value || "15:1"}</p>
+                    <p className="text-[10px] uppercase font-bold tracking-widest opacity-60">{settings.home?.stats?.[3]?.label || "Faculty Ratio"}</p>
                  </div>
                  <div className="space-y-1">
                     <h4 className="text-2xl font-black">Global Standards.</h4>
@@ -199,10 +219,16 @@ const AdmissionsPage = () => {
         <div className="max-w-7xl mx-auto flex flex-col items-center">
           <div className="text-center mb-20 space-y-4">
              <div className="inline-block px-4 py-1.5 bg-accent-100/50 text-accent-700 text-[10px] font-black uppercase tracking-[0.3em] rounded-lg">
-                The Admission Cycle
+                {settings.admissions?.process?.badge || "The Admission Cycle"}
              </div>
              <h2 className="text-5xl md:text-7xl font-black text-primary-950 leading-tight">
-               Four Steps to <span className="text-accent-500">Excellence.</span>
+                {settings.admissions?.process?.title?.includes("Excellence")
+                  ? <>
+                      {settings.admissions.process.title.split("Excellence")[0]}
+                      <span className="text-accent-500">Excellence</span>
+                      {settings.admissions.process.title.split("Excellence")[1]}
+                    </>
+                  : settings.admissions?.process?.title || "Four Steps to Excellence."}
              </h2>
           </div>
 
@@ -255,30 +281,38 @@ const AdmissionsPage = () => {
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="text-center mb-20">
              <h2 className="text-5xl md:text-6xl font-black text-white leading-tight">
-               Essentials for <span className="text-accent-400">Application.</span>
+               {settings.admissions?.checklist?.title?.includes("Application")
+                 ? <>
+                    {settings.admissions.checklist.title.split("Application")[0]}
+                    <span className="text-accent-400">Application</span>
+                    {settings.admissions.checklist.title.split("Application")[1]}
+                   </>
+                 : settings.admissions?.checklist?.title || "Essentials for Application."}
              </h2>
-             <p className="text-accent-100/40 text-sm font-black uppercase tracking-[0.4em] mt-4">Required Documents Checklist</p>
+             <p className="text-accent-100/40 text-sm font-black uppercase tracking-[0.4em] mt-4">{settings.admissions?.checklist?.subtitle || "Required Documents Checklist"}</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[
-              { title: "Birth Certificate", desc: "Original digital copy or scanned physical.", icon: ClipboardList },
-              { title: "Identity Records", desc: "Aadhar card of student and both parents.", icon: ShieldCheck },
-              { title: "Academic History", desc: "Previous report cards and transfer certs.", icon: BookOpen },
-              { title: "Contact Data", desc: "Valid email and active phone numbers.", icon: Phone },
-              { title: "Portrait Photos", desc: "4 recent passport size color photographs.", icon: Users },
-              { title: "Portal Access", desc: "Verified digital account on our platform.", icon: Sparkles },
-            ].map((card, i) => (
+            {(settings.admissions?.checklist?.items || [
+              { title: "Birth Certificate", desc: "Original digital copy or scanned physical.", icon: "ClipboardList" },
+              { title: "Identity Records", desc: "Aadhar card of student and both parents.", icon: "ShieldCheck" },
+              { title: "Academic History", desc: "Previous report cards and transfer certs.", icon: "BookOpen" },
+              { title: "Contact Data", desc: "Valid email and active phone numbers.", icon: "Phone" },
+              { title: "Portrait Photos", desc: "4 recent passport size color photographs.", icon: "Users" },
+              { title: "Portal Access", desc: "Verified digital account on our platform.", icon: "Sparkles" },
+            ]).map((card, i) => {
+              const Icon = IconMap[card.icon] || ClipboardList;
+              return (
               <div key={i} className="group p-8 rounded-[3rem] bg-white/5 border border-white/10 hover:bg-white/10 hover:border-accent-500/50 transition-all duration-500 flex flex-col gap-6 animate-fade-up" style={{ animationDelay: `${i * 100}ms` }}>
                  <div className="w-14 h-14 rounded-2xl bg-accent-500 text-white flex items-center justify-center group-hover:rotate-[360deg] transition-transform duration-1000">
-                    <card.icon size={24} />
+                    <Icon size={24} />
                  </div>
                  <div>
                     <h4 className="text-xl font-bold text-white mb-2">{card.title}</h4>
                     <p className="text-white/40 text-sm font-medium leading-relaxed">{card.desc}</p>
                  </div>
               </div>
-            ))}
+            )})}
           </div>
         </div>
       </section>
@@ -322,12 +356,12 @@ const AdmissionsPage = () => {
                         </label>
                         <div className="relative">
                           <div className="absolute left-0 top-1/2 -translate-y-1/2 text-primary-950/20 group-focus-within:text-accent-500 transition-colors">
-                             {/* No icon here for cleaner centered look, or keeping it */}
                              <field.icon size={20} className="ml-5" />
                           </div>
                           <input
                             type={field.type || "text"}
                             name={field.name}
+                            value={form[field.name]}
                             placeholder={`Enter ${field.label.toLowerCase()}`}
                             onChange={handleChange}
                             required={field.name !== "email" && field.name !== "prevSchool"}
@@ -342,6 +376,7 @@ const AdmissionsPage = () => {
                       <textarea
                         name="address"
                         rows="3"
+                        value={form.address}
                         placeholder="Complete residential address"
                         onChange={handleChange}
                         required
@@ -373,8 +408,8 @@ const AdmissionsPage = () => {
         </div>
 
         {/* Decorative Watermark */}
-        <div className="absolute -bottom-20 -left-20 text-[25rem] font-black text-primary-950/5 leading-none select-none pointer-events-none">
-           SBS
+        <div className="absolute -bottom-20 -left-20 text-[25rem] font-black text-primary-950/5 leading-none select-none pointer-events-none uppercase">
+           {settings.schoolName?.substring(0,3) || "SBS"}
         </div>
       </section>
 
@@ -397,15 +432,15 @@ const AdmissionsPage = () => {
                  <p className="text-xl text-gray-500 max-w-xl mx-auto font-medium">
                    Our dedicated enrollment councilors are available from 8:00 AM to 4:00 PM to guide you.
                  </p>
-                 <div className="flex flex-col sm:flex-row items-center justify-center gap-8 pt-6">
-                    <a href={`tel:${schoolInfo?.phone || "+919876543210"}`} className="text-center group cursor-pointer">
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-8 pt-6">
+                    <a href={`tel:${(settings.contact?.cards || []).find(c => c.title.toLowerCase().includes('phone'))?.details?.[0] || "+91 98765 43210"}`} className="text-center group cursor-pointer">
                        <p className="text-xs font-black uppercase tracking-[0.3em] text-primary-950 mb-2 opacity-40 group-hover:opacity-100 transition-opacity">Voice Support</p>
-                       <p className="text-3xl font-black text-primary-950 group-hover:text-accent-500 transition-colors">{schoolInfo?.phone || "+91 98765 43210"}</p>
+                       <p className="text-3xl font-black text-primary-950 group-hover:text-accent-500 transition-colors">{(settings.contact?.cards || []).find(c => c.title.toLowerCase().includes('phone'))?.details?.[0] || "+91 98765 43210"}</p>
                     </a>
                     <div className="h-10 w-[2px] bg-gray-100 hidden sm:block"></div>
-                    <a href={`mailto:${schoolInfo?.email || "admissions@sbs.edu"}`} className="text-center group cursor-pointer">
+                    <a href={`mailto:${(settings.contact?.cards || []).find(c => c.title.toLowerCase().includes('email'))?.details?.[0] || "admissions@sbsbadhwana.edu"}`} className="text-center group cursor-pointer">
                        <p className="text-xs font-black uppercase tracking-[0.3em] text-primary-950 mb-2 opacity-40 group-hover:opacity-100 transition-opacity">Email Portal</p>
-                       <p className="text-3xl font-black text-primary-950 group-hover:text-accent-500 transition-colors">{schoolInfo?.email || "admissions@sbs.edu"}</p>
+                       <p className="text-3xl font-black text-primary-950 group-hover:text-accent-500 transition-colors">{(settings.contact?.cards || []).find(c => c.title.toLowerCase().includes('email'))?.details?.[0] || "admissions@sbsbadhwana.edu"}</p>
                     </a>
                  </div>
               </div>
