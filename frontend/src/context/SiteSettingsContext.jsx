@@ -3,7 +3,7 @@ import axios from '../api/axios';
 
 const SiteSettingsContext = createContext();
 
-const INITIAL_SETTINGS = {
+export const INITIAL_SETTINGS = {
     schoolName: "SBS BADHWANA",
     logo: "",
     global: {
@@ -15,10 +15,12 @@ const INITIAL_SETTINGS = {
     },
     home: {
         hero: {
-            badge: "Excellence Since 2004",
+            badge: { text: "Excellence Since 2004", icon: "Sparkles" },
             title: "Inspiring Minds, Empowering Futures.",
             subtitle: "At SBS, we bridge the gap between curiosity and competence. Modern facilities meet timeless values.",
-            image: ""
+            image: "",
+            primaryBtn: { text: "Learn More", url: "/about" },
+            secondaryBtn: { text: "Contact Us", url: "/contact" }
         },
         stats: [
             { label: "Annual Success", value: "98.5%" },
@@ -27,7 +29,7 @@ const INITIAL_SETTINGS = {
             { label: "Faculty Ratio", value: "15:1" }
         ],
         advantage: {
-            badge: "Core Value Proposition",
+            badge: { text: "Core Value Proposition", icon: "Award" },
             title: "The SBS Advantage.",
             subtitle: "We've spent 20 years perfecting an educational model that works. Modern in approach, historical in results.",
             features: [
@@ -36,25 +38,29 @@ const INITIAL_SETTINGS = {
                     title: "Smart Learning", 
                     desc: "Interactive pedagogy for the 21st century focusing on critical thinking.",
                     badge: "Innovative",
+                    link: { text: "Learn More", url: "/about" },
                     details: ["Digital First Curricula", "Lego Robotics Lab", "Research-led Teaching"]
                 },
                 { 
                     icon: "Users", 
                     title: "Elite Alumni Network", 
                     desc: "Our graduates serve with distinction in the Indian Army, Air Force, and leading global corporations.",
-                    badge: "Professional"
+                    badge: "Professional",
+                    link: { text: "Learn More", url: "/about" }
                 },
                 { 
                     icon: "Shield", 
                     title: "Safe Haven", 
                     desc: "24/7 security and a supportive environment for holistic well-being.",
-                    badge: "Secure"
+                    badge: "Secure",
+                    link: { text: "Learn More", url: "/about" }
                 },
                 { 
                     icon: "Sparkles", 
                     title: "Creative Arts", 
                     desc: "Nurturing the next generation of artists and creators.",
-                    badge: "Creative"
+                    badge: "Creative",
+                    link: { text: "Learn More", url: "/about" }
                 }
             ]
         },
@@ -67,13 +73,11 @@ const INITIAL_SETTINGS = {
             points: ["Expertise", "Integrity", "Results"]
         },
         cta: {
-            badge: "20 Years of Educational Leadership",
-            title: "Start your Elite Journey.",
-            subtitle: "Join a tradition of excellence where we nurture future leaders.",
-            primaryBtn: "Apply for Admission",
-            secondaryBtn: "Virtual Tour",
-            trustText: "Trusted by 5000+ parents across India."
-        }
+            badge: { text: "20 Years of Educational Leadership", icon: "Trophy" },
+            title: "Join Our Legacy.",
+            subtitle: "Vision 2024",
+            primaryBtn: { text: "Apply Now", url: "/admissions" }
+        },
     },
     about: {
         hero: {
@@ -178,6 +182,24 @@ const INITIAL_SETTINGS = {
         contact: { showHero: true, showCards: true, showLocation: true, showForm: true, showFaqs: true }
     }
 };
+// Defensive deep merge logic
+export const mergeSettings = (defaults, data) => {
+    if (!data) return defaults;
+    const result = { ...defaults };
+    
+    Object.keys(data).forEach(key => {
+        if (data[key] && typeof data[key] === 'object' && !Array.isArray(data[key])) {
+            result[key] = (defaults[key] && typeof defaults[key] === 'object')
+                ? mergeSettings(defaults[key], data[key])
+                : data[key];
+        } else if (Array.isArray(data[key])) {
+            result[key] = data[key].length > 0 ? data[key] : defaults[key];
+        } else if (data[key] !== undefined && data[key] !== null) {
+            result[key] = data[key];
+        }
+    });
+    return result;
+};
 
 export const SiteSettingsProvider = ({ children }) => {
     const [settings, setSettings] = useState(INITIAL_SETTINGS);
@@ -187,25 +209,7 @@ export const SiteSettingsProvider = ({ children }) => {
         try {
             const response = await axios.get('/public/settings');
             
-            // Defensive deep merge logic
-            const mergeSettings = (defaults, data) => {
-                if (!data) return defaults;
-                const result = { ...defaults };
-                
-                Object.keys(data).forEach(key => {
-                    if (data[key] && typeof data[key] === 'object' && !Array.isArray(data[key])) {
-                        result[key] = (defaults[key] && typeof defaults[key] === 'object')
-                            ? mergeSettings(defaults[key], data[key])
-                            : data[key];
-                    } else if (Array.isArray(data[key])) {
-                        result[key] = data[key].length > 0 ? data[key] : defaults[key];
-                    } else if (data[key] !== undefined && data[key] !== null) {
-                        result[key] = data[key];
-                    }
-                });
-                return result;
-            };
-
+            // Use external mergeSettings
             const finalSettings = mergeSettings(INITIAL_SETTINGS, response.data);
             setSettings(finalSettings);
         } catch (error) {
@@ -230,6 +234,20 @@ export const SiteSettingsProvider = ({ children }) => {
         // Notify parent editor that the iframe is ready to receive live configurations
         if (window.parent !== window) {
             window.parent.postMessage({ type: 'IFRAME_READY' }, '*');
+            
+            // Prevent navigation in editor mode
+            const preventNav = (e) => {
+                const link = e.target.closest('a, button');
+                if (link) {
+                    e.preventDefault();
+                }
+            };
+            document.addEventListener('click', preventNav, true);
+            
+            return () => {
+                window.removeEventListener('message', handleMessage);
+                document.removeEventListener('click', preventNav, true);
+            };
         }
 
         return () => window.removeEventListener('message', handleMessage);

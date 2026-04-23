@@ -46,14 +46,15 @@ import {
   Tablet,
   X,
   ArrowLeft,
-  MousePointerClick
+  MousePointerClick,
+  RotateCcw
 } from "lucide-react";
 import { toast } from "react-toastify";
 import useAuthStore from "../../stores/authStore.js";
 import adminService from "../../api/adminService";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
-import { useSiteSettings } from "../../context/SiteSettingsContext";
+import { useSiteSettings, INITIAL_SETTINGS, mergeSettings } from "../../context/SiteSettingsContext";
 
 
 // --- HOISTED SHARED UI COMPONENTS (GLOBAL SCOPE) ---
@@ -134,7 +135,12 @@ const AdminSiteEditor = () => {
     const [uploadingImage, setUploadingImage] = useState(false);
     const [showPreview, setShowPreview] = useState(true);
     const [previewDevice, setPreviewDevice] = useState("desktop"); // desktop, tablet, mobile
+    const [zoom, setZoom] = useState(null); // null means auto-scale
+    const [pan, setPan] = useState({ x: 0, y: 0 });
+    const [isDragging, setIsDragging] = useState(false);
+    const [lastPos, setLastPos] = useState({ x: 0, y: 0 });
     const [containerWidth, setContainerWidth] = useState(0);
+    const [containerHeight, setContainerHeight] = useState(0);
     const containerRef = useRef(null);
     const iframeRef = useRef(null);
 
@@ -144,6 +150,7 @@ const AdminSiteEditor = () => {
         const observer = new ResizeObserver((entries) => {
             for (let entry of entries) {
                 setContainerWidth(entry.contentRect.width);
+                setContainerHeight(entry.contentRect.height);
             }
         });
 
@@ -154,7 +161,8 @@ const AdminSiteEditor = () => {
     const fetchSettings = async () => {
         try {
             const data = await adminService.getSiteSettings(token);
-            setSettings(data);
+            const merged = mergeSettings(INITIAL_SETTINGS, data);
+            setSettings(merged);
             setLoading(false);
         } catch (error) {
             toast.error("Failed to sync site configurations.");
@@ -316,8 +324,15 @@ const AdminSiteEditor = () => {
                 {/* Contextual Top Navigation */}
                 {!selectedElement ? (
                     <div className="flex border-b border-gray-100 overflow-x-auto no-scrollbar bg-gray-50/50 p-3 gap-2 relative z-10 shrink-0 shadow-inner">
-                        <SidebarBtn id="global" activeTab={activeTab} setActiveTab={setActiveTab} icon={Globe} label="Brand & Global" />
-                        <SidebarBtn id="theme" activeTab={activeTab} setActiveTab={setActiveTab} icon={Palette} label="Theme Engine" />
+                        <SidebarBtn id="global" activeTab={activeTab} setActiveTab={setActiveTab} icon={Globe} label="Global" />
+                        <SidebarBtn id="theme" activeTab={activeTab} setActiveTab={setActiveTab} icon={Palette} label="Theme" />
+                        <SidebarBtn id="layout" activeTab={activeTab} setActiveTab={setActiveTab} icon={LayoutTemplate} label="Layout" />
+                        <SidebarBtn id="home" activeTab={activeTab} setActiveTab={setActiveTab} icon={Monitor} label="Home" />
+                        <SidebarBtn id="about" activeTab={activeTab} setActiveTab={setActiveTab} icon={BookOpen} label="About" />
+                        <SidebarBtn id="admissions" activeTab={activeTab} setActiveTab={setActiveTab} icon={FileText} label="Admissions" />
+                        <SidebarBtn id="contact" activeTab={activeTab} setActiveTab={setActiveTab} icon={Phone} label="Contact" />
+                        <SidebarBtn id="footer" activeTab={activeTab} setActiveTab={setActiveTab} icon={Copyright} label="Footer" />
+                        <SidebarBtn id="gallery" activeTab={activeTab} setActiveTab={setActiveTab} icon={ImageIcon} label="Gallery" />
                     </div>
                 ) : (
                     <div className="flex border-b border-gray-100 bg-gray-50/50 p-4 relative z-10 shrink-0 shadow-inner items-center gap-3">
@@ -357,6 +372,207 @@ const AdminSiteEditor = () => {
                                             getImageUrl={getImageUrl} 
                                             uploadingImage={uploadingImage} 
                                         />
+                                    )}
+                                    {selectedElement.type === "button" && (
+                                        <div className="space-y-4">
+                                            <label className="text-xs font-bold text-gray-600 uppercase tracking-widest">{selectedElement.label}</label>
+                                            <Input placeholder="Button Text" value={getNestedField(settings, `${selectedElement.path}.primaryBtn`) || ""} onChange={(e) => updateNestedField(`${selectedElement.path}.primaryBtn`, e.target.value)} />
+                                            <p className="text-[11px] text-gray-400 font-medium">Link destination is configured globally. Use Navigation Tabs to change destinations.</p>
+                                        </div>
+                                    )}
+                                    {selectedElement.type === "stats" && (
+                                        <div className="space-y-6">
+                                            <div className="flex items-center justify-between">
+                                                <label className="text-xs font-bold text-gray-600 uppercase tracking-widest">{selectedElement.label}</label>
+                                                <button onClick={() => {
+                                                    const newStats = [...(getNestedField(settings, selectedElement.path) || []), { label: "New Stat", value: "0" }];
+                                                    updateNestedField(selectedElement.path, newStats);
+                                                }} className="px-3 py-1.5 bg-accent-50 text-accent-700 text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-accent-100 transition-colors">Add Stat</button>
+                                            </div>
+                                            {(getNestedField(settings, selectedElement.path) || []).map((stat, idx) => (
+                                                <div key={idx} className="bg-gray-50 p-5 rounded-xl border border-gray-100 relative group">
+                                                    <button onClick={() => {
+                                                        const newStats = getNestedField(settings, selectedElement.path).filter((_, i) => i !== idx);
+                                                        updateNestedField(selectedElement.path, newStats);
+                                                    }} className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-all text-red-500 hover:scale-110"><Trash2 size={14} /></button>
+                                                    <div className="space-y-3">
+                                                        <Input placeholder="Stat Number (e.g. 50+)" value={stat.value} onChange={(e) => {
+                                                            const newStats = [...getNestedField(settings, selectedElement.path)];
+                                                            newStats[idx].value = e.target.value;
+                                                            updateNestedField(selectedElement.path, newStats);
+                                                        }} />
+                                                        <Input placeholder="Stat Label" value={stat.label} onChange={(e) => {
+                                                            const newStats = [...getNestedField(settings, selectedElement.path)];
+                                                            newStats[idx].label = e.target.value;
+                                                            updateNestedField(selectedElement.path, newStats);
+                                                        }} />
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                    {selectedElement.type === "features" && (
+                                        <div className="space-y-6">
+                                            <div className="flex items-center justify-between">
+                                                <label className="text-xs font-bold text-gray-600 uppercase tracking-widest">{selectedElement.label}</label>
+                                                <button onClick={() => {
+                                                    const newFeats = [...(getNestedField(settings, selectedElement.path) || []), { title: "New Feature", badge: "Core", desc: "Description here", icon: "Star" }];
+                                                    updateNestedField(selectedElement.path, newFeats);
+                                                }} className="px-3 py-1.5 bg-accent-50 text-accent-700 text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-accent-100 transition-colors">Add Box</button>
+                                            </div>
+                                            {(getNestedField(settings, selectedElement.path) || []).map((feat, idx) => (
+                                                <div key={idx} className="bg-gray-50 p-5 rounded-xl border border-gray-100 relative group">
+                                                    <button onClick={() => {
+                                                        const newFeats = getNestedField(settings, selectedElement.path).filter((_, i) => i !== idx);
+                                                        updateNestedField(selectedElement.path, newFeats);
+                                                    }} className="absolute top-2 right-2 text-red-500 hover:scale-110 opacity-0 group-hover:opacity-100 transition-all"><Trash2 size={14} /></button>
+                                                    <div className="space-y-4">
+                                                        <div className="grid grid-cols-2 gap-3">
+                                                            <Input placeholder="Heading" value={feat.title} onChange={(e) => {
+                                                                const newFeats = [...getNestedField(settings, selectedElement.path)];
+                                                                newFeats[idx].title = e.target.value;
+                                                                updateNestedField(selectedElement.path, newFeats);
+                                                            }} />
+                                                            <Input placeholder="Badge" value={feat.badge} onChange={(e) => {
+                                                                const newFeats = [...getNestedField(settings, selectedElement.path)];
+                                                                newFeats[idx].badge = e.target.value;
+                                                                updateNestedField(selectedElement.path, newFeats);
+                                                            }} />
+                                                        </div>
+                                                        <select className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-accent-500 transition-colors" value={feat.icon || "Star"} onChange={(e) => {
+                                                            const newFeats = [...getNestedField(settings, selectedElement.path)];
+                                                            newFeats[idx].icon = e.target.value;
+                                                            updateNestedField(selectedElement.path, newFeats);
+                                                        }}>
+                                                            <option value="Star">Star Icon</option>
+                                                            <option value="BookOpen">Book Icon</option>
+                                                            <option value="Users">Users Icon</option>
+                                                            <option value="Shield">Shield Icon</option>
+                                                            <option value="Sparkles">Sparkles Icon</option>
+                                                            <option value="Target">Target Icon</option>
+                                                            <option value="Award">Award Icon</option>
+                                                        </select>
+                                                        <div className="grid grid-cols-2 gap-3">
+                                                            <Input placeholder="Link Text" value={feat.link?.text || "Learn More"} onChange={(e) => {
+                                                                const newFeats = [...getNestedField(settings, selectedElement.path)];
+                                                                if (!newFeats[idx].link) newFeats[idx].link = {};
+                                                                newFeats[idx].link.text = e.target.value;
+                                                                updateNestedField(selectedElement.path, newFeats);
+                                                            }} />
+                                                            <Input placeholder="Link URL" value={feat.link?.url || "/about"} onChange={(e) => {
+                                                                const newFeats = [...getNestedField(settings, selectedElement.path)];
+                                                                if (!newFeats[idx].link) newFeats[idx].link = {};
+                                                                newFeats[idx].link.url = e.target.value;
+                                                                updateNestedField(selectedElement.path, newFeats);
+                                                            }} />
+                                                        </div>
+                                                        <textarea placeholder="Description..." className="w-full px-4 py-3 bg-white rounded-xl text-sm font-medium border border-gray-200 outline-none focus:border-accent-500 min-h-[80px]" value={feat.desc} onChange={(e) => {
+                                                            const newFeats = [...getNestedField(settings, selectedElement.path)];
+                                                            newFeats[idx].desc = e.target.value;
+                                                            updateNestedField(selectedElement.path, newFeats);
+                                                        }} />
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {selectedElement.type === "icon" && (
+                                        <div className="space-y-4">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <div className="w-1.5 h-6 bg-accent-500 rounded-full"></div>
+                                                <label className="text-xs font-bold text-gray-900 uppercase tracking-widest">{selectedElement.label}</label>
+                                            </div>
+                                            <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100">
+                                                <label className="text-[11px] font-bold text-gray-400 mb-3 block uppercase tracking-tight">Select Visual Icon</label>
+                                                <select className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-accent-500 focus:ring-4 focus:ring-accent-500/5 transition-all" value={getNestedField(settings, selectedElement.path) || "Star"} onChange={(e) => updateNestedField(selectedElement.path, e.target.value)}>
+                                                    <option value="Star">Star (General)</option>
+                                                    <option value="BookOpen">Book (Education)</option>
+                                                    <option value="Users">Users (Community)</option>
+                                                    <option value="Shield">Shield (Security)</option>
+                                                    <option value="Sparkles">Sparkles (Quality)</option>
+                                                    <option value="Target">Target (Goal)</option>
+                                                    <option value="Award">Award (Achievement)</option>
+                                                    <option value="Zap">Zap (Dynamic)</option>
+                                                    <option value="Search">Search (Discovery)</option>
+                                                    <option value="Trophy">Trophy (Victory)</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {selectedElement.type === "single-stat" && (
+                                        <div className="space-y-6">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <div className="w-1.5 h-6 bg-accent-500 rounded-full"></div>
+                                                <label className="text-xs font-bold text-gray-900 uppercase tracking-widest">{selectedElement.label}</label>
+                                            </div>
+                                            <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 space-y-6">
+                                                <Input label="Metric Value" value={getNestedField(settings, selectedElement.path)?.value || ""} onChange={(e) => {
+                                                    const current = getNestedField(settings, selectedElement.path) || {};
+                                                    updateNestedField(selectedElement.path, { ...current, value: e.target.value });
+                                                }} />
+                                                <Input label="Metric Label" value={getNestedField(settings, selectedElement.path)?.label || ""} onChange={(e) => {
+                                                    const current = getNestedField(settings, selectedElement.path) || {};
+                                                    updateNestedField(selectedElement.path, { ...current, label: e.target.value });
+                                                }} />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {selectedElement.type === "badge" && (
+                                        <div className="space-y-6">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <div className="w-1.5 h-6 bg-accent-500 rounded-full"></div>
+                                                <label className="text-xs font-bold text-gray-900 uppercase tracking-widest">{selectedElement.label}</label>
+                                            </div>
+                                            <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 space-y-6">
+                                                <Input label="Badge Text" value={getNestedField(settings, selectedElement.path)?.text || ""} onChange={(e) => {
+                                                    const current = getNestedField(settings, selectedElement.path) || {};
+                                                    updateNestedField(selectedElement.path, { ...current, text: e.target.value });
+                                                }} />
+                                                
+                                                <div className="space-y-3">
+                                                    <label className="text-[11px] font-bold text-gray-400 uppercase tracking-tight">Badge Icon</label>
+                                                    <select className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-accent-500 transition-all" value={getNestedField(settings, selectedElement.path)?.icon || "Star"} onChange={(e) => {
+                                                        const current = getNestedField(settings, selectedElement.path) || {};
+                                                        updateNestedField(selectedElement.path, { ...current, icon: e.target.value });
+                                                    }}>
+                                                        <option value="Star">Star</option>
+                                                        <option value="Sparkles">Sparkles</option>
+                                                        <option value="Trophy">Trophy</option>
+                                                        <option value="Award">Award</option>
+                                                        <option value="Target">Target</option>
+                                                        <option value="Zap">Zap</option>
+                                                        <option value="ShieldCheck">Shield</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {selectedElement.type === "link" && (
+                                        <div className="space-y-6">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <div className="w-1.5 h-6 bg-accent-500 rounded-full"></div>
+                                                <label className="text-xs font-bold text-gray-900 uppercase tracking-widest">{selectedElement.label}</label>
+                                            </div>
+                                            <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 space-y-6">
+                                                <Input label="Display Text" value={getNestedField(settings, selectedElement.path)?.text || ""} onChange={(e) => {
+                                                    const current = getNestedField(settings, selectedElement.path) || {};
+                                                    updateNestedField(selectedElement.path, { ...current, text: e.target.value });
+                                                }} />
+                                                <Input label="Action URL / Page Route" value={getNestedField(settings, selectedElement.path)?.url || ""} onChange={(e) => {
+                                                    const current = getNestedField(settings, selectedElement.path) || {};
+                                                    updateNestedField(selectedElement.path, { ...current, url: e.target.value });
+                                                }} />
+                                                <div className="p-4 bg-white/50 rounded-xl border border-dashed border-gray-200">
+                                                    <p className="text-[10px] text-gray-400 font-medium leading-relaxed">
+                                                        Routes like <code className="text-accent-600 font-bold">/about</code> or <code className="text-accent-600 font-bold">/contact</code> work for internal pages. Use <code className="text-accent-600 font-bold">https://</code> for external links.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
                                     )}
                                 </section>
                             </div>
@@ -1061,24 +1277,55 @@ const AdminSiteEditor = () => {
                         </div>
                     </div>
                     
-                    <div className="flex items-center bg-gray-100/80 p-1 rounded-lg border border-gray-200/50">
-                        {[
-                            { id: "mobile", icon: Smartphone },
-                            { id: "tablet", icon: Tablet },
-                            { id: "desktop", icon: Monitor }
-                        ].map(device => (
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
+                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-tight">Zoom</span>
+                            <input 
+                                type="range" 
+                                min="15" 
+                                max="150" 
+                                value={zoom !== null ? zoom : 50} 
+                                onChange={(e) => setZoom(parseInt(e.target.value))}
+                                className="w-20 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-accent-500"
+                            />
                             <button 
-                                key={device.id}
-                                onClick={() => setPreviewDevice(device.id)}
-                                className={`p-2 rounded-md transition-all duration-300 ${
-                                    previewDevice === device.id 
-                                    ? "bg-white text-primary-950 shadow-sm border border-gray-200/60" 
-                                    : "text-gray-400 hover:text-gray-700"
-                                }`}
+                                onClick={() => setZoom(null)}
+                                className={`text-[8px] font-black px-1.5 py-0.5 rounded transition-colors ${zoom === null ? "bg-accent-500 text-white shadow-sm" : "bg-gray-200 text-gray-500 hover:bg-gray-300"}`}
                             >
-                                <device.icon size={14} />
+                                AUTO
                             </button>
-                        ))}
+                        </div>
+
+                        <div className="flex items-center bg-gray-100/80 p-1 rounded-lg border border-gray-200/50">
+                            {[
+                                { id: "mobile", icon: Smartphone },
+                                { id: "tablet", icon: Tablet },
+                                { id: "desktop", icon: Monitor }
+                            ].map(device => (
+                                <button 
+                                    key={device.id}
+                                    onClick={() => setPreviewDevice(device.id)}
+                                    className={`p-2 rounded-md transition-all duration-300 ${
+                                        previewDevice === device.id 
+                                        ? "bg-white text-primary-950 shadow-sm border border-gray-200/60" 
+                                        : "text-gray-400 hover:text-gray-700"
+                                    }`}
+                                >
+                                    <device.icon size={14} />
+                                </button>
+                            ))}
+                        </div>
+
+                        <button 
+                            onClick={() => {
+                                setPan({ x: 0, y: 0 });
+                                setZoom(null);
+                            }}
+                            className="p-2 text-gray-400 hover:text-accent-600 hover:bg-accent-50 rounded-lg transition-all"
+                            title="Reset View"
+                        >
+                            <RotateCcw size={14} />
+                        </button>
                     </div>
 
                     <div className="flex items-center gap-3">
@@ -1095,49 +1342,104 @@ const AdminSiteEditor = () => {
                 {/* Canvas Frame */}
                 <div 
                     ref={containerRef}
-                    className="flex-1 overflow-hidden p-6 md:p-10 flex items-center justify-center relative bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px]"
+                    onMouseDown={(e) => {
+                        // Allow dragging if clicking the background or the dot-grid wrapper
+                        if (e.target === containerRef.current || e.target.getAttribute('data-canvas-bg')) {
+                            setIsDragging(true);
+                            setLastPos({ x: e.clientX, y: e.clientY });
+                        }
+                    }}
+                    onMouseMove={(e) => {
+                        if (!isDragging) return;
+                        const dx = e.clientX - lastPos.x;
+                        const dy = e.clientY - lastPos.y;
+                        setPan(prev => ({ x: prev.x + dx, y: prev.y + dy }));
+                        setLastPos({ x: e.clientX, y: e.clientY });
+                    }}
+                    onMouseUp={() => setIsDragging(false)}
+                    onMouseLeave={() => setIsDragging(false)}
+                    style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+                    className="flex-1 overflow-hidden relative bg-[#f0f2f5] bg-[radial-gradient(#d1d5db_1px,transparent_1px)] [background-size:24px_24px]"
                 >
-                    <div 
-                        className={`bg-white shadow-2xl transition-all duration-700 ease-in-out relative flex flex-col overflow-hidden ring-1 ring-gray-200/50 ${
-                            previewDevice === "mobile" ? "w-[375px] h-full rounded-[3rem] ring-[12px] ring-gray-900" :
-                            previewDevice === "tablet" ? "w-[768px] h-full rounded-[2.5rem] ring-[10px] ring-gray-900" :
-                            "w-full h-full rounded-2xl"
-                        }`}
-                        style={previewDevice === "desktop" ? {
-                            width: "1440px",
-                            height: `${(100 / Math.max(0.1, Math.min(1, (containerWidth - 80) / 1440)))}%`,
-                            maxWidth: "none",
-                            transform: `scale(${Math.max(0.1, Math.min(1, (containerWidth - 80) / 1440))})`,
-                            transformOrigin: "top center",
-                            position: "absolute",
-                            top: "40px",
-                            left: "50%",
-                            marginLeft: "-720px",
-                        } : {}}
-                    >
-                        <div className="flex-1 overflow-auto bg-white">
-                            <iframe 
-                                ref={iframeRef}
-                                src="/" 
-                                className="w-full h-full border-none"
-                                title="Institutional Site Preview"
-                                key={previewDevice}
-                                onLoad={() => {
-                                    if (iframeRef.current && settings) {
-                                        iframeRef.current.contentWindow.postMessage({
-                                            type: 'LIVE_PREVIEW_UPDATE',
-                                            settings: settings
-                                        }, '*');
-                                    }
-                                }}
-                            />
-                        </div>
-                        {previewDevice !== "desktop" && (
-                            <div className="h-6 bg-gray-900 flex items-center justify-center">
-                                <div className="w-12 h-1 bg-white/20 rounded-full"></div>
+                    {(() => {
+                        // More conservative auto-scale to ensure room for panning
+                        const scaleW = (containerWidth - 100) / 1440;
+                        const scaleH = (containerHeight - 100) / 900;
+                        const autoScale = Math.max(0.15, Math.min(0.8, Math.min(scaleW, scaleH)));
+                        const currentScale = zoom !== null ? (zoom / 100) : autoScale;
+
+                        return (
+                            <div 
+                                data-canvas-bg="true"
+                                className="w-full h-full flex items-center justify-center p-8 relative"
+                            >
+                                {/* THE SCALED DEVICE CONTAINER */}
+                                <div 
+                                    style={{
+                                        width: previewDevice === "desktop" ? "1440px" : (previewDevice === "tablet" ? "768px" : "375px"),
+                                        height: previewDevice === "desktop" ? "900px" : "100%",
+                                        transform: `scale(${currentScale})`,
+                                        transformOrigin: "center center",
+                                        position: "absolute",
+                                        left: `calc(50% + ${pan.x}px)`,
+                                        top: `calc(50% + ${pan.y}px)`,
+                                        marginLeft: previewDevice === "desktop" ? "-720px" : (previewDevice === "tablet" ? "-384px" : "-187.5px"),
+                                        marginTop: previewDevice === "desktop" ? "-450px" : "-50%",
+                                        flexShrink: 0,
+                                        zIndex: 10
+                                    }}
+                                    className={`bg-white shadow-[0_40px_100px_-20px_rgba(0,0,0,0.3)] transition-all duration-500 ease-out relative flex flex-col overflow-hidden border border-gray-200/50 ${
+                                        previewDevice === "mobile" ? "rounded-[3.5rem] ring-[12px] ring-gray-900" :
+                                        previewDevice === "tablet" ? "rounded-[2.5rem] ring-[10px] ring-gray-900" :
+                                        "rounded-xl"
+                                    }`}
+                                >
+                                    {/* Browser Header (For Desktop) */}
+                                    {previewDevice === "desktop" && (
+                                        <div className="h-10 bg-gray-50 border-b border-gray-200 flex items-center px-4 gap-2 shrink-0">
+                                            <div className="flex gap-1.5">
+                                                <div className="w-2.5 h-2.5 rounded-full bg-[#FF5F57]"></div>
+                                                <div className="w-2.5 h-2.5 rounded-full bg-[#FEBC2E]"></div>
+                                                <div className="w-2.5 h-2.5 rounded-full bg-[#28C840]"></div>
+                                            </div>
+                                            <div className="mx-auto bg-white border border-gray-200 rounded-md h-6 w-1/3 flex items-center px-3 justify-center">
+                                                <span className="text-[10px] font-medium text-gray-400 truncate">institutional-portal.edu</span>
+                                            </div>
+                                            <div className="flex items-center gap-1.5 text-gray-400">
+                                                <RotateCcw size={12} />
+                                                <span className="text-[9px] font-bold text-gray-300">{(currentScale * 100).toFixed(0)}%</span>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="flex-1 overflow-auto bg-white relative">
+                                        <iframe 
+                                            ref={iframeRef}
+                                            src="/" 
+                                            className="w-full h-full border-none"
+                                            title="Institutional Site Preview"
+                                            key={previewDevice}
+                                            onLoad={() => {
+                                                if (iframeRef.current && settings) {
+                                                    iframeRef.current.contentWindow.postMessage({
+                                                        type: 'LIVE_PREVIEW_UPDATE',
+                                                        settings: settings
+                                                    }, '*');
+                                                }
+                                            }}
+                                        />
+                                    </div>
+
+                                    {/* Mobile/Tablet Home Button Area */}
+                                    {previewDevice !== "desktop" && (
+                                        <div className="h-8 bg-gray-900 flex items-center justify-center shrink-0">
+                                            <div className="w-16 h-1 bg-white/20 rounded-full"></div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                        )}
-                    </div>
+                        );
+                    })()}
                 </div>
 
             </div>

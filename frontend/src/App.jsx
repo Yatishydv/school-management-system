@@ -1,5 +1,5 @@
 // frontend/src/App.jsx
-import React from "react";
+import React, { useState } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 
 // PUBLIC COMPONENTS
@@ -77,7 +77,9 @@ const ScrollToTop = () => {
 };
 
 const App = () => {
+  const [isAdminAuth, setIsAdminAuth] = useState(false);
   const location = useLocation();
+
   useAutoLogout(5); // Auto logout after 5 min of inactivity
 
   const isDashboardRoute =

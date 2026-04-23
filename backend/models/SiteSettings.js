@@ -15,10 +15,21 @@ const siteSettingsSchema = new mongoose.Schema({
     // --- HOME PAGE ---
     home: {
         hero: {
-            badge: { type: String, default: "Excellence Since 2004" },
+            badge: {
+                text: { type: String, default: "Excellence Since 2004" },
+                icon: { type: String, default: "Sparkles" }
+            },
             title: { type: String, default: "Inspiring Minds, Empowering Futures." },
             subtitle: { type: String, default: "At SBS, we bridge the gap between curiosity and competence. Modern facilities meet timeless values." },
-            image: { type: String }
+            image: { type: String },
+            primaryBtn: {
+                text: { type: String, default: "Learn More" },
+                url: { type: String, default: "/about" }
+            },
+            secondaryBtn: {
+                text: { type: String, default: "Contact Us" },
+                url: { type: String, default: "/contact" }
+            }
         },
         stats: [
             { label: { type: String, default: "Annual Success" }, value: { type: String, default: "98.5%" } },
@@ -27,7 +38,10 @@ const siteSettingsSchema = new mongoose.Schema({
             { label: { type: String, default: "Faculty Ratio" }, value: { type: String, default: "15:1" } }
         ],
         advantage: {
-            badge: { type: String, default: "Core Value Proposition" },
+            badge: {
+                text: { type: String, default: "Core Value Proposition" },
+                icon: { type: String, default: "Award" }
+            },
             title: { type: String, default: "The SBS Advantage." },
             subtitle: { type: String, default: "We've spent 20 years perfecting an educational model that works. Modern in approach, historical in results." },
             features: [
@@ -36,6 +50,10 @@ const siteSettingsSchema = new mongoose.Schema({
                     title: { type: String, default: "Smart Learning" }, 
                     desc: { type: String, default: "Interactive pedagogy for the 21st century focusing on critical thinking." },
                     badge: { type: String, default: "Innovative" },
+                    link: {
+                        text: { type: String, default: "Learn More" },
+                        url: { type: String, default: "/about" }
+                    },
                     details: [{ type: String }]
                 }
             ]
@@ -49,12 +67,16 @@ const siteSettingsSchema = new mongoose.Schema({
             points: [{ type: String, default: "Expertise" }]
         },
         cta: {
-            badge: { type: String, default: "20 Years of Educational Leadership" },
-            title: { type: String, default: "Start your Elite Journey." },
-            subtitle: { type: String, default: "Join a tradition of excellence where we nurture future leaders." },
-            primaryBtn: { type: String, default: "Apply for Admission" },
-            secondaryBtn: { type: String, default: "Virtual Tour" },
-            trustText: { type: String, default: "Trusted by 5000+ parents across India." }
+            badge: {
+                text: { type: String, default: "20 Years of Educational Leadership" },
+                icon: { type: String, default: "Trophy" }
+            },
+            title: { type: String, default: "Join Our Legacy." },
+            subtitle: { type: String, default: "Vision 2024" },
+            primaryBtn: {
+                text: { type: String, default: "Apply Now" },
+                url: { type: String, default: "/admissions" }
+            }
         }
     },
 

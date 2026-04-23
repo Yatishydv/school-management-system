@@ -15,7 +15,13 @@ import {
   Zap,
   Search,
   FileText,
-  Quote
+  Quote,
+  Target,
+  ShieldCheck,
+  ClipboardList,
+  Headphones,
+  Mail,
+  Calendar
 } from "lucide-react";
 import { useSiteSettings } from "../../context/SiteSettingsContext";
 import schoolImageDefault from "../../assets/school.png";
@@ -112,8 +118,17 @@ const CountingStat = ({ value, label, duration = 2500 }) => {
   );
 };
 
+const DynamicIcon = ({ name, size = 24, className = "" }) => {
+  const IconMap = { 
+    BookOpen, Users, Shield, Sparkles, Award, Star, Zap, Search, FileText, Trophy,
+    ShieldCheck, ClipboardList, Headphones, Mail, Calendar, Target
+  };
+  const Icon = IconMap[name] || Star;
+  return <Icon size={size} className={className} />;
+};
+
 const HomePage = () => {
-  const { settings, loading } = useSiteSettings();
+  const { settings, loading, isEditorMode } = useSiteSettings();
 
   const getImageUrl = (url, fallback) => {
     if (!url) return fallback;
@@ -136,13 +151,12 @@ const HomePage = () => {
   const stats = settings.home?.stats || [];
   const features = (settings.home?.advantage?.features || []).map((f, i) => ({
     ...f,
-    icon: IconMap[f.icon] || Star,
     color: i % 4 === 0 ? "bg-blue-50 text-blue-600" : i % 4 === 1 ? "bg-accent-100 text-accent-700" : i % 4 === 2 ? "bg-purple-50 text-purple-600" : "bg-pink-50 text-pink-600",
     gridSpan: i === 0 ? "md:col-span-1 md:row-span-2" : i === 1 ? "md:col-span-2 md:row-span-1" : "md:col-span-1 md:row-span-1",
   }));
 
   const theme = settings.theme || { primaryColor: "#0a0a0a", accentColor: "#10b981" };
-  const layout = settings.layout?.home || { showHero: true, showStats: true, showAdvantage: true, showPrincipal: true, showCta: true };
+  const layout = { showHero: true, showStats: true, showAdvantage: true, showPrincipal: true, showCta: true, ...(settings.layout?.home || {}) };
 
   return (
     <div className="min-h-screen bg-neutral-bg-subtle text-gray-900 font-body overflow-x-hidden" style={{ "--primary": theme.primaryColor, "--accent": theme.accentColor }}>
@@ -157,10 +171,12 @@ const HomePage = () => {
 
           <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="relative z-10 space-y-8 text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent-100/50 text-accent-700 text-sm font-bold border border-accent-200 shadow-sm animate-fade-in" style={{ backgroundColor: `${theme.accentColor}20`, color: theme.accentColor, borderColor: `${theme.accentColor}40` }}>
-                <Sparkles size={16} />
-                <span><InlineEdit path="home.hero.badge" text={settings.home?.hero?.badge || "Explore Our Excellence"} /></span>
-              </div>
+              <EditableRegion type="badge" path="home.hero.badge" label="Hero Status Badge">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent-100/50 text-accent-700 text-sm font-bold border border-accent-200 shadow-sm animate-fade-in" style={{ backgroundColor: `${theme.accentColor}20`, color: theme.accentColor, borderColor: `${theme.accentColor}40` }}>
+                  <DynamicIcon name={settings.home?.hero?.badge?.icon || "Sparkles"} size={16} />
+                  <span>{settings.home?.hero?.badge?.text || "Explore Our Excellence"}</span>
+                </div>
+              </EditableRegion>
               
               <h1 className="text-5xl md:text-7xl xl:text-8xl font-black tracking-tight leading-[0.9] text-primary-950" style={{ color: theme.primaryColor }}>
                 <InlineEdit path="home.hero.title" text={settings.home?.hero?.title || "Elevating The Next Generation."} />
@@ -171,17 +187,21 @@ const HomePage = () => {
               </p>
 
               <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">
-                <Link to="/about" className="w-full sm:w-auto">
-                  <Button className="w-full px-8 py-4 rounded-full text-white shadow-2xl flex items-center justify-center gap-2 group transition-all" style={{ backgroundColor: theme.primaryColor }}>
-                    Learn More
-                    <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-                  </Button>
-                </Link>
-                <Link to="/contact" className="w-full sm:w-auto">
-                  <Button variant="ghost" className="w-full px-8 py-4 rounded-full border-2 text-primary-950 hover:bg-primary-50" style={{ borderColor: `${theme.primaryColor}20` }}>
-                    Contact Us
-                  </Button>
-                </Link>
+                <EditableRegion type="link" path="home.hero.primaryBtn" label="Primary Action Button">
+                  <Link to={settings.home?.hero?.primaryBtn?.url || "/about"} className="w-full sm:w-auto">
+                    <Button className="w-full px-8 py-4 rounded-full text-white shadow-2xl flex items-center justify-center gap-2 group transition-all" style={{ backgroundColor: theme.primaryColor }}>
+                      {settings.home?.hero?.primaryBtn?.text || "Learn More"}
+                      <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                    </Button>
+                  </Link>
+                </EditableRegion>
+                <EditableRegion type="link" path="home.hero.secondaryBtn" label="Secondary Action Button">
+                  <Link to={settings.home?.hero?.secondaryBtn?.url || "/contact"} className="w-full sm:w-auto">
+                    <Button variant="ghost" className="w-full px-8 py-4 rounded-full border-2 text-primary-950 hover:bg-primary-50" style={{ borderColor: `${theme.primaryColor}20` }}>
+                      {settings.home?.hero?.secondaryBtn?.text || "Contact Us"}
+                    </Button>
+                  </Link>
+                </EditableRegion>
               </div>
             </div>
 
@@ -194,15 +214,17 @@ const HomePage = () => {
                 
                 {stats.length >= 2 && (
                     <div className="absolute bottom-8 left-8 right-8 p-6 bg-white/10 backdrop-blur-xl rounded-3xl border border-white/20 shadow-2xl flex justify-between items-center text-white">
-                        <div>
-                        <p className="text-3xl font-black">{stats[0].value}</p>
-                        <p className="text-xs uppercase font-bold tracking-widest opacity-80">{stats[0].label}</p>
-                        </div>
+                        <EditableRegion type="single-stat" path="home.stats.0" label="Primary Metric" className="text-center">
+                            <p className="text-3xl font-black">{stats[0].value}</p>
+                            <p className="text-xs uppercase font-bold tracking-widest opacity-80">{stats[0].label}</p>
+                        </EditableRegion>
+
                         <div className="h-10 w-[1px] bg-white/20"></div>
-                        <div>
-                        <p className="text-3xl font-black">{stats[1].value}</p>
-                        <p className="text-xs uppercase font-bold tracking-widest opacity-80">{stats[1].label}</p>
-                        </div>
+
+                        <EditableRegion type="single-stat" path="home.stats.1" label="Secondary Metric" className="text-center">
+                            <p className="text-3xl font-black">{stats[1].value}</p>
+                            <p className="text-xs uppercase font-bold tracking-widest opacity-80">{stats[1].label}</p>
+                        </EditableRegion>
                     </div>
                 )}
               </div>
@@ -211,15 +233,25 @@ const HomePage = () => {
         </section>
       )}
 
-      {/* --- QUICK STATS --- */}
-      {layout.showStats && stats.length > 0 && (
-        <section className="py-12 bg-white">
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 py-10 px-8 bg-neutral-bg-subtle/50 rounded-[3rem] border border-gray-100 shadow-inner">
-              {stats.map((s, idx) => (
-                <CountingStat key={idx} value={s.value} label={s.label} />
-              ))}
-            </div>
+      {/* --- STATS SECTION --- */}
+      {layout.showStats && (stats.length > 0 || isEditorMode) && (
+        <section className="py-20 relative z-20 bg-white border-y border-gray-100">
+          <div className="container mx-auto px-6 max-w-7xl">
+            <EditableRegion type="stats" path="home.stats" label="Institutional Metrics">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-8 lg:gap-12 divide-x divide-gray-100">
+                {stats.length === 0 && isEditorMode ? (
+                  <div className="col-span-4 text-center text-gray-400 py-10 font-bold border-2 border-dashed border-gray-200 rounded-xl">
+                    No stats configured. Click to add.
+                  </div>
+                ) : (
+                  stats.map((stat, idx) => (
+                    <div key={idx} className="group">
+                        <CountingStat value={stat.value} label={stat.label} />
+                    </div>
+                  ))
+                )}
+              </div>
+            </EditableRegion>
           </div>
         </section>
       )}
@@ -232,9 +264,12 @@ const HomePage = () => {
           <div className="max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
               <div className="space-y-4">
-                <div className="inline-block px-4 py-1.5 bg-accent-100/50 text-accent-700 text-xs font-black uppercase tracking-[0.2em] rounded-lg border border-accent-200" style={{ backgroundColor: `${theme.accentColor}20`, color: theme.accentColor, borderColor: `${theme.accentColor}40` }}>
-                  <InlineEdit path="home.advantage.badge" text={settings.home?.advantage?.badge || "Our USP"} />
-                </div>
+                <EditableRegion type="badge" path="home.advantage.badge" label="Advantage Section Badge">
+                  <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-accent-100/50 text-accent-700 text-xs font-black uppercase tracking-[0.2em] rounded-lg border border-accent-200" style={{ backgroundColor: `${theme.accentColor}20`, color: theme.accentColor, borderColor: `${theme.accentColor}40` }}>
+                    <DynamicIcon name={settings.home?.advantage?.badge?.icon || "Award"} size={14} className="text-accent-500" style={{ color: theme.accentColor }} />
+                    <span>{settings.home?.advantage?.badge?.text || "Core Value Proposition"}</span>
+                  </div>
+                </EditableRegion>
                 <h2 className="text-4xl md:text-6xl font-black text-primary-950 leading-tight" style={{ color: theme.primaryColor }}>
                   <InlineEdit path="home.advantage.title" text={settings.home?.advantage?.title || "Why Choose Us."} />
                 </h2>
@@ -244,45 +279,74 @@ const HomePage = () => {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[280px]">
-              {features.map((f, i) => {
-                const Icon = f.icon;
-                return (
-                  <div 
-                    key={i} 
-                    className={`${f.gridSpan} group p-8 rounded-[2.5rem] bg-white border border-gray-100 shadow-sm hover:shadow-2xl hover:border-accent-200 transition-all duration-700 flex flex-col justify-start overflow-hidden relative active:scale-[0.99] cursor-default`}
-                  >
-                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-accent-300/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    
-                    <div className="relative z-10 flex flex-col h-full gap-4">
-                      <div>
-                        <div className="flex items-center justify-between mb-4">
-                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center group-hover:rotate-6 shadow-sm transition-transform duration-500`} style={{ backgroundColor: `${theme.accentColor}20`, color: theme.accentColor }}>
-                            <Icon size={24} />
-                          </div>
-                          <span className="text-[9px] uppercase font-black tracking-widest text-primary-950/40 bg-gray-50 px-2 py-1 rounded-full border border-gray-100">
-                            {f.badge || "Featured"}
-                          </span>
-                        </div>
-                        <h3 className="text-xl md:text-2xl font-black mb-2 text-primary-950 group-hover:text-accent-600 transition-colors leading-tight tracking-tight">
-                          {f.title}
-                        </h3>
-                        <p className="text-gray-600 leading-relaxed font-medium text-xs md:text-sm">
-                          {f.desc}
-                        </p>
-                      </div>
-
-                      <Link to="/about" className="mt-auto pt-4 border-t border-gray-100 block">
-                        <div className="flex items-center gap-2 font-bold text-[10px] uppercase tracking-[0.2em] group-hover:gap-3 transition-all duration-300" style={{ color: theme.accentColor }}>
-                          <span>Learn More</span>
-                          <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
-                        </div>
-                      </Link>
-                    </div>
+            <EditableRegion type="features" path="home.advantage.features" label="Core Advantages Grid">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6 lg:gap-8">
+                {features.length === 0 && isEditorMode ? (
+                  <div className="col-span-12 text-center text-gray-400 py-20 font-bold border-2 border-dashed border-gray-200 rounded-3xl">
+                    No features configured. Click to add.
                   </div>
-                );
-              })}
-            </div>
+                ) : (
+                  features.map((f, i) => {
+                    const total = features.length;
+                    let spanClass = "lg:col-span-4";
+                    
+                    if (total === 1) spanClass = "lg:col-span-4 lg:col-start-5";
+                    else if (total === 2 || total === 4) spanClass = "lg:col-span-6";
+                    else {
+                      // Dynamic balancing for 3, 5, 6, 7, 8... cards
+                      const remainder = total % 3;
+                      if (remainder === 1) {
+                        // For 7, 10, etc. - last 4 become two rows of 2
+                        if (i >= total - 4) spanClass = "lg:col-span-6";
+                        else spanClass = "lg:col-span-4";
+                      } else if (remainder === 2) {
+                        // For 5, 8, etc. - last 2 become one row of 2
+                        if (i >= total - 2) spanClass = "lg:col-span-6";
+                        else spanClass = "lg:col-span-4";
+                      } else {
+                        // Multiples of 3 - all equal
+                        spanClass = "lg:col-span-4";
+                      }
+                    }
+
+                    return (
+                      <div 
+                        key={i} 
+                        className={`${spanClass} group p-8 rounded-[2.5rem] bg-white border border-gray-100 shadow-sm hover:shadow-2xl hover:border-accent-200 transition-all duration-700 flex flex-col justify-start overflow-hidden relative active:scale-[0.99] cursor-default`}
+                      >
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-accent-300/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        
+                        <div className="relative z-10 flex flex-col h-full gap-4">
+                          <div>
+                            <div className="flex items-center justify-between mb-4">
+                              <div className={`w-12 h-12 rounded-xl flex items-center justify-center group-hover:rotate-6 shadow-sm transition-transform duration-500`} style={{ backgroundColor: `${theme.accentColor}20`, color: theme.accentColor }}>
+                                <DynamicIcon name={f.icon} size={24} />
+                              </div>
+                              <span className="text-[9px] uppercase font-black tracking-widest text-primary-950/40 bg-gray-50 px-2 py-1 rounded-full border border-gray-100">
+                                {f.badge || "Featured"}
+                              </span>
+                            </div>
+                            <h3 className="text-xl md:text-2xl font-black mb-2 text-primary-950 group-hover:text-accent-600 transition-colors duration-300 leading-tight tracking-tight">
+                              {f.title}
+                            </h3>
+                            <p className="text-gray-600 leading-relaxed font-medium text-xs md:text-sm">
+                              {f.desc}
+                            </p>
+                          </div>
+
+                          <Link to={f.link?.url || "/about"} className="mt-auto pt-4 border-t border-gray-100 block">
+                            <div className="flex items-center gap-2 font-bold text-[10px] uppercase tracking-[0.2em] group-hover:gap-3 transition-all duration-300" style={{ color: theme.accentColor }}>
+                              <span>{f.link?.text || "Learn More"}</span>
+                              <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
+                            </div>
+                          </Link>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+              </EditableRegion>
           </div>
         </section>
       )}
@@ -325,26 +389,30 @@ const HomePage = () => {
               
               <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
                 <div className="lg:col-span-8 space-y-8">
-                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent-50 text-accent-700 text-xs font-black uppercase tracking-[0.3em] border border-accent-100" style={{ backgroundColor: `${theme.accentColor}10`, color: theme.accentColor, borderColor: `${theme.accentColor}20` }}>
-                    <Trophy size={14} className="text-accent-500" style={{ color: theme.accentColor }} />
-                    <InlineEdit path="global.foundationYear" text={settings.global?.foundationYear || "Since 2004"} />
-                  </div>
+                  <EditableRegion type="badge" path="home.cta.badge" label="CTA Status Badge">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent-50 text-accent-700 text-xs font-black uppercase tracking-[0.3em] border border-accent-100" style={{ backgroundColor: `${theme.accentColor}10`, color: theme.accentColor, borderColor: `${theme.accentColor}20` }}>
+                      <DynamicIcon name={settings.home?.cta?.badge?.icon || "Trophy"} size={14} className="text-accent-500" style={{ color: theme.accentColor }} />
+                      <span>{settings.home?.cta?.badge?.text || "Since 2004"}</span>
+                    </div>
+                  </EditableRegion>
                   
                   <h2 className="text-5xl md:text-8xl font-black text-primary-950 leading-[0.9] tracking-tighter" style={{ color: theme.primaryColor }}>
-                    <InlineEdit path="global.ctaButtonText" text={settings.global?.ctaButtonText || "Apply Foundation."} />
+                    <InlineEdit path="home.cta.title" text={settings.home?.cta?.title || "Apply Foundation."} />
                   </h2>
                   
                   <p className="text-gray-600 text-lg md:text-xl font-medium max-w-xl leading-relaxed">
-                    <InlineEdit path="global.visionStatement" text={settings.global?.visionStatement || "Join a tradition of excellence and shape your future."} />
+                    <InlineEdit path="home.cta.subtitle" text={settings.home?.cta?.subtitle || "Join a tradition of excellence and shape your future."} />
                   </p>
 
                   <div className="flex flex-col sm:flex-row items-center gap-6 pt-4">
-                    <Link to="/admissions" className="w-full sm:w-auto">
-                      <Button className="w-full px-10 py-5 rounded-full text-white shadow-2xl transition-all duration-300 font-black uppercase tracking-widest text-sm flex items-center justify-center gap-3 relative overflow-hidden group shadow-accent-500/20" style={{ backgroundColor: theme.accentColor }}>
-                        <span className="relative">Apply Now</span>
-                        <ArrowRight size={18} className="relative group-hover:translate-x-2 transition-transform" />
-                      </Button>
-                    </Link>
+                    <EditableRegion type="link" path="home.cta.primaryBtn" label="CTA Action Button">
+                      <Link to={settings.home?.cta?.primaryBtn?.url || "/admissions"} className="w-full sm:w-auto inline-block">
+                        <Button className="w-full px-10 py-5 rounded-full text-white shadow-2xl transition-all duration-300 font-black uppercase tracking-widest text-sm flex items-center justify-center gap-3 relative overflow-hidden group shadow-accent-500/20" style={{ backgroundColor: theme.accentColor }}>
+                          <span className="relative">{settings.home?.cta?.primaryBtn?.text || "Apply Now"}</span>
+                          <ArrowRight size={18} className="relative group-hover:translate-x-2 transition-transform" />
+                        </Button>
+                      </Link>
+                    </EditableRegion>
                   </div>
                 </div>
 
