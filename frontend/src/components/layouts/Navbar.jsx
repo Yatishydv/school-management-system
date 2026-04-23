@@ -1,14 +1,14 @@
-// frontend/src/components/Navbar.jsx
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, LogOut } from "lucide-react";
+import { LogOut, Menu, X } from "lucide-react";
+import useAuthStore from "../../stores/authStore";
 import Button from "../ui/Button";
-import useAuthStore from "../../stores/authStore";  // UPDATED
+import { useSiteSettings } from "../../context/SiteSettingsContext";
 
 const Navbar = () => {
+  const { settings, loading } = useSiteSettings();
   const [isOpen, setIsOpen] = useState(false);
 
-  // FIXED AUTH STORE USAGE
   const { token, user, logout } = useAuthStore();
   const isAuthenticated = !!token;
 
@@ -32,6 +32,10 @@ const Navbar = () => {
 
   const dashboardPath = user ? `/${user.role}/dashboard` : "/login";
 
+  if (loading || !settings) return null;
+
+  const theme = settings.theme || { primaryColor: "#0a0a0a", accentColor: "#10b981" };
+
   return (
     <header className={`fixed left-1/2 -translate-x-1/2 w-[90%] max-w-6xl z-50 transition-all duration-500 rounded-full border border-white/50 ${
       scrolled 
@@ -43,9 +47,10 @@ const Navbar = () => {
           {/* LOGO */}
           <Link
             to="/"
-            className="text-2xl font-heading font-extrabold tracking-tight text-primary-950"
+            className="text-2xl font-heading font-extrabold tracking-tight"
+            style={{ color: theme.primaryColor }}
           >
-            SBS<span className="text-accent-500">.</span>
+            {settings.schoolName || "Institution"}<span style={{ color: theme.accentColor }}>.</span>
           </Link>
 
           {/* Desktop Menu */}
@@ -54,10 +59,11 @@ const Navbar = () => {
               <Link
                 key={link.name}
                 to={link.path}
-                className="text-base font-medium text-primary-950 hover:text-accent-600 transition-colors duration-300 relative group"
+                className="text-base font-medium transition-colors duration-300 relative group"
+                style={{ color: theme.primaryColor }}
               >
                 {link.name}
-                <span className="absolute left-0 bottom-0 w-full h-0.5 bg-accent-600 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-out" />
+                <span className="absolute left-0 bottom-0 w-full h-0.5 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-out" style={{ backgroundColor: theme.accentColor }} />
               </Link>
             ))}
           </nav>
@@ -78,7 +84,8 @@ const Navbar = () => {
                 <Button
                   variant="ghost"
                   onClick={logout}
-                  className="p-1 hover:text-accent-500 hover:bg-transparent -translate-y-0 transition-all"
+                  className="p-1 hover:bg-transparent -translate-y-0 transition-all"
+                  style={{ "--hover-color": theme.accentColor }}
                 >
                   <LogOut size={22} className="opacity-70 group-hover:opacity-100" />
                 </Button>
@@ -88,7 +95,8 @@ const Navbar = () => {
                 <Button
                   variant="accent"
                   size="sm"
-                  className="!rounded-full border border-white/20 shadow-xl shadow-accent-500/30"
+                  className="!rounded-full border border-white/20 shadow-xl"
+                  style={{ backgroundColor: theme.accentColor, boxShadow: `0 20px 25px -5px ${theme.accentColor}30` }}
                 >
                   Login
                 </Button>
@@ -121,7 +129,8 @@ const Navbar = () => {
               key={link.name}
               to={link.path}
               onClick={() => setIsOpen(false)}
-              className="block px-6 py-4 rounded-xl text-lg font-medium text-primary-900 hover:bg-accent-50/50 hover:text-accent-600 transition-all duration-200"
+              className="block px-6 py-4 rounded-xl text-lg font-medium transition-all duration-200"
+              style={{ color: theme.primaryColor }}
             >
               {link.name}
             </Link>
@@ -134,7 +143,8 @@ const Navbar = () => {
                   <Button 
                     variant="primary"
                     size="md"
-                    className="w-full !rounded-full shadow-xl shadow-primary-950/20"
+                    className="w-full !rounded-full shadow-xl"
+                    style={{ backgroundColor: theme.primaryColor }}
                   >
                     Dashboard
                   </Button>
@@ -154,7 +164,8 @@ const Navbar = () => {
                   <Button 
                     variant="accent"
                     size="md"
-                    className="w-full !rounded-full shadow-xl shadow-accent-500/20"
+                    className="w-full !rounded-full shadow-xl"
+                    style={{ backgroundColor: theme.accentColor }}
                   >
                     Login
                   </Button>

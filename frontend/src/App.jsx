@@ -5,6 +5,7 @@ import { Routes, Route, useLocation } from "react-router-dom";
 // PUBLIC COMPONENTS
 import Navbar from "./components/layouts/Navbar.jsx";
 import Footer from "./components/layouts/Footer.jsx";
+import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -85,8 +86,9 @@ const App = () => {
     location.pathname.startsWith("/student");
 
   return (
-    <SiteSettingsProvider>
-      <ScrollToTop />
+    <ErrorBoundary>
+      <SiteSettingsProvider>
+        <ScrollToTop />
       <ToastContainer 
         position="top-right" 
         autoClose={3000} 
@@ -254,7 +256,7 @@ const App = () => {
         <Route path="/admin/revenue" element={<ProtectedRoute role="admin"><AdminLayout><AdminRevenue /></AdminLayout></ProtectedRoute>} />
         <Route path="/admin/expenses" element={<ProtectedRoute role="admin"><AdminLayout><AdminExpenses /></AdminLayout></ProtectedRoute>} />
         <Route path="/admin/salaries" element={<ProtectedRoute role="admin"><AdminLayout><AdminSalaries /></AdminLayout></ProtectedRoute>} />
-        <Route path="/admin/site-editor" element={<ProtectedRoute role="admin"><AdminLayout><AdminSiteEditor /></AdminLayout></ProtectedRoute>} />
+        <Route path="/admin/site-editor" element={<ProtectedRoute role="admin"><AdminSiteEditor /></ProtectedRoute>} />
         
         {/* CATCH ALL - 404 */}
         <Route path="*" element={<NotFound />} />
@@ -263,6 +265,7 @@ const App = () => {
       {/* Footer only on public pages */}
       {!isDashboardRoute && <Footer />}
     </SiteSettingsProvider>
+    </ErrorBoundary>
   );
 };
 

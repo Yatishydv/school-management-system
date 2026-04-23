@@ -23,34 +23,24 @@ export const getSettings = async (req, res) => {
 // @access  Private/Admin
 export const updateSettings = async (req, res) => {
     try {
-        let settings = await SiteSettings.findOne();
-        if (!settings) {
-            settings = new SiteSettings();
-        }
-
-        // Update fields provided in req.body
-        const updateData = req.body;
+        const updateData = { ...req.body };
         
-        // Use set() for deep updates to ensure Mongoose detects changes in nested objects
-        Object.keys(updateData).forEach(key => {
-            if (typeof updateData[key] === 'object' && updateData[key] !== null && !Array.isArray(updateData[key])) {
-                // For top-level page keys (home, about, etc.), do a shallow merge of their sections
-                settings[key] = { ...settings[key], ...updateData[key] };
-            } else {
-                settings[key] = updateData[key];
-            }
-        });
+        // Ensure immutable paths are not modified
+        delete updateData._id;
+        delete updateData.__v;
+        delete updateData.createdAt;
+        delete updateData.updatedAt;
 
-        // Mark modified to help Mongoose with nested objects if necessary
-        settings.markModified('home');
-        settings.markModified('about');
-        settings.markModified('admissions');
-        settings.markModified('contact');
-        settings.markModified('global');
-
-        const updatedSettings = await settings.save();
+        // Use findOneAndUpdate with upsert to robustly replace configuration without deepMerge casting errors
+        const updatedSettings = await SiteSettings.findOneAndUpdate(
+            {},
+            { $set: updateData },
+            { new: true, upsert: true, runValidators: true }
+        );
+        
         res.json(updatedSettings);
     } catch (error) {
+        console.error("Settings update error:", error);
         res.status(400).json({ message: error.message });
     }
 };

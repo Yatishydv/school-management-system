@@ -164,6 +164,18 @@ const INITIAL_SETTINGS = {
         youtube: "",
         whatsapp: "",
         linkedin: ""
+    },
+    theme: {
+        primaryColor: "#0a0a0a",
+        accentColor: "#10b981",
+        secondaryColor: "#6366f1",
+        fontFamily: "Inter, sans-serif"
+    },
+    layout: {
+        home: { showHero: true, showStats: true, showAdvantage: true, showPrincipal: true, showCta: true },
+        about: { showHero: true, showHeritage: true, showMissionVision: true, showValues: true },
+        admissions: { showHero: true, showProcess: true, showChecklist: true, showForm: true, showSupport: true },
+        contact: { showHero: true, showCards: true, showLocation: true, showForm: true, showFaqs: true }
     }
 };
 
@@ -186,7 +198,6 @@ export const SiteSettingsProvider = ({ children }) => {
                             ? mergeSettings(defaults[key], data[key])
                             : data[key];
                     } else if (Array.isArray(data[key])) {
-                        // Only override defaults if the provided array is not empty
                         result[key] = data[key].length > 0 ? data[key] : defaults[key];
                     } else if (data[key] !== undefined && data[key] !== null) {
                         result[key] = data[key];
@@ -206,12 +217,51 @@ export const SiteSettingsProvider = ({ children }) => {
 
     useEffect(() => {
         fetchSettings();
+
+        // Listen for live preview messages from AdminSiteEditor
+        const handleMessage = (event) => {
+            if (event.data?.type === 'LIVE_PREVIEW_UPDATE') {
+                setSettings(prev => ({ ...prev, ...event.data.settings }));
+            }
+        };
+
+        window.addEventListener('message', handleMessage);
+        
+        // Notify parent editor that the iframe is ready to receive live configurations
+        if (window.parent !== window) {
+            window.parent.postMessage({ type: 'IFRAME_READY' }, '*');
+        }
+
+        return () => window.removeEventListener('message', handleMessage);
     }, []);
 
     const refreshSettings = () => fetchSettings();
 
+    const isEditorMode = window.parent !== window;
+
+    const dispatchInlineEdit = (path, value) => {
+        if (isEditorMode) {
+            window.parent.postMessage({
+                type: 'LIVE_INLINE_UPDATE',
+                path,
+                value
+            }, '*');
+        }
+    };
+
+    const dispatchElementClick = (elementType, path, label) => {
+        if (isEditorMode) {
+            window.parent.postMessage({
+                type: 'LIVE_FOCUS_FIELD',
+                elementType,
+                path,
+                label
+            }, '*');
+        }
+    };
+
     return (
-        <SiteSettingsContext.Provider value={{ settings, loading, refreshSettings }}>
+        <SiteSettingsContext.Provider value={{ settings, setSettings, loading, refreshSettings, isEditorMode, dispatchInlineEdit, dispatchElementClick }}>
             {children}
         </SiteSettingsContext.Provider>
     );

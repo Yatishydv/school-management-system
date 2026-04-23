@@ -140,6 +140,42 @@ const siteSettingsSchema = new mongoose.Schema({
         youtube: { type: String, default: "" },
         whatsapp: { type: String, default: "" },
         linkedin: { type: String, default: "" }
+    },
+
+    // --- THEME & LAYOUT ENGINE ---
+    theme: {
+        primaryColor: { type: String, default: "#0a0a0a" }, // primary-950
+        accentColor: { type: String, default: "#10b981" },  // emerald-500
+        secondaryColor: { type: String, default: "#6366f1" }, // indigo-500
+        fontFamily: { type: String, default: "Inter, sans-serif" }
+    },
+
+    layout: {
+        home: {
+            showHero: { type: Boolean, default: true },
+            showStats: { type: Boolean, default: true },
+            showAdvantage: { type: Boolean, default: true },
+            showPrincipal: { type: Boolean, default: true },
+            showCta: { type: Boolean, default: true }
+        },
+        about: {
+            showHero: { type: Boolean, default: true },
+            showHeritage: { type: Boolean, default: true },
+            showMissionVision: { type: Boolean, default: true },
+            showValues: { type: Boolean, default: true }
+        },
+        admissions: {
+            showHero: { type: Boolean, default: true },
+            showProcess: { type: Boolean, default: true },
+            showChecklist: { type: Boolean, default: true }
+        },
+        contact: {
+            showHero: { type: Boolean, default: true },
+            showCards: { type: Boolean, default: true },
+            showLocation: { type: Boolean, default: true },
+            showForm: { type: Boolean, default: true },
+            showFaqs: { type: Boolean, default: true }
+        }
     }
 }, { timestamps: true });
 

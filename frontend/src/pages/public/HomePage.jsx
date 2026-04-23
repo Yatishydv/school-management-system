@@ -20,6 +20,8 @@ import {
 import { useSiteSettings } from "../../context/SiteSettingsContext";
 import schoolImageDefault from "../../assets/school.png";
 import principalImageDefault from "../../assets/principal.png";
+import InlineEdit from "../../components/ui/InlineEdit";
+import EditableRegion from "../../components/ui/EditableRegion";
 
 /* ------------------------ Counting Stat Component ------------------------ */
 const CountingStat = ({ value, label, duration = 2500 }) => {
@@ -129,349 +131,233 @@ const HomePage = () => {
     );
   }
 
-  // Combine Settings with "Good" Layout Structure
-  const defaultStats = [
-    { label: "Alumni", value: "1,200+" },
-    { label: "Ratio", value: "15:1" },
-    { label: "Experience", value: "45+" },
-    { label: "Security", value: "100%" }
-  ];
-
-  const stats = (settings.home?.stats && settings.home.stats.length > 0)
-    ? settings.home.stats
-    : defaultStats;
-
   const IconMap = { BookOpen, Users, Shield, Sparkles, Award, Star, Zap, Search, FileText, Trophy };
   
-  const defaultFeatures = [
-    {
-      icon: BookOpen,
-      title: "Smart Learning",
-      desc: "Interactive pedagogy for the 21st century. We focus on critical thinking and real-world application.",
-      color: "bg-blue-50 text-blue-600",
-      gridSpan: "md:col-span-1 md:row-span-2",
-      badge: "Innovative",
-      details: ["Digital First Curricula", "Lego Robotics Lab"],
-    },
-    {
-      icon: Users,
-      title: "Elite Alumni Network",
-      desc: "Our graduates serve with distinction in the Indian Armed Forces and global corporations.",
-      color: "bg-accent-100 text-accent-700",
-      gridSpan: "md:col-span-2 md:row-span-1",
-      badge: "Professional",
-    },
-    {
-      icon: Shield,
-      title: "Safe Haven",
-      desc: "24/7 security and a supportive environment for holistic well-being.",
-      color: "bg-purple-50 text-purple-600",
-      gridSpan: "md:col-span-1 md:row-span-1",
-      badge: "Secure",
-    },
-    {
-      icon: Sparkles,
-      title: "Creative Arts",
-      desc: "Nurturing the next generation of artists and creators.",
-      color: "bg-pink-50 text-pink-600",
-      gridSpan: "md:col-span-1 md:row-span-1",
-      badge: "Creative",
-    },
-  ];
+  const stats = settings.home?.stats || [];
+  const features = (settings.home?.advantage?.features || []).map((f, i) => ({
+    ...f,
+    icon: IconMap[f.icon] || Star,
+    color: i % 4 === 0 ? "bg-blue-50 text-blue-600" : i % 4 === 1 ? "bg-accent-100 text-accent-700" : i % 4 === 2 ? "bg-purple-50 text-purple-600" : "bg-pink-50 text-pink-600",
+    gridSpan: i === 0 ? "md:col-span-1 md:row-span-2" : i === 1 ? "md:col-span-2 md:row-span-1" : "md:col-span-1 md:row-span-1",
+  }));
 
-  const features = (settings.home?.advantage?.features || []).length > 0
-    ? settings.home.advantage.features.map((f, i) => ({
-        ...f,
-        icon: IconMap[f.icon] || defaultFeatures[i % defaultFeatures.length].icon,
-        color: defaultFeatures[i % defaultFeatures.length].color,
-        gridSpan: defaultFeatures[i % defaultFeatures.length].gridSpan,
-      }))
-    : defaultFeatures;
+  const theme = settings.theme || { primaryColor: "#0a0a0a", accentColor: "#10b981" };
+  const layout = settings.layout?.home || { showHero: true, showStats: true, showAdvantage: true, showPrincipal: true, showCta: true };
 
   return (
-    <div className="min-h-screen bg-neutral-bg-subtle text-gray-900 font-body overflow-x-hidden">
+    <div className="min-h-screen bg-neutral-bg-subtle text-gray-900 font-body overflow-x-hidden" style={{ "--primary": theme.primaryColor, "--accent": theme.accentColor }}>
       
       {/* --- HERO SECTION --- */}
-      <section className="relative min-h-[95vh] flex items-center pt-36 pb-16 px-6 overflow-hidden">
-        {/* Abstract Background Shapes */}
-        <div className="absolute top-0 left-0 w-full h-full -z-10 bg-white">
-          <div className="absolute -top-24 -right-24 w-96 h-96 bg-accent-100 rounded-full blur-3xl opacity-50 pulse-slow"></div>
-          <div className="absolute top-1/2 -left-24 w-96 h-96 bg-blue-50 rounded-full blur-3xl opacity-50 pulse-slow delay-700"></div>
-        </div>
-
-        <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div className="relative z-10 space-y-8 text-center lg:text-left">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent-100/50 text-accent-700 text-sm font-bold border border-accent-200 shadow-sm animate-fade-in">
-              <Sparkles size={16} />
-              <span>{settings.home?.hero?.badge || "Admissions Open for 2024-25"}</span>
-            </div>
-            
-            <h1 className="text-5xl md:text-7xl xl:text-8xl font-black tracking-tight leading-[0.9] text-primary-950">
-              {settings.home?.hero?.title?.includes("Education") 
-                ? <>
-                    {settings.home.hero.title.split("Education")[0]}
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-500 to-accent-400">Education</span>
-                    {settings.home.hero.title.split("Education")[1]}
-                  </>
-                : settings.home?.hero?.title || "Elevate Education Experience."}
-            </h1>
-
-            <p className="text-lg md:text-xl text-gray-600 max-w-xl mx-auto lg:mx-0 leading-relaxed">
-              {settings.home?.hero?.subtitle || "At SBS, we bridge the gap between curiosity and competence. Modern facilities meet timeless values for a holistic growth journey."}
-            </p>
-
-            <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">
-              <Link to="/about" className="w-full sm:w-auto">
-                <Button className="w-full px-8 py-4 rounded-full bg-primary-950 text-white hover:bg-black shadow-2xl shadow-primary-950/20 flex items-center justify-center gap-2 group transition-all">
-                  Explore Programs
-                  <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </Link>
-              <Link to="/contact" className="w-full sm:w-auto">
-                <Button variant="ghost" className="w-full px-8 py-4 rounded-full border-2 border-primary-950/10 text-primary-950 hover:bg-primary-50">
-                  Contact Office
-                </Button>
-              </Link>
-            </div>
+      {layout.showHero && (
+        <section className="relative min-h-[95vh] flex items-center pt-36 pb-16 px-6 overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-full -z-10 bg-white">
+            <div className="absolute -top-24 -right-24 w-96 h-96 bg-accent-100 rounded-full blur-3xl opacity-50 pulse-slow" style={{ backgroundColor: `${theme.accentColor}20` }}></div>
+            <div className="absolute top-1/2 -left-24 w-96 h-96 bg-blue-50 rounded-full blur-3xl opacity-50 pulse-slow delay-700" style={{ backgroundColor: `${theme.primaryColor}10` }}></div>
           </div>
 
-          <div className="relative hidden lg:block">
-            <div className="relative rounded-[3rem] overflow-hidden shadow-2xl transform rotate-2 hover:rotate-0 transition-all duration-700 scale-105 border-[12px] border-white ring-1 ring-gray-200">
-              <img src={getImageUrl(settings.home?.hero?.image, schoolImageDefault)} alt="School" className="w-full h-[600px] object-cover" />
-              <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/60 to-transparent"></div>
+          <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div className="relative z-10 space-y-8 text-center lg:text-left">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent-100/50 text-accent-700 text-sm font-bold border border-accent-200 shadow-sm animate-fade-in" style={{ backgroundColor: `${theme.accentColor}20`, color: theme.accentColor, borderColor: `${theme.accentColor}40` }}>
+                <Sparkles size={16} />
+                <span><InlineEdit path="home.hero.badge" text={settings.home?.hero?.badge || "Explore Our Excellence"} /></span>
+              </div>
               
-              {/* Floating Stat Card */}
-              <div className="absolute bottom-8 left-8 right-8 p-6 bg-white/10 backdrop-blur-xl rounded-3xl border border-white/20 shadow-2xl flex justify-between items-center text-white">
-                <div>
-                  <p className="text-3xl font-black">{stats[0]?.value || "98.5%"}</p>
-                  <p className="text-xs uppercase font-bold tracking-widest opacity-80">{stats[0]?.label || "Annual Success"}</p>
-                </div>
-                <div className="h-10 w-[1px] bg-white/20"></div>
-                <div>
-                  <p className="text-3xl font-black">{stats[1]?.value || "50+"}</p>
-                  <p className="text-xs uppercase font-bold tracking-widest opacity-80">{stats[1]?.label || "Awards Won"}</p>
-                </div>
+              <h1 className="text-5xl md:text-7xl xl:text-8xl font-black tracking-tight leading-[0.9] text-primary-950" style={{ color: theme.primaryColor }}>
+                <InlineEdit path="home.hero.title" text={settings.home?.hero?.title || "Elevating The Next Generation."} />
+              </h1>
+
+              <p className="text-lg md:text-xl text-gray-600 max-w-xl mx-auto lg:mx-0 leading-relaxed">
+                <InlineEdit path="home.hero.subtitle" text={settings.home?.hero?.subtitle || "A nurturing environment where every student's potential is discovered and developed."} />
+              </p>
+
+              <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">
+                <Link to="/about" className="w-full sm:w-auto">
+                  <Button className="w-full px-8 py-4 rounded-full text-white shadow-2xl flex items-center justify-center gap-2 group transition-all" style={{ backgroundColor: theme.primaryColor }}>
+                    Learn More
+                    <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                </Link>
+                <Link to="/contact" className="w-full sm:w-auto">
+                  <Button variant="ghost" className="w-full px-8 py-4 rounded-full border-2 text-primary-950 hover:bg-primary-50" style={{ borderColor: `${theme.primaryColor}20` }}>
+                    Contact Us
+                  </Button>
+                </Link>
+              </div>
+            </div>
+
+            <div className="relative hidden lg:block">
+              <div className="relative rounded-[3rem] overflow-hidden shadow-2xl transform rotate-2 hover:rotate-0 transition-all duration-700 scale-105 border-[12px] border-white ring-1 ring-gray-200">
+                <EditableRegion type="image" path="home.hero.image" label="Hero Background Graphic" className="w-full h-[600px] block">
+                    <img src={getImageUrl(settings.home?.hero?.image, schoolImageDefault)} alt="School" className="w-full h-[600px] object-cover" />
+                </EditableRegion>
+                <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/60 to-transparent pointer-events-none"></div>
+                
+                {stats.length >= 2 && (
+                    <div className="absolute bottom-8 left-8 right-8 p-6 bg-white/10 backdrop-blur-xl rounded-3xl border border-white/20 shadow-2xl flex justify-between items-center text-white">
+                        <div>
+                        <p className="text-3xl font-black">{stats[0].value}</p>
+                        <p className="text-xs uppercase font-bold tracking-widest opacity-80">{stats[0].label}</p>
+                        </div>
+                        <div className="h-10 w-[1px] bg-white/20"></div>
+                        <div>
+                        <p className="text-3xl font-black">{stats[1].value}</p>
+                        <p className="text-xs uppercase font-bold tracking-widest opacity-80">{stats[1].label}</p>
+                        </div>
+                    </div>
+                )}
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* --- QUICK STATS --- */}
-      <section className="py-12 bg-white">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 py-10 px-8 bg-neutral-bg-subtle/50 rounded-[3rem] border border-gray-100 shadow-inner">
-            {stats.map((s, idx) => (
-              <CountingStat key={idx} value={s.value} label={s.label} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* --- BENTO FEATURES (THE SBS ADVANTAGE) --- */}
-      <section className="py-32 px-6 relative overflow-hidden">
-        {/* Decorative background */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-accent-50/50 rounded-full blur-[100px] -z-10"></div>
-        
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
-            <div className="space-y-4">
-              <div className="inline-block px-4 py-1.5 bg-accent-100/50 text-accent-700 text-xs font-black uppercase tracking-[0.2em] rounded-lg border border-accent-200">
-                {settings.home?.advantage?.badge || "Core Value Proposition"}
-              </div>
-              <h2 className="text-4xl md:text-6xl font-black text-primary-950 leading-tight">
-                {settings.home?.advantage?.title?.includes("Advantage")
-                  ? <>
-                      {settings.home.advantage.title.split("Advantage")[0]}
-                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-500 to-accent-400">Advantage</span>
-                      {settings.home.advantage.title.split("Advantage")[1]}
-                    </>
-                  : settings.home?.advantage?.title || "The SBS Advantage."}
-              </h2>
-            </div>
-            <p className="max-w-md text-gray-500 font-medium leading-relaxed">
-              {settings.home?.advantage?.subtitle || "We've spent 20 years perfecting an educational model that works. Modern in approach, historical in results."}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[280px]">
-            {features.map((f, i) => {
-              const Icon = f.icon;
-              return (
-                <div 
-                  key={i} 
-                  className={`${f.gridSpan} group p-8 rounded-[2.5rem] bg-white border border-gray-100 shadow-sm hover:shadow-2xl hover:border-accent-200 transition-all duration-700 flex flex-col justify-start overflow-hidden relative active:scale-[0.99] cursor-default`}
-                >
-                  {/* Watermark for first card */}
-                  {i === 0 && (
-                    <div className="absolute -bottom-10 -left-10 text-[15rem] font-black text-gray-100/80 select-none -z-0 leading-none">
-                      20
-                    </div>
-                  )}
-
-                  {/* Glass highlight effect */}
-                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-accent-300/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  
-                  <div className="relative z-10 flex flex-col h-full gap-4">
-                    <div>
-                      <div className="flex items-center justify-between mb-4">
-                        <div className={`w-12 h-12 rounded-xl ${f.color} flex items-center justify-center group-hover:rotate-6 shadow-sm transition-transform duration-500`}>
-                          <Icon size={24} />
-                        </div>
-                        <span className="text-[9px] uppercase font-black tracking-widest text-primary-950/40 bg-gray-50 px-2 py-1 rounded-full border border-gray-100">
-                          {f.badge || "Elite"}
-                        </span>
-                      </div>
-                      <h3 className="text-xl md:text-2xl font-black mb-2 text-primary-950 group-hover:text-accent-600 transition-colors leading-tight tracking-tight">
-                        {f.title}
-                      </h3>
-                      <p className="text-gray-600 leading-relaxed font-medium text-xs md:text-sm">
-                        {f.desc}
-                      </p>
-                      
-                      {f.details && f.details.length > 0 && (
-                        <div className="space-y-2 mt-4 border-t border-gray-100 pt-4">
-                          {f.details.map((detail, idx) => (
-                            <div key={idx} className="flex items-center gap-2 text-[11px] font-bold text-primary-950/80">
-                              <div className="w-1 h-1 rounded-full bg-accent-500"></div>
-                              {detail}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    <Link to="/about" className="mt-auto pt-4 border-t border-gray-100 block">
-                      <div className="flex items-center gap-2 text-accent-600 font-bold text-[10px] uppercase tracking-[0.2em] group-hover:gap-3 transition-all duration-300">
-                        <span>Explore More</span>
-                        <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
-                      </div>
-                    </Link>
-                  </div>
-                  
-                  {/* Bottom pattern */}
-                  <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-accent-50/30 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* --- PRINCIPAL'S SECTION --- */}
-      <section className="py-24 bg-primary-950 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-1/2 h-full bg-accent-500/10 -skew-x-12 translate-x-1/2"></div>
-        
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-          <div className="order-2 lg:order-1 relative">
-            <div className="relative z-10 rounded-[3rem] overflow-hidden border-8 border-white/10 shadow-3xl">
-              <img src={getImageUrl(settings.home?.principal?.image, principalImageDefault)} alt="Principal" className="w-full grayscale hover:grayscale-0 transition-all duration-700 h-[500px] object-cover object-top" />
-            </div>
-            {/* Decoration */}
-            <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-accent-500 rounded-full blur-[80px] opacity-30"></div>
-          </div>
-
-          <div className="text-white space-y-8 order-1 lg:order-2">
-            <h2 className="text-4xl md:text-5xl font-black">
-              {settings.home?.principal?.title || "Leadership with Vision."}
-            </h2>
-            <p className="text-xl text-accent-100/80 italic leading-relaxed font-medium">
-              "{settings.home?.principal?.quote || "We believe that every child is a unique universe. Our mission is to provide the light that helps them discover their own path to excellence."}"
-            </p>
-            <div className="space-y-2">
-              <p className="text-2xl font-bold text-accent-400">{settings.home?.principal?.name || "Mr. Sanjay Sharma"}</p>
-              <p className="uppercase tracking-[0.3em] text-[10px] font-black opacity-40">{settings.home?.principal?.designation || "Principal & Founder"}</p>
-            </div>
-            
-            <div className="flex items-center gap-6 pt-6">
-              {(settings.home?.principal?.points || ["Expertise", "Integrity", "Results"]).map((p, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <CheckCircle size={20} className="text-accent-400" />
-                  <span className="text-sm font-bold opacity-80 uppercase tracking-wider">{p}</span>
-                </div>
+      {layout.showStats && stats.length > 0 && (
+        <section className="py-12 bg-white">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 py-10 px-8 bg-neutral-bg-subtle/50 rounded-[3rem] border border-gray-100 shadow-inner">
+              {stats.map((s, idx) => (
+                <CountingStat key={idx} value={s.value} label={s.label} />
               ))}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
-      {/* --- FINAL HIGH-IMPACT LIGHT CTA SECTION --- */}
-      <section className="py-32 px-6 relative overflow-hidden bg-white">
-        <div className="max-w-7xl mx-auto">
-          <div className="relative rounded-[4rem] bg-[#f0faf2] bg-gradient-to-br from-[#f0faf2] via-white/90 to-[#e8f5ee] p-12 md:p-24 overflow-hidden border border-accent-200/30 shadow-accent-glow">
-            {/* Subtle Neutral Mesh Gradient Overlay */}
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,#F0FDF4_0%,transparent_50%),radial-gradient(circle_at_80%_70%,#F1F5F9_0%,transparent_50%)] opacity-70"></div>
-            
-            <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-              {/* Left Column: Big Impact Text */}
-              <div className="lg:col-span-8 space-y-8">
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent-50 text-accent-700 text-xs font-black uppercase tracking-[0.3em] border border-accent-100">
-                  <Trophy size={14} className="text-accent-500" />
-                  {settings.home?.cta?.badge || "20 Years of Educational Leadership"}
+      {/* --- BENTO FEATURES (THE SBS ADVANTAGE) --- */}
+      {layout.showAdvantage && (
+        <section className="py-32 px-6 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-accent-50/50 rounded-full blur-[100px] -z-10" style={{ backgroundColor: `${theme.accentColor}10` }}></div>
+          
+          <div className="max-w-7xl mx-auto">
+            <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
+              <div className="space-y-4">
+                <div className="inline-block px-4 py-1.5 bg-accent-100/50 text-accent-700 text-xs font-black uppercase tracking-[0.2em] rounded-lg border border-accent-200" style={{ backgroundColor: `${theme.accentColor}20`, color: theme.accentColor, borderColor: `${theme.accentColor}40` }}>
+                  <InlineEdit path="home.advantage.badge" text={settings.home?.advantage?.badge || "Our USP"} />
                 </div>
-                
-                <h2 className="text-5xl md:text-8xl font-black text-primary-950 leading-[0.9] tracking-tighter">
-                  {settings.home?.cta?.title?.includes("Elite")
-                    ? <>
-                        {settings.home.cta.title.split("Elite")[0]}
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-600 to-accent-400">Elite</span>
-                        {settings.home.cta.title.split("Elite")[1]}
-                      </>
-                    : settings.home?.cta?.title || "Start your Elite Journey."}
+                <h2 className="text-4xl md:text-6xl font-black text-primary-950 leading-tight" style={{ color: theme.primaryColor }}>
+                  <InlineEdit path="home.advantage.title" text={settings.home?.advantage?.title || "Why Choose Us."} />
                 </h2>
-                
-                <p className="text-gray-600 text-lg md:text-xl font-medium max-w-xl leading-relaxed">
-                  {settings.home?.cta?.subtitle || "Join a tradition of excellence where we nurture future leaders for the Indian Armed Forces and global corporate spaces."}
-                </p>
-
-                <div className="flex flex-col sm:flex-row items-center gap-6 pt-4">
-                  <Link to="/admissions" className="w-full sm:w-auto">
-                    <Button className="w-full px-10 py-5 rounded-full bg-accent-500 text-white hover:bg-accent-600 active:scale-95 shadow-2xl shadow-accent-500/20 transition-all duration-300 font-black uppercase tracking-widest text-sm flex items-center justify-center gap-3 relative overflow-hidden group">
-                      <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full animate-shimmer"></div>
-                      <span className="relative">{settings.home?.cta?.primaryBtn || "Apply for Admission"}</span>
-                      <ArrowRight size={18} className="relative group-hover:translate-x-2 transition-transform" />
-                    </Button>
-                  </Link>
-                  <Link to="/gallery" className="w-full sm:w-auto">
-                    <Button variant="ghost" className="w-full px-10 py-5 rounded-full border-2 border-primary-950/10 text-primary-950 hover:bg-gray-50 transition-all font-black uppercase tracking-widest text-sm flex items-center gap-2">
-                      <span>{settings.home?.cta?.secondaryBtn || "Virtual Tour"}</span>
-                      <div className="w-2 h-2 rounded-full bg-accent-500 animate-pulse"></div>
-                    </Button>
-                  </Link>
-                </div>
               </div>
+              <p className="max-w-md text-gray-500 font-medium leading-relaxed">
+                <InlineEdit path="home.advantage.subtitle" text={settings.home?.advantage?.subtitle || "Experience a transformational journey at our campus."} />
+              </p>
+            </div>
 
-              {/* Right Column: Decorative Stat/Badge */}
-              <div className="lg:col-span-4 hidden lg:flex flex-col items-center justify-center relative">
-                {/* Massive Watermark */}
-                <div className="absolute inset-0 flex items-center justify-center -z-10 pointer-events-none">
-                  <span className="text-[25rem] font-black text-gray-100/70 leading-none select-none uppercase">{settings.schoolName?.substring(0, 3) || "SBS"}</span>
-                </div>
-                
-                <div className="p-8 rounded-[3rem] bg-white border border-gray-100 shadow-2xl space-y-6 transform rotate-3 hover:rotate-0 transition-all duration-700">
-                  <div className="flex -space-x-3">
-                    {[1, 2, 3, 4].map((i) => (
-                      <div key={i} className="w-12 h-12 rounded-full border-2 border-white bg-accent-500 flex items-center justify-center text-white text-xs font-bold">
-                        {i}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[280px]">
+              {features.map((f, i) => {
+                const Icon = f.icon;
+                return (
+                  <div 
+                    key={i} 
+                    className={`${f.gridSpan} group p-8 rounded-[2.5rem] bg-white border border-gray-100 shadow-sm hover:shadow-2xl hover:border-accent-200 transition-all duration-700 flex flex-col justify-start overflow-hidden relative active:scale-[0.99] cursor-default`}
+                  >
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-accent-300/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    
+                    <div className="relative z-10 flex flex-col h-full gap-4">
+                      <div>
+                        <div className="flex items-center justify-between mb-4">
+                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center group-hover:rotate-6 shadow-sm transition-transform duration-500`} style={{ backgroundColor: `${theme.accentColor}20`, color: theme.accentColor }}>
+                            <Icon size={24} />
+                          </div>
+                          <span className="text-[9px] uppercase font-black tracking-widest text-primary-950/40 bg-gray-50 px-2 py-1 rounded-full border border-gray-100">
+                            {f.badge || "Featured"}
+                          </span>
+                        </div>
+                        <h3 className="text-xl md:text-2xl font-black mb-2 text-primary-950 group-hover:text-accent-600 transition-colors leading-tight tracking-tight">
+                          {f.title}
+                        </h3>
+                        <p className="text-gray-600 leading-relaxed font-medium text-xs md:text-sm">
+                          {f.desc}
+                        </p>
                       </div>
-                    ))}
-                    <div className="w-12 h-12 rounded-full border-2 border-white bg-primary-950 flex items-center justify-center text-white text-xs font-bold">
-                      +5k
+
+                      <Link to="/about" className="mt-auto pt-4 border-t border-gray-100 block">
+                        <div className="flex items-center gap-2 font-bold text-[10px] uppercase tracking-[0.2em] group-hover:gap-3 transition-all duration-300" style={{ color: theme.accentColor }}>
+                          <span>Learn More</span>
+                          <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
+                        </div>
+                      </Link>
                     </div>
                   </div>
-                  <p className="text-primary-950 font-bold leading-tight">
-                    {settings.home?.cta?.trustText || "Trusted by 5000+ parents across India."}
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* --- PRINCIPAL'S SECTION --- */}
+      {layout.showPrincipal && (
+        <section className="py-24 relative overflow-hidden" style={{ backgroundColor: theme.primaryColor }}>
+          <div className="absolute top-0 right-0 w-1/2 h-full bg-accent-500/10 -skew-x-12 translate-x-1/2" style={{ backgroundColor: `${theme.accentColor}10` }}></div>
+          
+          <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <div className="order-2 lg:order-1 relative">
+              <EditableRegion type="image" path="home.principal.image" label="Portrait Visual" className="relative z-10 rounded-[3rem] overflow-hidden border-8 border-white/10 shadow-3xl block">
+                <img src={getImageUrl(settings.home?.principal?.image, principalImageDefault)} alt="Principal" className="w-full grayscale hover:grayscale-0 transition-all duration-700 h-[500px] object-cover object-top" />
+              </EditableRegion>
+              <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-accent-500 rounded-full blur-[80px] opacity-30" style={{ backgroundColor: theme.accentColor }}></div>
+            </div>
+
+            <div className="text-white space-y-8 order-1 lg:order-2">
+              <h2 className="text-4xl md:text-5xl font-black">
+                <InlineEdit path="home.principal.title" text={settings.home?.principal?.title || "Leadership with Vision."} />
+              </h2>
+              <p className="text-xl italic leading-relaxed font-medium opacity-90">
+                "<InlineEdit path="home.principal.quote" text={settings.home?.principal?.quote || "Education is the manifestation of the perfection already in man."} />"
+              </p>
+              <div className="space-y-2">
+                <p className="text-2xl font-bold" style={{ color: theme.accentColor }}><InlineEdit path="home.principal.name" text={settings.home?.principal?.name || "The Principal"} /></p>
+                <p className="uppercase tracking-[0.3em] text-[10px] font-black opacity-40"><InlineEdit path="home.principal.designation" text={settings.home?.principal?.designation || "Principal"} /></p>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* --- FINAL CTA SECTION --- */}
+      {layout.showCta && (
+        <section className="py-32 px-6 relative overflow-hidden bg-white">
+          <div className="max-w-7xl mx-auto">
+            <div className="relative rounded-[4rem] p-12 md:p-24 overflow-hidden border border-accent-200/30 shadow-accent-glow" style={{ backgroundColor: `${theme.accentColor}05` }}>
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,#F0FDF4_0%,transparent_50%),radial-gradient(circle_at_80%_70%,#F1F5F9_0%,transparent_50%)] opacity-70"></div>
+              
+              <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+                <div className="lg:col-span-8 space-y-8">
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent-50 text-accent-700 text-xs font-black uppercase tracking-[0.3em] border border-accent-100" style={{ backgroundColor: `${theme.accentColor}10`, color: theme.accentColor, borderColor: `${theme.accentColor}20` }}>
+                    <Trophy size={14} className="text-accent-500" style={{ color: theme.accentColor }} />
+                    <InlineEdit path="global.foundationYear" text={settings.global?.foundationYear || "Since 2004"} />
+                  </div>
+                  
+                  <h2 className="text-5xl md:text-8xl font-black text-primary-950 leading-[0.9] tracking-tighter" style={{ color: theme.primaryColor }}>
+                    <InlineEdit path="global.ctaButtonText" text={settings.global?.ctaButtonText || "Apply Foundation."} />
+                  </h2>
+                  
+                  <p className="text-gray-600 text-lg md:text-xl font-medium max-w-xl leading-relaxed">
+                    <InlineEdit path="global.visionStatement" text={settings.global?.visionStatement || "Join a tradition of excellence and shape your future."} />
                   </p>
-                  <div className="pt-4 border-t border-gray-100 flex items-center gap-3">
-                    <Star className="text-yellow-400 fill-yellow-400" size={16} />
-                    <span className="text-sm text-gray-500 font-medium">4.9/5 Average Rating</span>
+
+                  <div className="flex flex-col sm:flex-row items-center gap-6 pt-4">
+                    <Link to="/admissions" className="w-full sm:w-auto">
+                      <Button className="w-full px-10 py-5 rounded-full text-white shadow-2xl transition-all duration-300 font-black uppercase tracking-widest text-sm flex items-center justify-center gap-3 relative overflow-hidden group shadow-accent-500/20" style={{ backgroundColor: theme.accentColor }}>
+                        <span className="relative">Apply Now</span>
+                        <ArrowRight size={18} className="relative group-hover:translate-x-2 transition-transform" />
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+
+                <div className="lg:col-span-4 hidden lg:flex flex-col items-center justify-center relative">
+                  <div className="absolute inset-0 flex items-center justify-center -z-10 pointer-events-none">
+                    <span className="text-[25rem] font-black text-gray-100/70 leading-none select-none uppercase">{settings.schoolName?.substring(0, 3)}</span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
     </div>
   );
