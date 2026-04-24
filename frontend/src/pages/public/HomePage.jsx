@@ -21,7 +21,10 @@ import {
   ClipboardList,
   Headphones,
   Mail,
-  Calendar
+  Calendar,
+  TrendingUp,
+  Globe,
+  History
 } from "lucide-react";
 import { useSiteSettings } from "../../context/SiteSettingsContext";
 import schoolImageDefault from "../../assets/school.png";
@@ -121,7 +124,7 @@ const CountingStat = ({ value, label, duration = 2500 }) => {
 const DynamicIcon = ({ name, size = 24, className = "" }) => {
   const IconMap = { 
     BookOpen, Users, Shield, Sparkles, Award, Star, Zap, Search, FileText, Trophy,
-    ShieldCheck, ClipboardList, Headphones, Mail, Calendar, Target
+    ShieldCheck, ClipboardList, Headphones, Mail, Calendar, Target, TrendingUp, Globe, History
   };
   const Icon = IconMap[name] || Star;
   return <Icon size={size} className={className} />;
@@ -146,7 +149,7 @@ const HomePage = () => {
     );
   }
 
-  const IconMap = { BookOpen, Users, Shield, Sparkles, Award, Star, Zap, Search, FileText, Trophy };
+  const IconMap = { BookOpen, Users, Shield, Sparkles, Award, Star, Zap, Search, FileText, Trophy, ShieldCheck, TrendingUp, Globe, History, Target };
   
   const stats = settings.home?.stats || [];
   const features = (settings.home?.advantage?.features || []).map((f, i) => ({
@@ -172,7 +175,7 @@ const HomePage = () => {
           <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="relative z-10 space-y-8 text-center lg:text-left">
               <EditableRegion type="badge" path="home.hero.badge" label="Hero Status Badge">
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent-100/50 text-accent-700 text-sm font-bold border border-accent-200 shadow-sm animate-fade-in" style={{ backgroundColor: `${theme.accentColor}20`, color: theme.accentColor, borderColor: `${theme.accentColor}40` }}>
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold border border-accent-200 shadow-sm animate-fade-in" style={{ backgroundColor: `${settings.home?.hero?.badge?.color || theme.accentColor}20`, color: settings.home?.hero?.badge?.color || theme.accentColor, borderColor: `${settings.home?.hero?.badge?.color || theme.accentColor}40` }}>
                   <DynamicIcon name={settings.home?.hero?.badge?.icon || "Sparkles"} size={16} />
                   <span>{settings.home?.hero?.badge?.text || "Explore Our Excellence"}</span>
                 </div>
@@ -211,22 +214,6 @@ const HomePage = () => {
                     <img src={getImageUrl(settings.home?.hero?.image, schoolImageDefault)} alt="School" className="w-full h-[600px] object-cover" />
                 </EditableRegion>
                 <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/60 to-transparent pointer-events-none"></div>
-                
-                {stats.length >= 2 && (
-                    <div className="absolute bottom-8 left-8 right-8 p-6 bg-white/10 backdrop-blur-xl rounded-3xl border border-white/20 shadow-2xl flex justify-between items-center text-white">
-                        <EditableRegion type="single-stat" path="home.stats.0" label="Primary Metric" className="text-center">
-                            <p className="text-3xl font-black">{stats[0].value}</p>
-                            <p className="text-xs uppercase font-bold tracking-widest opacity-80">{stats[0].label}</p>
-                        </EditableRegion>
-
-                        <div className="h-10 w-[1px] bg-white/20"></div>
-
-                        <EditableRegion type="single-stat" path="home.stats.1" label="Secondary Metric" className="text-center">
-                            <p className="text-3xl font-black">{stats[1].value}</p>
-                            <p className="text-xs uppercase font-bold tracking-widest opacity-80">{stats[1].label}</p>
-                        </EditableRegion>
-                    </div>
-                )}
               </div>
             </div>
           </div>
@@ -265,8 +252,8 @@ const HomePage = () => {
             <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
               <div className="space-y-4">
                 <EditableRegion type="badge" path="home.advantage.badge" label="Advantage Section Badge">
-                  <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-accent-100/50 text-accent-700 text-xs font-black uppercase tracking-[0.2em] rounded-lg border border-accent-200" style={{ backgroundColor: `${theme.accentColor}20`, color: theme.accentColor, borderColor: `${theme.accentColor}40` }}>
-                    <DynamicIcon name={settings.home?.advantage?.badge?.icon || "Award"} size={14} className="text-accent-500" style={{ color: theme.accentColor }} />
+                  <div className="inline-flex items-center gap-2 px-4 py-1.5 text-xs font-black uppercase tracking-[0.2em] rounded-lg border border-accent-200" style={{ backgroundColor: `${settings.home?.advantage?.badge?.color || theme.accentColor}20`, color: settings.home?.advantage?.badge?.color || theme.accentColor, borderColor: `${settings.home?.advantage?.badge?.color || theme.accentColor}40` }}>
+                    <DynamicIcon name={settings.home?.advantage?.badge?.icon || "Award"} size={14} />
                     <span>{settings.home?.advantage?.badge?.text || "Core Value Proposition"}</span>
                   </div>
                 </EditableRegion>
@@ -390,8 +377,8 @@ const HomePage = () => {
               <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
                 <div className="lg:col-span-8 space-y-8">
                   <EditableRegion type="badge" path="home.cta.badge" label="CTA Status Badge">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent-50 text-accent-700 text-xs font-black uppercase tracking-[0.3em] border border-accent-100" style={{ backgroundColor: `${theme.accentColor}10`, color: theme.accentColor, borderColor: `${theme.accentColor}20` }}>
-                      <DynamicIcon name={settings.home?.cta?.badge?.icon || "Trophy"} size={14} className="text-accent-500" style={{ color: theme.accentColor }} />
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-black uppercase tracking-[0.3em] border border-accent-100" style={{ backgroundColor: `${settings.home?.cta?.badge?.color || theme.accentColor}10`, color: settings.home?.cta?.badge?.color || theme.accentColor, borderColor: `${settings.home?.cta?.badge?.color || theme.accentColor}20` }}>
+                      <DynamicIcon name={settings.home?.cta?.badge?.icon || "Trophy"} size={14} />
                       <span>{settings.home?.cta?.badge?.text || "Since 2004"}</span>
                     </div>
                   </EditableRegion>
@@ -418,7 +405,9 @@ const HomePage = () => {
 
                 <div className="lg:col-span-4 hidden lg:flex flex-col items-center justify-center relative">
                   <div className="absolute inset-0 flex items-center justify-center -z-10 pointer-events-none">
-                    <span className="text-[25rem] font-black text-gray-100/70 leading-none select-none uppercase">{settings.schoolName?.substring(0, 3)}</span>
+                    <span className="text-[25rem] font-black text-gray-100/70 leading-none select-none uppercase">
+                      <InlineEdit path="schoolName" text={settings.schoolName?.substring(0, 3) || "SBS"} />
+                    </span>
                   </div>
                 </div>
               </div>

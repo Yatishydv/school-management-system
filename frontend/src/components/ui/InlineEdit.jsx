@@ -5,17 +5,22 @@ const InlineEdit = ({ path, text, label = "Text Content", className = "", as: Co
     const { isEditorMode, dispatchInlineEdit, dispatchElementClick } = useSiteSettings();
     const elementRef = useRef(null);
 
+    // Defensive check: if text is an object, try to extract a string or fallback
+    const displayText = typeof text === 'object' && text !== null
+        ? (text.text || text.title || text.content || "")
+        : (text || "");
+
     // Keep inner text strictly synced with props if not currently being edited
     useEffect(() => {
-        if (elementRef.current && elementRef.current.textContent !== text) {
-            elementRef.current.textContent = text || "";
+        if (elementRef.current && elementRef.current.textContent !== displayText) {
+            elementRef.current.textContent = displayText;
         }
-    }, [text]);
+    }, [displayText]);
 
     const handleBlur = () => {
         if (!elementRef.current) return;
         const newText = elementRef.current.textContent;
-        if (newText !== text) {
+        if (newText !== displayText) {
             dispatchInlineEdit(path, newText);
         }
     };
@@ -26,7 +31,7 @@ const InlineEdit = ({ path, text, label = "Text Content", className = "", as: Co
     };
 
     if (!isEditorMode) {
-        return <Component className={className}>{text}</Component>;
+        return <Component className={className}>{displayText}</Component>;
     }
 
     return (
@@ -39,7 +44,7 @@ const InlineEdit = ({ path, text, label = "Text Content", className = "", as: Co
             onClick={handleFocus}
             className={`${className} relative cursor-text outline-none transition-all duration-200 hover:ring-2 hover:ring-blue-500/50 hover:bg-blue-50/10 focus:ring-2 focus:ring-blue-500 focus:bg-blue-50/30 rounded-sm px-1 -mx-1`}
         >
-            {text}
+            {displayText}
         </Component>
     );
 };

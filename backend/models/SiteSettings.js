@@ -83,12 +83,20 @@ const siteSettingsSchema = new mongoose.Schema({
     // --- ABOUT PAGE ---
     about: {
         hero: {
-            badge: { type: String, default: "Sparkles" },
+            badge: {
+                text: { type: String, default: "Our Story" },
+                icon: { type: String, default: "Sparkles" },
+                color: { type: String }
+            },
             title: { type: String, default: "Inspiring Minds, Empowering Futures." },
             subtitle: { type: String, default: "Nurturing the leaders of tomorrow with modern technology and traditional values." }
         },
         heritage: {
-            badge: { type: String, default: "Our Heritage" },
+            badge: {
+                text: { type: String, default: "Our Heritage" },
+                icon: { type: String, default: "History" },
+                color: { type: String }
+            },
             title: { type: String, default: "A Legacy of Heart & Mind." },
             story: { type: String, default: "Established in 2004, SBS Badhwana began as a vision to bring world-class education to the heart of Badhwana. What started as a small cohort has blossomed into a community of over 5,000 successful alumni." }
         },
@@ -102,13 +110,21 @@ const siteSettingsSchema = new mongoose.Schema({
     // --- ADMISSIONS PAGE ---
     admissions: {
         hero: {
-            badge: { type: String, default: "Session 2024-25 Open" },
+            badge: {
+                text: { type: String, default: "Session 2024-25 Open" },
+                icon: { type: String, default: "Sparkles" },
+                color: { type: String }
+            },
             title: { type: String, default: "Shape Their Elite Future." },
             subtitle: { type: String, default: "Bridge the gap between potential and excellence." },
             image: { type: String }
         },
         process: {
-            badge: { type: String, default: "The Admission Cycle" },
+            badge: {
+                text: { type: String, default: "The Admission Cycle" },
+                icon: { type: String, default: "Target" },
+                color: { type: String }
+            },
             title: { type: String, default: "Four Steps to Excellence." },
             steps: [
                 { title: { type: String, default: "Discovery" }, desc: { type: String, default: "Connect with our admissions office." }, icon: { type: String, default: "Search" }, badge: { type: String, default: "Inquiry" } }
@@ -126,7 +142,11 @@ const siteSettingsSchema = new mongoose.Schema({
     // --- CONTACT PAGE ---
     contact: {
         hero: {
-            badge: { type: String, default: "Connect with our Institution" },
+            badge: {
+                text: { type: String, default: "Connect with our Institution" },
+                icon: { type: String, default: "Phone" },
+                color: { type: String }
+            },
             title: { type: String, default: "Contact Our Campus." },
             subtitle: { type: String, default: "Reach out to our administrative team for inquiries." }
         },
@@ -134,7 +154,11 @@ const siteSettingsSchema = new mongoose.Schema({
             { title: { type: String, default: "Phone Support" }, icon: { type: String, default: "Headphones" }, details: [{ type: String, default: "Office: +91 98765 43210" }], color: { type: String, default: "bg-blue-50 text-blue-600" }, label: { type: String, default: "Call Us Anytime" } }
         ],
         location: {
-            badge: { type: String, default: "Campus Location" },
+            badge: {
+                text: { type: String, default: "Campus Location" },
+                icon: { type: String, default: "Globe" },
+                color: { type: String }
+            },
             title: { type: String, default: "Visit Our Institution." },
             campusName: { type: String, default: "S.B.S. Senior Secondary School" },
             address: { type: String, default: "Village Badhwana, Tehsil Dadri, Charkhi Dadri, Haryana – 127308" },

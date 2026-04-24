@@ -49,7 +49,8 @@ import {
   MousePointerClick,
   RotateCcw,
   TrendingUp,
-  HelpCircle
+  HelpCircle,
+  Quote
 } from "lucide-react";
 import { toast } from "react-toastify";
 import useAuthStore from "../../stores/authStore.js";
@@ -59,7 +60,6 @@ import Input from "../../components/ui/Input";
 import { useSiteSettings, INITIAL_SETTINGS, mergeSettings } from "../../context/SiteSettingsContext";
 
 
-// --- HOISTED SHARED UI COMPONENTS (GLOBAL SCOPE) ---
 // --- SHARED UI COMPONENTS (REVAMP 2.0) ---
 const SidebarBtn = ({ id, activeTab, setActiveTab, icon: Icon, label }) => (
     <button 
@@ -136,8 +136,8 @@ const AdminSiteEditor = () => {
     const [settings, setSettings] = useState(null);
     const [uploadingImage, setUploadingImage] = useState(false);
     const [showPreview, setShowPreview] = useState(true);
-    const [previewDevice, setPreviewDevice] = useState("desktop"); // desktop, tablet, mobile
-    const [zoom, setZoom] = useState(null); // null means auto-scale
+    const [previewDevice, setPreviewDevice] = useState("desktop"); 
+    const [zoom, setZoom] = useState(null); 
     const [pan, setPan] = useState({ x: 0, y: 0 });
     const [isDragging, setIsDragging] = useState(false);
     const [lastPos, setLastPos] = useState({ x: 0, y: 0 });
@@ -149,17 +149,31 @@ const AdminSiteEditor = () => {
 
     useEffect(() => {
         if (!containerRef.current) return;
-        
         const observer = new ResizeObserver((entries) => {
             for (let entry of entries) {
                 setContainerWidth(entry.contentRect.width);
                 setContainerHeight(entry.contentRect.height);
             }
         });
-
         observer.observe(containerRef.current);
         return () => observer.disconnect();
-    }, [showPreview]); // Re-observe when showPreview changes
+    }, [showPreview]);
+
+    const handleMouseDown = (e) => {
+        if (e.button !== 0 || e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') return;
+        setIsDragging(true);
+        setLastPos({ x: e.clientX, y: e.clientY });
+    };
+
+    const handleMouseMove = (e) => {
+        if (!isDragging) return;
+        const dx = e.clientX - lastPos.x;
+        const dy = e.clientY - lastPos.y;
+        setPan(prev => ({ x: prev.x + dx, y: prev.y + dy }));
+        setLastPos({ x: e.clientX, y: e.clientY });
+    };
+
+    const handleMouseUp = () => setIsDragging(false);
 
     const handleTabChange = (id) => {
         setActiveTab(id);
@@ -169,14 +183,8 @@ const AdminSiteEditor = () => {
             admissions: "/admissions",
             contact: "/contact",
             gallery: "/gallery",
-            footer: null, // Keep current
-            global: null,
-            theme: null,
-            layout: null
         };
-        if (urlMap[id]) {
-            setPreviewUrl(urlMap[id]);
-        }
+        if (urlMap[id]) setPreviewUrl(urlMap[id]);
     };
 
     const fetchSettings = async () => {
@@ -222,7 +230,7 @@ const AdminSiteEditor = () => {
                 }
             } else if (e.data?.type === 'LIVE_INLINE_UPDATE') {
                 setSettings(prev => {
-                    const newSettings = { ...prev };
+                    const newSettings = JSON.parse(JSON.stringify(prev));
                     const keys = e.data.path.split('.');
                     let current = newSettings;
                     for (let i = 0; i < keys.length - 1; i++) {
@@ -249,7 +257,7 @@ const AdminSiteEditor = () => {
         setSaving(true);
         try {
             const updated = await adminService.updateSiteSettings(settings, token);
-            setGlobalSettings(updated); // Sync with global context immediately
+            setGlobalSettings(updated);
             toast.success("Site configuration committed successfully.");
         } catch (error) {
             toast.error("Protocol failure: Could not update records.");
@@ -263,7 +271,6 @@ const AdminSiteEditor = () => {
         setUploadingImage(true);
         const formData = new FormData();
         formData.append("image", file);
-
         try {
             const data = await adminService.uploadSiteImage(formData, token);
             const pathParts = fieldPath.split('.');
@@ -298,8 +305,13 @@ const AdminSiteEditor = () => {
             const newSettings = JSON.parse(JSON.stringify(prev));
             let current = newSettings;
             for (let i = 0; i < pathParts.length - 1; i++) {
-                if (!current[pathParts[i]]) current[pathParts[i]] = {};
-                current = current[pathParts[i]];
+                const part = pathParts[i];
+                // If the current part doesn't exist OR it is not an object (e.g. it's a legacy string),
+                // we must convert/initialize it as an object to allow further nesting.
+                if (!current[part] || typeof current[part] !== 'object') {
+                    current[part] = {};
+                }
+                current = current[part];
             }
             current[pathParts[pathParts.length - 1]] = value;
             return newSettings;
@@ -312,15 +324,10 @@ const AdminSiteEditor = () => {
         </div>
     );
 
-
-
-
     return (
         <div className="h-screen w-full flex overflow-hidden bg-gray-50 font-sans">
-            {/* LEFT SIDEBAR (Control Panel) */}
             <aside className={`h-full bg-white border-r border-gray-200 flex flex-col shrink-0 transition-all duration-300 ${showPreview ? "w-[400px] xl:w-[480px]" : "w-full max-w-4xl mx-auto border-x shadow-2xl"}`}>
                 
-                {/* Header Actions */}
                 <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-primary-950 text-white relative z-20 shadow-md">
                     <div className="flex items-center gap-3">
                         <button onClick={() => window.location.href = '/admin/dashboard'} className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all">
@@ -328,21 +335,15 @@ const AdminSiteEditor = () => {
                         </button>
                         <div>
                             <h2 className="text-sm font-bold tracking-tight">Site Editor</h2>
-                            <p className="text-[10px] text-white/60 uppercase tracking-widest font-bold">Unsaved Changes</p>
+                            <p className="text-[10px] text-white/60 uppercase tracking-widest font-bold">Live Editor</p>
                         </div>
                     </div>
-                    
-                    <button 
-                        onClick={handleUpdate}
-                        disabled={saving}
-                        className="bg-accent-500 text-white px-5 py-2.5 rounded-lg flex items-center gap-2 hover:bg-accent-400 transition-all shadow-lg disabled:opacity-50 text-xs font-bold"
-                    >
+                    <button onClick={handleUpdate} disabled={saving} className="bg-accent-500 text-white px-5 py-2.5 rounded-lg flex items-center gap-2 hover:bg-accent-400 transition-all shadow-lg disabled:opacity-50 text-xs font-bold">
                         {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                         Save
                     </button>
                 </div>
 
-                {/* Contextual Top Navigation */}
                 {!selectedElement ? (
                     <div className="flex border-b border-gray-100 overflow-x-auto no-scrollbar bg-gray-50/50 p-3 gap-2 relative z-10 shrink-0 shadow-inner">
                         <SidebarBtn id="global" activeTab={activeTab} setActiveTab={handleTabChange} icon={Globe} label="Global" />
@@ -367,46 +368,151 @@ const AdminSiteEditor = () => {
                     </div>
                 )}
 
-                {/* Content Area (Scrollable) */}
                 <main className="flex-1 overflow-y-auto p-6 space-y-8 bg-gray-50/50 scroll-smooth flex flex-col relative">
                         
-                        {/* CONTEXTUAL INSPECTOR */}
                         {selectedElement && (
                             <div className="animate-fade-up space-y-6 flex-1">
                                 <section className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm space-y-6">
                                     {selectedElement.type === "text" && (
                                         <div className="space-y-4">
                                             <label className="text-xs font-bold text-gray-600 uppercase tracking-widest">{selectedElement.label}</label>
-                                            <textarea 
-                                                className="w-full px-5 py-4 bg-gray-50 rounded-xl border border-gray-200 text-sm font-medium outline-none focus:ring-2 focus:ring-accent-500/20 focus:border-accent-500 transition-all min-h-[250px]"
-                                                value={getNestedField(settings, selectedElement.path) || ""}
-                                                onChange={(e) => updateNestedField(selectedElement.path, e.target.value)}
-                                            />
+                                            {(() => {
+                                                const rawValue = getNestedField(settings, selectedElement.path);
+                                                // Check if we are dealing with an object (new format) or string (legacy format)
+                                                const isObject = rawValue && typeof rawValue === 'object' && !Array.isArray(rawValue);
+                                                const isStructuredSection = selectedElement.path === 'about.mission' || selectedElement.path === 'about.vision';
+                                                
+                                                if (isObject || isStructuredSection) {
+                                                    // Use the same fallbacks as the AboutPage to avoid "empty" editors when defaults are active
+                                                    const fallbacks = {
+                                                        'about.mission': { 
+                                                            title: "The Mission", 
+                                                            content: "To provide an inclusive, stimulating environment that fosters curiosity and academic excellence." 
+                                                        },
+                                                        'about.vision': { 
+                                                            title: "The Vision", 
+                                                            content: "To be a global leader in transformative education, shaping character and competence." 
+                                                        }
+                                                    };
+                                                    
+                                                    const defaultVal = fallbacks[selectedElement.path] || { title: "", content: "" };
+                                                    const current = isObject ? rawValue : { 
+                                                        title: typeof rawValue === 'string' ? "" : defaultVal.title, 
+                                                        content: typeof rawValue === 'string' ? rawValue : defaultVal.content 
+                                                    };
+                                                    
+                                                    return (
+                                                        <div className="space-y-4 bg-gray-50 p-6 rounded-2xl border border-gray-100">
+                                                            <Input label="Section Heading" value={current.title || ""} onChange={(e) => {
+                                                                updateNestedField(selectedElement.path, { ...current, title: e.target.value });
+                                                            }} />
+                                                            <div className="space-y-2">
+                                                               <label className="text-[11px] font-bold text-gray-400 uppercase tracking-tight ml-1">Main Content Description</label>
+                                                               <textarea 
+                                                                   className="w-full px-5 py-4 bg-white rounded-xl border border-gray-200 text-sm font-medium text-gray-900 outline-none focus:ring-2 focus:ring-accent-500/20 focus:border-accent-500 transition-all min-h-[150px]"
+                                                                   style={{ color: '#111827 !important', WebkitTextFillColor: '#111827' }}
+                                                                   value={current.content || ""}
+                                                                   onChange={(e) => {
+                                                                       updateNestedField(selectedElement.path, { ...current, content: e.target.value });
+                                                                   }}
+                                                               />
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                } else {
+                                                    return (
+                                                        <textarea 
+                                                            className="w-full px-5 py-4 bg-gray-50 rounded-xl border border-gray-200 text-sm font-medium text-primary-950 outline-none focus:ring-2 focus:ring-accent-500/20 focus:border-accent-500 transition-all min-h-[250px]"
+                                                            value={typeof rawValue === 'string' ? rawValue : ""}
+                                                            onChange={(e) => updateNestedField(selectedElement.path, e.target.value)}
+                                                        />
+                                                    );
+                                                }
+                                            })()}
                                         </div>
                                     )}
                                     {selectedElement.type === "image" && (
-                                        <ImagePicker 
-                                            label={selectedElement.label} 
-                                            value={getNestedField(settings, selectedElement.path)} 
-                                            path={selectedElement.path} 
-                                            handleImageUpload={handleImageUpload} 
-                                            getImageUrl={getImageUrl} 
-                                            uploadingImage={uploadingImage} 
-                                        />
+                                        <ImagePicker label={selectedElement.label} value={getNestedField(settings, selectedElement.path)} path={selectedElement.path} handleImageUpload={handleImageUpload} getImageUrl={getImageUrl} uploadingImage={uploadingImage} />
                                     )}
-                                    {selectedElement.type === "button" && (
-                                        <div className="space-y-4">
-                                            <label className="text-xs font-bold text-gray-600 uppercase tracking-widest">{selectedElement.label}</label>
-                                            <Input placeholder="Button Text" value={getNestedField(settings, `${selectedElement.path}.primaryBtn`) || ""} onChange={(e) => updateNestedField(`${selectedElement.path}.primaryBtn`, e.target.value)} />
-                                            <p className="text-[11px] text-gray-400 font-medium">Link destination is configured globally. Use Navigation Tabs to change destinations.</p>
+                                    {selectedElement.type === "badge" && (
+                                        <div className="space-y-6">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <div className="w-1.5 h-6 bg-accent-500 rounded-full"></div>
+                                                <label className="text-xs font-bold text-gray-900 uppercase tracking-widest">{selectedElement.label}</label>
+                                            </div>
+                                            <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 space-y-6">
+                                                <Input 
+                                                    label="Badge Text" 
+                                                    value={typeof getNestedField(settings, selectedElement.path) === 'string' ? getNestedField(settings, selectedElement.path) : (getNestedField(settings, selectedElement.path)?.text || "")} 
+                                                    onChange={(e) => {
+                                                        const current = getNestedField(settings, selectedElement.path);
+                                                        if (typeof current === 'string') {
+                                                            updateNestedField(selectedElement.path, { text: e.target.value, icon: "Sparkles", color: "#10b981" });
+                                                        } else {
+                                                            updateNestedField(selectedElement.path, { ...(current || {}), text: e.target.value });
+                                                        }
+                                                    }} 
+                                                />
+                                                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100">
+                                                    <div className="space-y-3">
+                                                       <label className="text-[11px] font-bold text-gray-400 uppercase tracking-tight ml-1">Badge Icon</label>
+                                                       <select 
+                                                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-accent-500 transition-all" 
+                                                            value={(typeof getNestedField(settings, selectedElement.path) === 'object' ? getNestedField(settings, selectedElement.path)?.icon : null) || "Sparkles"} 
+                                                            onChange={(e) => {
+                                                                const current = getNestedField(settings, selectedElement.path);
+                                                                if (typeof current === 'string') {
+                                                                    updateNestedField(selectedElement.path, { text: current, icon: e.target.value, color: "#10b981" });
+                                                                } else {
+                                                                    updateNestedField(selectedElement.path, { ...(current || {}), icon: e.target.value });
+                                                                }
+                                                            }}
+                                                        >
+                                                           <option value="Star">Star</option>
+                                                           <option value="Sparkles">Sparkles</option>
+                                                           <option value="Trophy">Trophy</option>
+                                                           <option value="Award">Award</option>
+                                                           <option value="Target">Target</option>
+                                                           <option value="Zap">Zap</option>
+                                                           <option value="ShieldCheck">Shield</option>
+                                                           <option value="History">History</option>
+                                                           <option value="Globe">Globe</option>
+                                                           <option value="TrendingUp">Trend</option>
+                                                           <option value="BookOpen">Education</option>
+                                                       </select>
+                                                    </div>
+                                                    <div className="space-y-3">
+                                                       <label className="text-[11px] font-bold text-gray-400 uppercase tracking-tight ml-1">Icon Style</label>
+                                                       <div className="flex items-center gap-3">
+                                                           <input 
+                                                                type="color" 
+                                                                value={(typeof getNestedField(settings, selectedElement.path) === 'object' ? getNestedField(settings, selectedElement.path)?.color : null) || "#10b981"} 
+                                                                onChange={(e) => {
+                                                                    const current = getNestedField(settings, selectedElement.path);
+                                                                    if (typeof current === 'string') {
+                                                                        updateNestedField(selectedElement.path, { text: current, icon: "Sparkles", color: e.target.value });
+                                                                    } else {
+                                                                        updateNestedField(selectedElement.path, { ...(current || {}), color: e.target.value });
+                                                                    }
+                                                                }} 
+                                                                className="w-12 h-11 rounded-lg border border-gray-200 p-1 bg-white cursor-pointer" 
+                                                            />
+                                                           <div className="text-[10px] font-bold text-gray-400 uppercase leading-tight">Pick<br/>Color</div>
+                                                       </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     )}
                                     {selectedElement.type === "stats" && (
                                         <div className="space-y-6">
                                             <div className="flex items-center justify-between">
-                                                <label className="text-xs font-bold text-gray-600 uppercase tracking-widest">{selectedElement.label}</label>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-1.5 h-6 bg-accent-500 rounded-full"></div>
+                                                    <label className="text-xs font-bold text-gray-900 uppercase tracking-widest">{selectedElement.label}</label>
+                                                </div>
                                                 <button onClick={() => {
-                                                    const newStats = [...(getNestedField(settings, selectedElement.path) || []), { label: "New Stat", value: "0" }];
+                                                    const newStats = [...(getNestedField(settings, selectedElement.path) || []), { label: "New Stat", value: "0", icon: "Star" }];
                                                     updateNestedField(selectedElement.path, newStats);
                                                 }} className="px-3 py-1.5 bg-accent-50 text-accent-700 text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-accent-100 transition-colors">Add Stat</button>
                                             </div>
@@ -417,12 +523,29 @@ const AdminSiteEditor = () => {
                                                         const newStats = currentStats.filter((_, i) => i !== idx);
                                                         updateNestedField(selectedElement.path, newStats);
                                                     }} className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-all text-red-500 hover:scale-110"><Trash2 size={14} /></button>
-                                                    <div className="space-y-3">
-                                                        <Input placeholder="Stat Number (e.g. 50+)" value={stat.value} onChange={(e) => {
-                                                            const currentStats = [...getNestedField(settings, selectedElement.path)];
-                                                            currentStats[idx].value = e.target.value;
-                                                            updateNestedField(selectedElement.path, currentStats);
-                                                        }} />
+                                                    <div className="space-y-4">
+                                                        <div className="grid grid-cols-2 gap-3">
+                                                            <Input placeholder="Stat Number (e.g. 50+)" value={stat.value} onChange={(e) => {
+                                                                const currentStats = [...getNestedField(settings, selectedElement.path)];
+                                                                currentStats[idx].value = e.target.value;
+                                                                updateNestedField(selectedElement.path, currentStats);
+                                                            }} />
+                                                            <select className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-accent-500 transition-colors" value={stat.icon || "Star"} onChange={(e) => {
+                                                                const currentStats = [...getNestedField(settings, selectedElement.path)];
+                                                                currentStats[idx].icon = e.target.value;
+                                                                updateNestedField(selectedElement.path, currentStats);
+                                                            }}>
+                                                                <option value="TrendingUp">Trend</option>
+                                                                <option value="Globe">Globe</option>
+                                                                <option value="Users">Users</option>
+                                                                <option value="Trophy">Trophy</option>
+                                                                <option value="Star">Star</option>
+                                                                <option value="Zap">Zap</option>
+                                                                <option value="ShieldCheck">Shield</option>
+                                                                <option value="History">History</option>
+                                                                <option value="BookOpen">Education</option>
+                                                            </select>
+                                                        </div>
                                                         <Input placeholder="Stat Label" value={stat.label} onChange={(e) => {
                                                             const currentStats = [...getNestedField(settings, selectedElement.path)];
                                                             currentStats[idx].label = e.target.value;
@@ -433,12 +556,15 @@ const AdminSiteEditor = () => {
                                             ))}
                                         </div>
                                     )}
-                                    {selectedElement.type === "features" && (
+                                    {selectedElement.type === "features" || selectedElement.type === "values" ? (
                                         <div className="space-y-6">
                                             <div className="flex items-center justify-between">
-                                                <label className="text-xs font-bold text-gray-600 uppercase tracking-widest">{selectedElement.label}</label>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-1.5 h-6 bg-accent-500 rounded-full"></div>
+                                                    <label className="text-xs font-bold text-gray-900 uppercase tracking-widest">{selectedElement.label}</label>
+                                                </div>
                                                 <button onClick={() => {
-                                                    const newFeats = [...(getNestedField(settings, selectedElement.path) || []), { title: "New Feature", badge: "Core", desc: "Description here", icon: "Star" }];
+                                                    const newFeats = [...(getNestedField(settings, selectedElement.path) || []), { title: "New Item", badge: "Core", desc: "Description here", icon: "Star" }];
                                                     updateNestedField(selectedElement.path, newFeats);
                                                 }} className="px-3 py-1.5 bg-accent-50 text-accent-700 text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-accent-100 transition-colors">Add Box</button>
                                             </div>
@@ -455,7 +581,7 @@ const AdminSiteEditor = () => {
                                                                 newFeats[idx].title = e.target.value;
                                                                 updateNestedField(selectedElement.path, newFeats);
                                                             }} />
-                                                            <Input placeholder="Badge" value={feat.badge} onChange={(e) => {
+                                                            <Input placeholder="Badge/Category" value={feat.badge} onChange={(e) => {
                                                                 const newFeats = [...getNestedField(settings, selectedElement.path)];
                                                                 newFeats[idx].badge = e.target.value;
                                                                 updateNestedField(selectedElement.path, newFeats);
@@ -466,28 +592,16 @@ const AdminSiteEditor = () => {
                                                             newFeats[idx].icon = e.target.value;
                                                             updateNestedField(selectedElement.path, newFeats);
                                                         }}>
-                                                            <option value="Star">Star Icon</option>
-                                                            <option value="BookOpen">Book Icon</option>
-                                                            <option value="Users">Users Icon</option>
-                                                            <option value="Shield">Shield Icon</option>
-                                                            <option value="Sparkles">Sparkles Icon</option>
-                                                            <option value="Target">Target Icon</option>
-                                                            <option value="Award">Award Icon</option>
+                                                            <option value="Star">Star</option>
+                                                            <option value="BookOpen">Education</option>
+                                                            <option value="Users">Community</option>
+                                                            <option value="Shield">Security</option>
+                                                            <option value="Sparkles">Excellence</option>
+                                                            <option value="Target">Mission</option>
+                                                            <option value="Award">Achievement</option>
+                                                            <option value="Zap">Passion</option>
+                                                            <option value="Compass">Empathy</option>
                                                         </select>
-                                                        <div className="grid grid-cols-2 gap-3">
-                                                            <Input placeholder="Link Text" value={feat.link?.text || "Learn More"} onChange={(e) => {
-                                                                const newFeats = [...getNestedField(settings, selectedElement.path)];
-                                                                if (!newFeats[idx].link) newFeats[idx].link = {};
-                                                                newFeats[idx].link.text = e.target.value;
-                                                                updateNestedField(selectedElement.path, newFeats);
-                                                            }} />
-                                                            <Input placeholder="Link URL" value={feat.link?.url || "/about"} onChange={(e) => {
-                                                                const newFeats = [...getNestedField(settings, selectedElement.path)];
-                                                                if (!newFeats[idx].link) newFeats[idx].link = {};
-                                                                newFeats[idx].link.url = e.target.value;
-                                                                updateNestedField(selectedElement.path, newFeats);
-                                                            }} />
-                                                        </div>
                                                         <textarea placeholder="Description..." className="w-full px-4 py-3 bg-white rounded-xl text-sm font-medium border border-gray-200 outline-none focus:border-accent-500 min-h-[80px]" value={feat.desc} onChange={(e) => {
                                                             const newFeats = [...getNestedField(settings, selectedElement.path)];
                                                             newFeats[idx].desc = e.target.value;
@@ -497,92 +611,36 @@ const AdminSiteEditor = () => {
                                                 </div>
                                             ))}
                                         </div>
-                                    )}
-
-                                    {selectedElement.type === "icon" && (
-                                        <div className="space-y-4">
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <div className="w-1.5 h-6 bg-accent-500 rounded-full"></div>
-                                                <label className="text-xs font-bold text-gray-900 uppercase tracking-widest">{selectedElement.label}</label>
-                                            </div>
-                                            <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100">
-                                                <label className="text-[11px] font-bold text-gray-400 mb-3 block uppercase tracking-tight">Select Visual Icon</label>
-                                                <select className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-accent-500 focus:ring-4 focus:ring-accent-500/5 transition-all" value={getNestedField(settings, selectedElement.path) || "Star"} onChange={(e) => updateNestedField(selectedElement.path, e.target.value)}>
-                                                    <option value="Star">Star (General)</option>
-                                                    <option value="BookOpen">Book (Education)</option>
-                                                    <option value="Users">Users (Community)</option>
-                                                    <option value="Shield">Shield (Security)</option>
-                                                    <option value="Sparkles">Sparkles (Quality)</option>
-                                                    <option value="Target">Target (Goal)</option>
-                                                    <option value="Award">Award (Achievement)</option>
-                                                    <option value="Zap">Zap (Dynamic)</option>
-                                                    <option value="Search">Search (Discovery)</option>
-                                                    <option value="Trophy">Trophy (Victory)</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {selectedElement.type === "single-stat" && (
+                                    ) : null}
+                                    {selectedElement.type === "list" && (
                                         <div className="space-y-6">
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <div className="w-1.5 h-6 bg-accent-500 rounded-full"></div>
-                                                <label className="text-xs font-bold text-gray-900 uppercase tracking-widest">{selectedElement.label}</label>
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-1.5 h-6 bg-accent-500 rounded-full"></div>
+                                                    <label className="text-xs font-bold text-gray-900 uppercase tracking-widest">{selectedElement.label}</label>
+                                                </div>
+                                                <button onClick={() => {
+                                                    const current = getNestedField(settings, selectedElement.path) || [];
+                                                    updateNestedField(selectedElement.path, [...current, "New Item"]);
+                                                }} className="px-3 py-1.5 bg-accent-50 text-accent-700 text-[10px] font-black uppercase tracking-widest rounded-lg">Add Item</button>
                                             </div>
-                                            <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 space-y-6">
-                                                <Input label="Metric Value" value={getNestedField(settings, selectedElement.path)?.value || ""} onChange={(e) => {
-                                                    const current = getNestedField(settings, selectedElement.path) || {};
-                                                    updateNestedField(selectedElement.path, { ...current, value: e.target.value });
-                                                }} />
-                                                <Input label="Metric Label" value={getNestedField(settings, selectedElement.path)?.label || ""} onChange={(e) => {
-                                                    const current = getNestedField(settings, selectedElement.path) || {};
-                                                    updateNestedField(selectedElement.path, { ...current, label: e.target.value });
-                                                }} />
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {selectedElement.type === "badge" && (
-                                        <div className="space-y-6">
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <div className="w-1.5 h-6 bg-accent-500 rounded-full"></div>
-                                                <label className="text-xs font-bold text-gray-900 uppercase tracking-widest">{selectedElement.label}</label>
-                                            </div>
-                                            <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 space-y-6">
-                                                <Input 
-                                                    label="Badge Text" 
-                                                    value={typeof getNestedField(settings, selectedElement.path) === 'string' ? getNestedField(settings, selectedElement.path) : (getNestedField(settings, selectedElement.path)?.text || "")} 
-                                                    onChange={(e) => {
-                                                        const current = getNestedField(settings, selectedElement.path);
-                                                        if (typeof current === 'string') {
-                                                            updateNestedField(selectedElement.path, e.target.value);
-                                                        } else {
-                                                            updateNestedField(selectedElement.path, { ...current, text: e.target.value });
-                                                        }
-                                                    }} 
-                                                />
-                                                
-                                                {(typeof getNestedField(settings, selectedElement.path) === 'object') && (
-                                                    <div className="space-y-3">
-                                                        <label className="text-[11px] font-bold text-gray-400 uppercase tracking-tight">Badge Icon</label>
-                                                        <select className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-accent-500 transition-all" value={getNestedField(settings, selectedElement.path)?.icon || "Star"} onChange={(e) => {
-                                                            const current = getNestedField(settings, selectedElement.path) || {};
-                                                            updateNestedField(selectedElement.path, { ...current, icon: e.target.value });
-                                                        }}>
-                                                            <option value="Star">Star</option>
-                                                            <option value="Sparkles">Sparkles</option>
-                                                            <option value="Trophy">Trophy</option>
-                                                            <option value="Award">Award</option>
-                                                            <option value="Target">Target</option>
-                                                            <option value="Zap">Zap</option>
-                                                            <option value="ShieldCheck">Shield</option>
-                                                        </select>
+                                            <div className="space-y-3">
+                                                {(Array.isArray(getNestedField(settings, selectedElement.path)) ? getNestedField(settings, selectedElement.path) : []).map((item, idx) => (
+                                                    <div key={idx} className="flex gap-2">
+                                                        <Input value={item} onChange={(e) => {
+                                                            const current = [...getNestedField(settings, selectedElement.path)];
+                                                            current[idx] = e.target.value;
+                                                            updateNestedField(selectedElement.path, current);
+                                                        }} />
+                                                        <button onClick={() => {
+                                                            const current = getNestedField(settings, selectedElement.path);
+                                                            updateNestedField(selectedElement.path, current.filter((_, i) => i !== idx));
+                                                        }} className="p-2 text-red-500 hover:scale-110 transition-transform"><Trash2 size={16}/></button>
                                                     </div>
-                                                )}
+                                                ))}
                                             </div>
                                         </div>
                                     )}
-
                                     {selectedElement.type === "link" && (
                                         <div className="space-y-6">
                                             <div className="flex items-center gap-2 mb-2">
@@ -590,19 +648,15 @@ const AdminSiteEditor = () => {
                                                 <label className="text-xs font-bold text-gray-900 uppercase tracking-widest">{selectedElement.label}</label>
                                             </div>
                                             <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 space-y-6">
-                                                <Input label="Display Text" value={getNestedField(settings, selectedElement.path)?.text || ""} onChange={(e) => {
+                                                <Input label="Display Text" value={getNestedField(settings, selectedElement.path)?.text || getNestedField(settings, selectedElement.path)?.btnText || ""} onChange={(e) => {
                                                     const current = getNestedField(settings, selectedElement.path) || {};
-                                                    updateNestedField(selectedElement.path, { ...current, text: e.target.value });
+                                                    const key = current.btnText !== undefined ? "btnText" : "text";
+                                                    updateNestedField(selectedElement.path, { ...current, [key]: e.target.value });
                                                 }} />
                                                 <Input label="Action URL / Page Route" value={getNestedField(settings, selectedElement.path)?.url || ""} onChange={(e) => {
                                                     const current = getNestedField(settings, selectedElement.path) || {};
                                                     updateNestedField(selectedElement.path, { ...current, url: e.target.value });
                                                 }} />
-                                                <div className="p-4 bg-white/50 rounded-xl border border-dashed border-gray-200">
-                                                    <p className="text-[10px] text-gray-400 font-medium leading-relaxed">
-                                                        Routes like <code className="text-accent-600 font-bold">/about</code> or <code className="text-accent-600 font-bold">/contact</code> work for internal pages. Use <code className="text-accent-600 font-bold">https://</code> for external links.
-                                                    </p>
-                                                </div>
                                             </div>
                                         </div>
                                     )}
@@ -610,7 +664,6 @@ const AdminSiteEditor = () => {
                             </div>
                         )}
 
-                        {/* EMPTY STATE */}
                         {!selectedElement && !activeTab && (
                             <div className="flex-1 flex flex-col items-center justify-center text-center p-8 mt-20 space-y-4">
                                 <div className="w-16 h-16 bg-white rounded-2xl shadow-sm border border-gray-200 flex items-center justify-center">
@@ -618,861 +671,298 @@ const AdminSiteEditor = () => {
                                 </div>
                                 <div>
                                     <h3 className="text-xl font-black tracking-tight text-primary-950">Visual Editor Active</h3>
-                                    <p className="text-sm text-gray-500 font-medium max-w-[250px] mx-auto mt-2 leading-relaxed">
-                                        Click any text, image, or button on the canvas to inspect and edit its properties.
-                                    </p>
+                                    <p className="text-sm text-gray-500 font-medium max-w-[250px] mx-auto mt-2 leading-relaxed">Click any element on the canvas to edit its properties.</p>
                                 </div>
                             </div>
                         )}
                         
-                        {/* THEME TAB */}
                         {activeTab === "theme" && (
                             <div className="animate-fade-up space-y-8">
                                 <section className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm space-y-6">
                                     <SectionHeader icon={Palette} title="Theme Engine" />
                                     <div className="grid grid-cols-1 gap-6">
                                         <div className="space-y-4">
-                                            <div className="flex items-center justify-between px-1">
-                                                <label className="text-[13px] font-semibold text-gray-500">Primary Branding Color</label>
-                                                <span className="text-[11px] font-bold text-primary-950/40 uppercase tracking-wider">{settings.theme?.primaryColor}</span>
-                                            </div>
+                                            <label className="text-[13px] font-semibold text-gray-500">Primary Color</label>
                                             <div className="flex items-center gap-3">
-                                                <input type="color" value={settings.theme?.primaryColor || "#0a0a0a"} onChange={(e) => updateNestedField("theme.primaryColor", e.target.value)} className="w-16 h-14 rounded-xl border border-gray-200 p-1 cursor-pointer bg-white" />
-                                                <div className="flex-1">
-                                                    <Input placeholder="#000000" value={settings.theme?.primaryColor || "#0a0a0a"} onChange={(e) => updateNestedField("theme.primaryColor", e.target.value)} />
-                                                </div>
+                                                <input type="color" value={settings.theme?.primaryColor || "#0a0a0a"} onChange={(e) => updateNestedField("theme.primaryColor", e.target.value)} className="w-16 h-14 rounded-xl border border-gray-200 p-1 bg-white cursor-pointer" />
+                                                <Input value={settings.theme?.primaryColor || "#0a0a0a"} onChange={(e) => updateNestedField("theme.primaryColor", e.target.value)} />
                                             </div>
                                         </div>
                                         <div className="space-y-4">
-                                            <div className="flex items-center justify-between px-1">
-                                                <label className="text-[13px] font-semibold text-gray-500">Accent Highlight Color</label>
-                                                <span className="text-[11px] font-bold text-primary-950/40 uppercase tracking-wider">{settings.theme?.accentColor}</span>
-                                            </div>
+                                            <label className="text-[13px] font-semibold text-gray-500">Accent Color</label>
                                             <div className="flex items-center gap-3">
-                                                <input type="color" value={settings.theme?.accentColor || "#10b981"} onChange={(e) => updateNestedField("theme.accentColor", e.target.value)} className="w-16 h-14 rounded-xl border border-gray-200 p-1 cursor-pointer bg-white" />
-                                                <div className="flex-1">
-                                                    <Input placeholder="#000000" value={settings.theme?.accentColor || "#10b981"} onChange={(e) => updateNestedField("theme.accentColor", e.target.value)} />
-                                                </div>
+                                                <input type="color" value={settings.theme?.accentColor || "#10b981"} onChange={(e) => updateNestedField("theme.accentColor", e.target.value)} className="w-16 h-14 rounded-xl border border-gray-200 p-1 bg-white cursor-pointer" />
+                                                <Input value={settings.theme?.accentColor || "#10b981"} onChange={(e) => updateNestedField("theme.accentColor", e.target.value)} />
                                             </div>
                                         </div>
-                                        <div className="md:col-span-2">
-                                            <Input label="Primary Typography (Font Family)" value={settings.theme?.fontFamily || "Inter, sans-serif"} onChange={(e) => updateNestedField("theme.fontFamily", e.target.value)} placeholder="e.g. 'Inter', sans-serif" />
-                                        </div>
+                                        <Input label="Font Family" value={settings.theme?.fontFamily || "Inter, sans-serif"} onChange={(e) => updateNestedField("theme.fontFamily", e.target.value)} />
                                     </div>
                                 </section>
                             </div>
                         )}
 
-                        {/* LAYOUT TAB */}
                         {activeTab === "layout" && (
                             <div className="animate-fade-up space-y-8">
                                 <section className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm space-y-8">
-                                    <SectionHeader icon={LayoutTemplate} title="Home Page Visibility" />
+                                    <SectionHeader icon={LayoutTemplate} title="Section Visibility" />
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <Toggle label="Hero Section" value={settings.layout?.home?.showHero} onChange={(v) => updateNestedField("layout.home.showHero", v)} />
-                                        <Toggle label="Performance Metrics" value={settings.layout?.home?.showStats} onChange={(v) => updateNestedField("layout.home.showStats", v)} />
-                                        <Toggle label="Institutional Advantage" value={settings.layout?.home?.showAdvantage} onChange={(v) => updateNestedField("layout.home.showAdvantage", v)} />
-                                        <Toggle label="Leadership Message" value={settings.layout?.home?.showPrincipal} onChange={(v) => updateNestedField("layout.home.showPrincipal", v)} />
-                                        <Toggle label="Application CTA" value={settings.layout?.home?.showCta} onChange={(v) => updateNestedField("layout.home.showCta", v)} />
-                                    </div>
-                                </section>
-
-                                <section className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm space-y-8">
-                                    <SectionHeader icon={Info} title="About Page Visibility" />
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <Toggle label="Hero Section" value={settings.layout?.about?.showHero} onChange={(v) => updateNestedField("layout.about.showHero", v)} />
-                                        <Toggle label="Heritage & Story" value={settings.layout?.about?.showHeritage} onChange={(v) => updateNestedField("layout.about.showHeritage", v)} />
-                                        <Toggle label="Core Value Grid" value={settings.layout?.about?.showValues} onChange={(v) => updateNestedField("layout.about.showValues", v)} />
-                                        <Toggle label="Leadership Portraits" value={settings.layout?.about?.showPrincipal} onChange={(v) => updateNestedField("layout.about.showPrincipal", v)} />
-                                        <Toggle label="Final CTA Section" value={settings.layout?.about?.showCta} onChange={(v) => updateNestedField("layout.about.showCta", v)} />
-                                    </div>
-                                </section>
-
-                                <section className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm space-y-8">
-                                    <SectionHeader icon={ShieldCheck} title="Admissions Visibility" />
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <Toggle label="Hero Section" value={settings.layout?.admissions?.showHero} onChange={(v) => updateNestedField("layout.admissions.showHero", v)} />
-                                        <Toggle label="Enrollment Cycle" value={settings.layout?.admissions?.showProcess} onChange={(v) => updateNestedField("layout.admissions.showProcess", v)} />
-                                        <Toggle label="Document Checklist" value={settings.layout?.admissions?.showChecklist} onChange={(v) => updateNestedField("layout.admissions.showChecklist", v)} />
-                                        <Toggle label="Digital Application" value={settings.layout?.admissions?.showForm} onChange={(v) => updateNestedField("layout.admissions.showForm", v)} />
-                                        <Toggle label="Counselor Support" value={settings.layout?.admissions?.showSupport} onChange={(v) => updateNestedField("layout.admissions.showSupport", v)} />
-                                    </div>
-                                </section>
-
-                                <section className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm space-y-8">
-                                    <SectionHeader icon={Phone} title="Contact Page Visibility" />
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <Toggle label="Hero Section" value={settings.layout?.contact?.showHero} onChange={(v) => updateNestedField("layout.contact.showHero", v)} />
-                                        <Toggle label="Information Cards" value={settings.layout?.contact?.showCards} onChange={(v) => updateNestedField("layout.contact.showCards", v)} />
-                                        <Toggle label="Campus Locator (Map)" value={settings.layout?.contact?.showLocation} onChange={(v) => updateNestedField("layout.contact.showLocation", v)} />
-                                        <Toggle label="Direct Message Hub" value={settings.layout?.contact?.showForm} onChange={(v) => updateNestedField("layout.contact.showForm", v)} />
-                                        <Toggle label="FAQ Integration" value={settings.layout?.contact?.showFaqs} onChange={(v) => updateNestedField("layout.contact.showFaqs", v)} />
+                                        <Toggle label="Home Hero" value={settings.layout?.home?.showHero} onChange={(v) => updateNestedField("layout.home.showHero", v)} />
+                                        <Toggle label="Home Stats" value={settings.layout?.home?.showStats} onChange={(v) => updateNestedField("layout.home.showStats", v)} />
+                                        <Toggle label="About Mission" value={settings.layout?.about?.showMissionVision} onChange={(v) => updateNestedField("layout.about.showMissionVision", v)} />
+                                        <Toggle label="About Pillars" value={settings.layout?.about?.showValues} onChange={(v) => updateNestedField("layout.about.showValues", v)} />
                                     </div>
                                 </section>
                             </div>
                         )}
 
-                        {/* GLOBAL TAB */}
                         {activeTab === "global" && (
                             <div className="animate-fade-up space-y-8">
                                 <section className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm space-y-6">
                                     <SectionHeader icon={ShieldCheck} title="Institutional Brand" />
-                                    <div className="grid grid-cols-1 gap-6">
-                                        <div className="space-y-6">
-                                            <Input label="Official School Name" value={settings.schoolName || ""} onChange={(e) => setSettings({...settings, schoolName: e.target.value})} placeholder="e.g. S.B.S. School" />
-                                            <p className="text-xs text-gray-400 font-medium px-1">This name appears in the logo, footer, and browser title bar.</p>
-                                        </div>
-                                        <ImagePicker label="Institutional Identity (Logo)" value={settings.logo} path="logo" handleImageUpload={handleImageUpload} getImageUrl={getImageUrl} uploadingImage={uploadingImage} />
-                                    </div>
+                                    <Input label="School Name" value={settings.schoolName || ""} onChange={(e) => setSettings({...settings, schoolName: e.target.value})} />
+                                    <ImagePicker label="Logo" value={settings.logo} path="logo" handleImageUpload={handleImageUpload} getImageUrl={getImageUrl} uploadingImage={uploadingImage} />
                                 </section>
-
                                 <section className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm space-y-6">
-                                    <SectionHeader icon={Globe} title="Social Connectivity" />
+                                    <SectionHeader icon={Globe} title="Social Links" />
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        {[
-                                            { icon: Facebook, label: "Facebook", path: "socialLinks.facebook", color: "#1877F2" },
-                                            { icon: Instagram, label: "Instagram", path: "socialLinks.instagram", color: "#E4405F" },
-                                            { icon: Twitter, label: "X (Twitter)", path: "socialLinks.twitter", color: "#000000" },
-                                            { icon: Youtube, label: "YouTube", path: "socialLinks.youtube", color: "#FF0000" },
-                                            { icon: MessageCircle, label: "WhatsApp", path: "socialLinks.whatsapp", color: "#25D366" },
-                                            { icon: Linkedin, label: "LinkedIn", path: "socialLinks.linkedin", color: "#0A66C2" }
-                                        ].map((social, i) => (
-                                            <div key={i} className="space-y-1">
-                                                <div className="flex items-center gap-2 mb-1.5 px-1">
-                                                    <social.icon size={16} style={{ color: social.color }} />
-                                                    <span className="text-[13px] font-semibold text-gray-500">{social.label} URL</span>
-                                                </div>
-                                                <Input value={getNestedField(settings, social.path) || ""} onChange={(e) => updateNestedField(social.path, e.target.value)} placeholder="https://..." />
-                                            </div>
+                                        {["facebook", "instagram", "twitter", "youtube", "linkedin"].map(social => (
+                                            <Input key={social} label={social.toUpperCase()} value={settings.socialLinks?.[social] || ""} onChange={(e) => updateNestedField(`socialLinks.${social}`, e.target.value)} />
                                         ))}
-                                    </div>
-                                </section>
-
-                                <section className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm space-y-8">
-                                    <SectionHeader icon={Award} title="Institutional Heritage" />
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                        <Input label="Foundation Year" value={settings.global?.foundationYear || ""} onChange={(e) => updateNestedField("global.foundationYear", e.target.value)} placeholder="e.g. 1995" />
-                                        <Input label="Holistic Vision Tag" value={settings.global?.holisticVision || ""} onChange={(e) => updateNestedField("global.holisticVision", e.target.value)} placeholder="e.g. Empowering Minds" />
-                                    </div>
-                                </section>
-
-                                <section className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm space-y-8">
-                                    <SectionHeader icon={LayoutTemplate} title="Footer Configuration" />
-                                    <div className="space-y-8">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                            <div className="space-y-4">
-                                                <label className="text-[13px] font-semibold text-gray-500 ml-1">Footer Narrative</label>
-                                                <textarea className="w-full px-5 py-4 bg-gray-50 rounded-2xl text-sm font-medium min-h-[120px] outline-none focus:bg-white focus:border-accent-500 transition-all" value={settings.global?.footer?.desc || ""} onChange={(e) => updateNestedField("global.footer.desc", e.target.value)} />
-                                            </div>
-                                            <div className="space-y-6">
-                                                <Input label="Institutional Email" value={settings.global?.footer?.email || ""} onChange={(e) => updateNestedField("global.footer.email", e.target.value)} />
-                                                <Input label="Direct Hotline" value={settings.global?.footer?.phone || ""} onChange={(e) => updateNestedField("global.footer.phone", e.target.value)} />
-                                            </div>
-                                        </div>
-                                        <div className="space-y-4">
-                                            <label className="text-[13px] font-semibold text-gray-500 ml-1">Office Address</label>
-                                            <textarea className="w-full px-5 py-4 bg-gray-50 rounded-2xl text-sm font-medium min-h-[100px] outline-none focus:bg-white focus:border-accent-500 transition-all" value={settings.global?.footer?.address || ""} onChange={(e) => updateNestedField("global.footer.address", e.target.value)} />
-                                        </div>
                                     </div>
                                 </section>
                             </div>
                         )}
 
-                        {/* HOME TAB */}
                         {activeTab === "home" && (
                             <div className="animate-fade-up space-y-8">
                                 <section className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm space-y-8">
-                                    <SectionHeader icon={Sparkles} title="Hero Experience" />
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                                        <div className="space-y-6">
-                                            <Input label="Short Tagline (Badge)" value={settings.home?.hero?.badge || ""} onChange={(e) => updateNestedField("home.hero.badge", e.target.value)} placeholder="e.g. Excellence in Education" />
-                                            <Input label="Primary Headline Title" value={settings.home?.hero?.title || ""} onChange={(e) => updateNestedField("home.hero.title", e.target.value)} placeholder="e.g. Shaping Future Leaders" />
-                                            <div className="space-y-2">
-                                                <label className="text-[13px] font-semibold text-gray-500 ml-1">Hero Description Subtext</label>
-                                                <textarea className="w-full px-5 py-4 bg-white rounded-2xl border border-gray-200 text-sm font-medium outline-none focus:ring-4 focus:ring-accent-500/5 focus:border-accent-500 transition-all min-h-[120px] placeholder:text-gray-400" value={settings.home?.hero?.subtitle || ""} onChange={(e) => updateNestedField("home.hero.subtitle", e.target.value)} placeholder="Describe your institutional vision..." />
-                                            </div>
-                                        </div>
-                                        <div id="field-home-hero-image">
-                                            <ImagePicker label="Hero Cover Visual" value={settings.home?.hero?.image} path="home.hero.image" handleImageUpload={handleImageUpload} getImageUrl={getImageUrl} uploadingImage={uploadingImage} />
-                                        </div>
-                                    </div>
+                                    <SectionHeader icon={Sparkles} title="Hero Section" />
+                                    <Input label="Title" value={settings.home?.hero?.title || ""} onChange={(e) => updateNestedField("home.hero.title", e.target.value)} />
+                                    <textarea className="w-full px-5 py-4 bg-white border border-gray-200 rounded-2xl text-sm min-h-[100px]" value={settings.home?.hero?.subtitle || ""} onChange={(e) => updateNestedField("home.hero.subtitle", e.target.value)} />
+                                    <ImagePicker label="Hero Image" value={settings.home?.hero?.image} path="home.hero.image" handleImageUpload={handleImageUpload} getImageUrl={getImageUrl} uploadingImage={uploadingImage} />
                                 </section>
-
                                 <section className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm space-y-8">
-                                    <SectionHeader icon={Award} title="Institutional Metrics" />
-                                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-                                        {(settings.home?.stats || []).map((stat, idx) => (
-                                            <div key={idx} className="bg-gray-50 p-5 rounded-2xl border border-gray-100 relative group">
-                                                <button onClick={() => {
-                                                    const newStats = settings.home.stats.filter((_, i) => i !== idx);
-                                                    updateNestedField("home.stats", newStats);
-                                                }} className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-all text-red-500 hover:scale-110"><Trash2 size={14} /></button>
-                                                <div className="space-y-3">
-                                                    <Input placeholder="99+" value={stat.value} onChange={(e) => {
-                                                        const newStats = [...settings.home.stats];
-                                                        newStats[idx].value = e.target.value;
-                                                        updateNestedField("home.stats", newStats);
-                                                    }} />
-                                                    <Input placeholder="Students" value={stat.label} onChange={(e) => {
-                                                        const newStats = [...settings.home.stats];
-                                                        newStats[idx].label = e.target.value;
-                                                        updateNestedField("home.stats", newStats);
-                                                    }} />
-                                                </div>
+                                    <SectionHeader icon={Award} title="Stats & Metrics" />
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {(settings.home?.stats || []).map((stat, i) => (
+                                            <div key={i} className="bg-gray-50 p-4 rounded-xl space-y-2">
+                                                <Input value={stat.value} onChange={(e) => {
+                                                    const news = [...settings.home.stats];
+                                                    news[i].value = e.target.value;
+                                                    updateNestedField("home.stats", news);
+                                                }} />
+                                                <Input value={stat.label} onChange={(e) => {
+                                                    const news = [...settings.home.stats];
+                                                    news[i].label = e.target.value;
+                                                    updateNestedField("home.stats", news);
+                                                }} />
                                             </div>
                                         ))}
-                                        { (settings.home?.stats || []).length < 4 && (
-                                            <button onClick={() => {
-                                                const newStats = [...(settings.home.stats || []), { label: "New Stat", value: "0" }];
-                                                updateNestedField("home.stats", newStats);
-                                            }} className="bg-gray-50 p-5 rounded-2xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-2 hover:bg-gray-100 hover:border-accent-200 transition-all group">
-                                                <Plus className="text-gray-400 group-hover:text-accent-600" size={24} />
-                                                <span className="text-xs font-bold text-gray-500 uppercase tracking-tight">Add Metric</span>
-                                            </button>
-                                        )}
-                                    </div>
-                                </section>
-
-                                <section className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm space-y-10">
-                                    <SectionHeader icon={Star} title="Institutional Advantage" />
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                                        <div className="space-y-6">
-                                            <Input label="Section Tagline" value={settings.home?.advantage?.badge || ""} onChange={(e) => updateNestedField("home.advantage.badge", e.target.value)} />
-                                            <Input label="Section Main Title" value={settings.home?.advantage?.title || ""} onChange={(e) => updateNestedField("home.advantage.title", e.target.value)} />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[13px] font-semibold text-gray-500 ml-1">Section Overview</label>
-                                            <textarea className="w-full px-5 py-4 bg-white rounded-2xl border border-gray-200 text-sm font-medium outline-none focus:ring-4 focus:ring-accent-500/5 focus:border-accent-500 transition-all min-h-[100px]" value={settings.home?.advantage?.subtitle || ""} onChange={(e) => updateNestedField("home.advantage.subtitle", e.target.value)} />
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        {(settings.home?.advantage?.features || []).map((feat, idx) => (
-                                            <div key={idx} className="p-6 bg-gray-50 rounded-2xl border border-gray-200 relative group">
-                                                <button onClick={() => {
-                                                    const newFeats = settings.home.advantage.features.filter((_, i) => i !== idx);
-                                                    updateNestedField("home.advantage.features", newFeats);
-                                                }} className="absolute top-3 right-3 text-red-500 hover:scale-110 opacity-0 group-hover:opacity-100 transition-all">
-                                                    <Trash2 size={16} />
-                                                </button>
-                                                <div className="space-y-5">
-                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                        <Input label="Feature Heading" value={feat.title} onChange={(e) => {
-                                                            const newFeats = [...settings.home.advantage.features];
-                                                            newFeats[idx].title = e.target.value;
-                                                            updateNestedField("home.advantage.features", newFeats);
-                                                        }} />
-                                                        <Input label="Category Badge" value={feat.badge} onChange={(e) => {
-                                                            const newFeats = [...settings.home.advantage.features];
-                                                            newFeats[idx].badge = e.target.value;
-                                                            updateNestedField("home.advantage.features", newFeats);
-                                                        }} />
-                                                    </div>
-                                                    <textarea placeholder="Supporting details..." className="w-full px-4 py-3 bg-white rounded-xl text-sm font-medium border border-gray-200 outline-none focus:border-accent-500 transition-all min-h-[80px]" value={feat.desc} onChange={(e) => {
-                                                        const newFeats = [...settings.home.advantage.features];
-                                                        newFeats[idx].desc = e.target.value;
-                                                        updateNestedField("home.advantage.features", newFeats);
-                                                    }} />
-                                                </div>
-                                            </div>
-                                        ))}
-                                        <button onClick={() => {
-                                            const newFeats = [...(settings.home.advantage.features || []), { title: "New Feature", badge: "Core", desc: "Description here", icon: "Star" }];
-                                            updateNestedField("home.advantage.features", newFeats);
-                                        }} className="p-6 rounded-2xl border-2 border-dashed border-gray-200 hover:bg-gray-50 transition-all flex flex-col items-center justify-center gap-2 group">
-                                            <Plus className="text-gray-300 group-hover:text-accent-600" size={32} />
-                                            <span className="text-xs font-bold text-gray-500 uppercase tracking-tight">Add Proposition</span>
-                                        </button>
-                                    </div>
-                                </section>
-
-                                <section className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm space-y-8">
-                                    <SectionHeader icon={Users} title="Leadership Hub" />
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                                        <div className="space-y-6">
-                                            <Input label="Leadership Heading" value={settings.home?.principal?.title || ""} onChange={(e) => updateNestedField("home.principal.title", e.target.value)} />
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <Input label="Leader Name" value={settings.home?.principal?.name || ""} onChange={(e) => updateNestedField("home.principal.name", e.target.value)} />
-                                                <Input label="Designation" value={settings.home?.principal?.designation || ""} onChange={(e) => updateNestedField("home.principal.designation", e.target.value)} />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-[13px] font-semibold text-gray-500 ml-1">Personal Statement / Quote</label>
-                                                <textarea className="w-full px-5 py-4 bg-white border border-gray-200 rounded-2xl text-sm font-medium min-h-[140px] outline-none focus:border-accent-500 transition-all" value={settings.home?.principal?.quote || ""} onChange={(e) => updateNestedField("home.principal.quote", e.target.value)} />
-                                            </div>
-                                        </div>
-                                        <ImagePicker label="Portrait Visual" value={settings.home?.principal?.image} path="home.principal.image" handleImageUpload={handleImageUpload} getImageUrl={getImageUrl} uploadingImage={uploadingImage} />
-                                    </div>
-                                </section>
-
-                                <section className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm space-y-8">
-                                    <SectionHeader icon={Zap} title="Enrollment CTA" />
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                                        <div className="space-y-6">
-                                            <Input label="Action Tagline" value={typeof settings.home?.cta?.badge === 'object' ? settings.home.cta.badge.text : settings.home?.cta?.badge || ""} onChange={(e) => updateNestedField(typeof settings.home?.cta?.badge === 'object' ? "home.cta.badge.text" : "home.cta.badge", e.target.value)} />
-                                            <Input label="Call-to-Action Title" value={settings.home?.cta?.title || ""} onChange={(e) => updateNestedField("home.cta.title", e.target.value)} />
-                                            <div className="space-y-2">
-                                                <label className="text-[13px] font-semibold text-gray-500 ml-1">Action Subtext</label>
-                                                <textarea className="w-full px-5 py-4 bg-white border border-gray-200 rounded-2xl text-sm font-medium min-h-[100px] outline-none focus:border-accent-500 transition-all" value={settings.home?.cta?.subtitle || ""} onChange={(e) => updateNestedField("home.cta.subtitle", e.target.value)} />
-                                            </div>
-                                        </div>
-                                        <div className="space-y-6">
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <Input label="Primary Button" value={typeof settings.home?.cta?.primaryBtn === 'object' ? settings.home.cta.primaryBtn.text : settings.home?.cta?.primaryBtn || ""} onChange={(e) => updateNestedField(typeof settings.home?.cta?.primaryBtn === 'object' ? "home.cta.primaryBtn.text" : "home.cta.primaryBtn", e.target.value)} />
-                                                <Input label="Secondary Button" value={typeof settings.home?.cta?.secondaryBtn === 'object' ? settings.home.cta.secondaryBtn.text : settings.home?.cta?.secondaryBtn || ""} onChange={(e) => updateNestedField(typeof settings.home?.cta?.secondaryBtn === 'object' ? "home.cta.secondaryBtn.text" : "home.cta.secondaryBtn", e.target.value)} />
-                                            </div>
-                                            <Input label="Social Proof / Trust Text" value={settings.home?.cta?.trustText || ""} onChange={(e) => updateNestedField("home.cta.trustText", e.target.value)} />
-                                        </div>
                                     </div>
                                 </section>
                             </div>
                         )}
 
-                        {/* ABOUT TAB */}
                         {activeTab === "about" && (
                             <div className="animate-fade-up space-y-8">
                                 <section className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm space-y-8">
-                                    <SectionHeader icon={BookOpen} title="Heritage & Mission" />
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                                        <div className="space-y-6">
-                                            <Input label="Short Tagline (Badge)" value={typeof settings.about?.hero?.badge === 'object' ? settings.about.hero.badge.text : settings.about?.hero?.badge || ""} onChange={(e) => updateNestedField(typeof settings.about?.hero?.badge === 'object' ? "about.hero.badge.text" : "about.hero.badge", e.target.value)} />
-                                            <Input label="Primary Narrative Heading" value={settings.about?.hero?.title || ""} onChange={(e) => updateNestedField("about.hero.title", e.target.value)} />
-                                            <div className="space-y-2">
-                                                <label className="text-[13px] font-semibold text-gray-500 ml-1">Institutional Story (Teaser)</label>
-                                                <textarea className="w-full px-5 py-4 bg-white rounded-2xl border border-gray-200 text-sm font-medium outline-none focus:ring-4 focus:ring-accent-500/5 focus:border-accent-500 transition-all min-h-[120px]" value={settings.about?.hero?.subtitle || ""} onChange={(e) => updateNestedField("about.hero.subtitle", e.target.value)} />
-                                            </div>
-                                        </div>
-                                        <div className="space-y-6">
-                                            <Input label="Historical Heritage Title" value={typeof settings.about?.heritage?.title === 'object' ? settings.about.heritage.title.text : settings.about?.heritage?.title || ""} onChange={(e) => updateNestedField(typeof settings.about?.heritage?.title === 'object' ? "about.heritage.title.text" : "about.heritage.title", e.target.value)} />
-                                            <div className="space-y-2">
-                                                <label className="text-[13px] font-semibold text-gray-500 ml-1">The Full Legacy Tale</label>
-                                                <textarea className="w-full px-5 py-4 bg-white rounded-2xl border border-gray-200 text-sm font-medium outline-none focus:ring-4 focus:ring-accent-500/5 focus:border-accent-500 transition-all min-h-[160px]" value={settings.about?.heritage?.story || ""} onChange={(e) => updateNestedField("about.heritage.story", e.target.value)} />
-                                            </div>
-                                        </div>
+                                    <SectionHeader icon={BookOpen} title="Heritage & Hero" />
+                                    <Input label="Hero Title" value={settings.about?.hero?.title || ""} onChange={(e) => updateNestedField("about.hero.title", e.target.value)} />
+                                    <textarea className="w-full px-5 py-4 bg-white border border-gray-200 rounded-2xl text-sm min-h-[100px]" value={settings.about?.hero?.subtitle || ""} onChange={(e) => updateNestedField("about.hero.subtitle", e.target.value)} />
+                                    <div className="space-y-4">
+                                        <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Heritage Title</label>
+                                        <Input value={settings.about?.heritage?.title || ""} onChange={(e) => updateNestedField("about.heritage.title", e.target.value)} />
+                                        <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Heritage Story</label>
+                                        <textarea className="w-full px-5 py-4 bg-white border border-gray-200 rounded-2xl text-sm min-h-[150px]" value={settings.about?.heritage?.story || ""} onChange={(e) => updateNestedField("about.heritage.story", e.target.value)} />
                                     </div>
-                                </section>
-
-                                <section className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm space-y-8">
-                                    <SectionHeader icon={Target} title="Core Directives" />
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                        <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100 space-y-4">
-                                            <Input label="Principal Mission Title" value={settings.about?.mission?.title || ""} onChange={(e) => updateNestedField("about.mission.title", e.target.value)} />
-                                            <textarea placeholder="Define your institutional mission..." className="w-full px-4 py-3 bg-white rounded-xl text-sm font-medium border border-gray-200 outline-none focus:border-accent-500 transition-all min-h-[120px]" value={settings.about?.mission?.content || ""} onChange={(e) => updateNestedField("about.mission.content", e.target.value)} />
-                                        </div>
-                                        <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100 space-y-4">
-                                            <Input label="Future Vision Title" value={settings.about?.vision?.title || ""} onChange={(e) => updateNestedField("about.vision.title", e.target.value)} />
-                                            <textarea placeholder="Define your vision for the future..." className="w-full px-4 py-3 bg-white rounded-xl text-sm font-medium border border-gray-200 outline-none focus:border-accent-500 transition-all min-h-[120px]" value={settings.about?.vision?.content || ""} onChange={(e) => updateNestedField("about.vision.content", e.target.value)} />
-                                        </div>
-                                    </div>
-                                </section>
-
-                                <section className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm space-y-8">
-                                    <SectionHeader icon={Award} title="Value Pillars" />
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        {(settings.about?.values || []).map((val, idx) => (
-                                            <div key={idx} className="p-6 bg-gray-50 rounded-2xl border border-gray-100 relative group">
-                                                <button onClick={() => {
-                                                    const newVals = settings.about.values.filter((_, i) => i !== idx);
-                                                    updateNestedField("about.values", newVals);
-                                                }} className="absolute top-3 right-3 text-red-500 hover:scale-110 opacity-0 group-hover:opacity-100 transition-all">
-                                                    <Trash2 size={16} />
-                                                </button>
-                                                <div className="space-y-4">
-                                                    <Input label="Pillar Heading" value={val.title} onChange={(e) => {
-                                                        const newVals = [...settings.about.values];
-                                                        newVals[idx].title = e.target.value;
-                                                        updateNestedField("about.values", newVals);
-                                                    }} />
-                                                    <textarea placeholder="Pillar description..." className="w-full px-4 py-3 bg-white rounded-xl text-sm font-medium border border-gray-200 outline-none focus:border-accent-500 transition-all min-h-[80px]" value={val.desc} onChange={(e) => {
-                                                        const newVals = [...settings.about.values];
-                                                        newVals[idx].desc = e.target.value;
-                                                        updateNestedField("about.values", newVals);
-                                                    }} />
-                                                </div>
+                                    <div className="space-y-4 pt-4 border-t border-gray-100">
+                                        <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Key Highlights (Hero List)</label>
+                                        {(settings.about?.hero?.points || []).map((p, i) => (
+                                            <div key={i} className="flex gap-2">
+                                                <Input value={p} onChange={(e) => {
+                                                    const newp = [...settings.about.hero.points];
+                                                    newp[i] = e.target.value;
+                                                    updateNestedField("about.hero.points", newp);
+                                                }} />
+                                                <button onClick={() => updateNestedField("about.hero.points", settings.about.hero.points.filter((_, idx) => idx !== i))} className="text-red-500 hover:scale-110 transition-transform"><Trash2 size={16}/></button>
                                             </div>
                                         ))}
-                                        <button onClick={() => {
-                                            const newVals = [...(settings.about.values || []), { title: "Resilience", desc: "Always moving forward...", icon: "Shield" }];
-                                            updateNestedField("about.values", newVals);
-                                        }} className="p-6 rounded-2xl border-2 border-dashed border-gray-200 hover:border-accent-200 hover:bg-accent-50 transition-all flex flex-col items-center justify-center gap-2 group">
-                                            <Plus className="text-gray-300 group-hover:text-accent-600" size={32} />
-                                            <span className="text-xs font-bold text-gray-500 uppercase tracking-tight">Add Value Pillar</span>
-                                        </button>
+                                        <button onClick={() => updateNestedField("about.hero.points", [...(settings.about.hero.points || []), "New Point"])} className="text-xs font-bold text-accent-600 uppercase tracking-widest">+ Add Point</button>
                                     </div>
                                 </section>
 
                                 <section className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm space-y-8">
-                                    <SectionHeader icon={Zap} title="Institutional CTA" />
+                                    <SectionHeader icon={Target} title="Mission & Vision" />
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                        <div className="space-y-4">
-                                            <Input label="Decision Title" value={settings.about?.cta?.title || ""} onChange={(e) => updateNestedField("about.cta.title", e.target.value)} />
-                                            <textarea placeholder="Why choose us? Summarize here..." className="w-full px-4 py-3 bg-gray-50 rounded-2xl text-sm font-medium min-h-[100px] outline-none focus:bg-white focus:border-accent-500 transition-all" value={settings.about?.cta?.subtitle || ""} onChange={(e) => updateNestedField("about.cta.subtitle", e.target.value)} />
+                                        <div className="space-y-4 p-5 bg-gray-50 rounded-2xl border border-gray-100">
+                                            <Input label="Mission Title" value={settings.about?.mission?.title || ""} onChange={(e) => updateNestedField("about.mission.title", e.target.value)} />
+                                            <textarea className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm min-h-[120px]" value={settings.about?.mission?.content || ""} onChange={(e) => updateNestedField("about.mission.content", e.target.value)} />
                                         </div>
-                                        <div className="space-y-4">
-                                            <Input label="Primary Action Text" value={settings.about?.cta?.btnText || "Apply for Admission"} onChange={(e) => updateNestedField("about.cta.btnText", e.target.value)} />
+                                        <div className="space-y-4 p-5 bg-gray-50 rounded-2xl border border-gray-100">
+                                            <Input label="Vision Title" value={settings.about?.vision?.title || ""} onChange={(e) => updateNestedField("about.vision.title", e.target.value)} />
+                                            <textarea className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm min-h-[120px]" value={settings.about?.vision?.content || ""} onChange={(e) => updateNestedField("about.vision.content", e.target.value)} />
                                         </div>
                                     </div>
                                 </section>
 
                                 <section className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm space-y-8">
-                                    <SectionHeader icon={TrendingUp} title="Institutional Metrics" />
+                                    <SectionHeader icon={Award} title="Philosophy Pillars" />
+                                    <div className="grid grid-cols-2 gap-4 mb-6">
+                                        <Input label="Section Title" value={settings.about?.philosophy?.title || ""} onChange={(e) => updateNestedField("about.philosophy.title", e.target.value)} />
+                                        <Input label="Section Accent" value={settings.about?.philosophy?.accent || ""} onChange={(e) => updateNestedField("about.philosophy.accent", e.target.value)} />
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {(settings.about?.values || []).map((val, i) => (
+                                            <div key={i} className="bg-gray-50 p-5 rounded-2xl border border-gray-100 relative group">
+                                                <button onClick={() => updateNestedField("about.values", settings.about.values.filter((_, idx) => idx !== i))} className="absolute top-2 right-2 text-red-500 opacity-0 group-hover:opacity-100 transition-all"><Trash2 size={14}/></button>
+                                                <Input label="Title" value={val.title} onChange={(e) => {
+                                                    const newv = [...settings.about.values];
+                                                    newv[i].title = e.target.value;
+                                                    updateNestedField("about.values", newv);
+                                                }} />
+                                                <textarea className="w-full px-4 py-3 mt-2 bg-white border border-gray-200 rounded-xl text-sm min-h-[80px]" value={val.desc} onChange={(e) => {
+                                                    const newv = [...settings.about.values];
+                                                    newv[i].desc = e.target.value;
+                                                    updateNestedField("about.values", newv);
+                                                }} />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </section>
+
+                                <section className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm space-y-8">
+                                    <SectionHeader icon={Plus} title="Action Center (CTA)" />
                                     <div className="space-y-6">
-                                        <div className="flex items-center justify-between">
-                                            <label className="text-xs font-bold text-gray-600 uppercase tracking-widest">Global Stats (About Page)</label>
-                                            <button onClick={() => {
-                                                const current = settings.global?.aboutStats || [];
-                                                updateNestedField("global.aboutStats", [...current, { label: "New Metric", value: "100%", icon: "Star" }]);
-                                            }} className="px-3 py-1.5 bg-accent-50 text-accent-700 text-[10px] font-black uppercase tracking-widest rounded-lg">Add Metric</button>
-                                        </div>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            {(settings.global?.aboutStats || []).map((stat, idx) => (
-                                                <div key={idx} className="bg-gray-50 p-5 rounded-2xl border border-gray-100 space-y-4 relative group">
-                                                    <button onClick={() => {
-                                                        const current = settings.global.aboutStats.filter((_, i) => i !== idx);
-                                                        updateNestedField("global.aboutStats", current);
-                                                    }} className="absolute top-2 right-2 text-red-500 opacity-0 group-hover:opacity-100 transition-all"><Trash2 size={14} /></button>
-                                                    <Input label="Value" value={stat.value} onChange={(e) => {
-                                                        const current = [...settings.global.aboutStats];
-                                                        current[idx].value = e.target.value;
-                                                        updateNestedField("global.aboutStats", current);
-                                                    }} />
-                                                    <Input label="Label" value={stat.label} onChange={(e) => {
-                                                        const current = [...settings.global.aboutStats];
-                                                        current[idx].label = e.target.value;
-                                                        updateNestedField("global.aboutStats", current);
-                                                    }} />
-                                                </div>
-                                            ))}
-                                        </div>
+                                        <Input label="CTA Main Title" value={settings.about?.cta?.title || ""} onChange={(e) => updateNestedField("about.cta.title", e.target.value)} />
+                                        <textarea className="w-full px-5 py-4 bg-white border border-gray-200 rounded-2xl text-sm min-h-[80px]" value={settings.about?.cta?.subtitle || ""} onChange={(e) => updateNestedField("about.cta.subtitle", e.target.value)} />
+                                        <Input label="Button Label" value={settings.about?.cta?.btnText || ""} onChange={(e) => updateNestedField("about.cta.btnText", e.target.value)} />
                                     </div>
                                 </section>
 
                                 <section className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm space-y-8">
                                     <SectionHeader icon={Users} title="Leadership Pulse" />
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                                        <div className="space-y-6">
-                                            <Input label="Principal Name" value={settings.home?.principal?.name || ""} onChange={(e) => updateNestedField("home.principal.name", e.target.value)} />
-                                            <Input label="Principal Title" value={settings.home?.principal?.designation || ""} onChange={(e) => updateNestedField("home.principal.designation", e.target.value)} />
-                                            <div className="space-y-2">
-                                                <label className="text-[13px] font-semibold text-gray-500 ml-1">Leadership Quote</label>
-                                                <textarea className="w-full px-5 py-4 bg-gray-50 rounded-2xl text-sm font-medium min-h-[120px] outline-none focus:bg-white focus:border-accent-500 transition-all" value={settings.home?.principal?.quote || ""} onChange={(e) => updateNestedField("home.principal.quote", e.target.value)} />
-                                            </div>
-                                        </div>
-                                        <ImagePicker label="Principal Portrait" value={settings.home?.principal?.image} path="home.principal.image" handleImageUpload={handleImageUpload} getImageUrl={getImageUrl} uploadingImage={uploadingImage} />
+                                    <Input label="Leader Heading" value={settings.home?.principal?.title || ""} onChange={(e) => updateNestedField("home.principal.title", e.target.value)} />
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <Input label="Name" value={settings.home?.principal?.name || ""} onChange={(e) => updateNestedField("home.principal.name", e.target.value)} />
+                                        <Input label="Designation" value={settings.home?.principal?.designation || ""} onChange={(e) => updateNestedField("home.principal.designation", e.target.value)} />
                                     </div>
+                                    <textarea className="w-full px-5 py-4 bg-white border border-gray-200 rounded-2xl text-sm min-h-[100px]" value={settings.home?.principal?.quote || ""} onChange={(e) => updateNestedField("home.principal.quote", e.target.value)} />
+                                    <ImagePicker label="Portrait" value={settings.home?.principal?.image} path="home.principal.image" handleImageUpload={handleImageUpload} getImageUrl={getImageUrl} uploadingImage={uploadingImage} />
                                 </section>
                             </div>
                         )}
 
-                        {/* ADMISSIONS TAB */}
-                        {activeTab === "admissions" && (
-                            <div className="animate-fade-up space-y-8">
-                                <section className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm space-y-8">
-                                    <SectionHeader icon={FileText} title="Enrollment Strategy" />
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                                        <div className="space-y-6">
-                                            <Input label="Short Tagline (Badge)" value={typeof settings.admissions?.hero?.badge === 'object' ? settings.admissions.hero.badge.text : settings.admissions?.hero?.badge || ""} onChange={(e) => updateNestedField(typeof settings.admissions?.hero?.badge === 'object' ? "admissions.hero.badge.text" : "admissions.hero.badge", e.target.value)} />
-                                            <Input label="Primary Enrollment Heading" value={settings.admissions?.hero?.title || ""} onChange={(e) => updateNestedField("admissions.hero.title", e.target.value)} />
-                                            <div className="space-y-2">
-                                                <label className="text-[13px] font-semibold text-gray-500 ml-1">Admission Overview</label>
-                                                <textarea className="w-full px-5 py-4 bg-white rounded-2xl border border-gray-200 text-sm font-medium outline-none focus:ring-4 focus:ring-accent-500/5 focus:border-accent-500 transition-all min-h-[120px]" value={settings.admissions?.hero?.subtitle || ""} onChange={(e) => updateNestedField("admissions.hero.subtitle", e.target.value)} />
-                                            </div>
-                                        </div>
-                                        <ImagePicker label="Admissions Hub Visual" value={settings.admissions?.hero?.image} path="admissions.hero.image" handleImageUpload={handleImageUpload} getImageUrl={getImageUrl} uploadingImage={uploadingImage} />
-                                    </div>
-                                </section>
-
-                                <section className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm space-y-8">
-                                    <SectionHeader icon={Trophy} title="Enrollment Cycle" />
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        {(settings.admissions?.process?.steps || []).map((step, idx) => (
-                                            <div key={idx} className="bg-gray-50 p-6 rounded-2xl border border-gray-100 relative group">
-                                                <button onClick={() => {
-                                                    const newSteps = settings.admissions.process.steps.filter((_, i) => i !== idx);
-                                                    updateNestedField("admissions.process.steps", newSteps);
-                                                }} className="absolute top-3 right-3 text-red-500 hover:scale-110 opacity-0 group-hover:opacity-100 transition-all"><Trash2 size={16} /></button>
-                                                <div className="space-y-4">
-                                                    <div className="grid grid-cols-2 gap-4">
-                                                        <Input label="Step Milestone" value={step.title} onChange={(e) => {
-                                                            const newSteps = [...settings.admissions.process.steps];
-                                                            newSteps[idx].title = e.target.value;
-                                                            updateNestedField("admissions.process.steps", newSteps);
-                                                        }} />
-                                                        <Input label="Phase Status" value={step.badge} onChange={(e) => {
-                                                            const newSteps = [...settings.admissions.process.steps];
-                                                            newSteps[idx].badge = e.target.value;
-                                                            updateNestedField("admissions.process.steps", newSteps);
-                                                        }} />
-                                                    </div>
-                                                    <textarea placeholder="Supporting details..." className="w-full px-4 py-3 bg-white rounded-xl text-sm font-medium border border-gray-200 min-h-[80px] outline-none focus:border-accent-500 transition-all" value={step.desc} onChange={(e) => {
-                                                        const newSteps = [...settings.admissions.process.steps];
-                                                        newSteps[idx].desc = e.target.value;
-                                                        updateNestedField("admissions.process.steps", newSteps);
-                                                    }} />
-                                                </div>
-                                            </div>
-                                        ))}
-                                        <button onClick={() => {
-                                            const newSteps = [...(settings.admissions?.process?.steps || []), { title: "Inquiry", desc: "Start the journey...", icon: "Star", badge: "Phase 1" }];
-                                            updateNestedField("admissions.process.steps", newSteps);
-                                        }} className="p-6 rounded-2xl border-2 border-dashed border-gray-200 hover:bg-gray-50 transition-all flex flex-col items-center justify-center gap-2 group">
-                                            <Plus className="text-gray-300 group-hover:text-accent-600" size={32} />
-                                            <span className="text-xs font-bold text-gray-500 uppercase tracking-tight">Add Cycle Stage</span>
-                                        </button>
-                                    </div>
-                                </section>
-
-                                <section className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm space-y-8">
-                                    <SectionHeader icon={CheckCircle} title="Evidence Checklist" />
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                        {(settings.admissions?.checklist?.items || []).map((item, idx) => (
-                                            <div key={idx} className="bg-gray-50 p-5 rounded-2xl border border-gray-100 relative group">
-                                                <button onClick={() => {
-                                                    const newItems = settings.admissions.checklist.items.filter((_, i) => i !== idx);
-                                                    updateNestedField("admissions.checklist.items", newItems);
-                                                }} className="absolute top-3 right-3 text-red-500 hover:scale-110 opacity-0 group-hover:opacity-100 transition-all"><Trash2 size={14} /></button>
-                                                <div className="space-y-3">
-                                                    <Input placeholder="Document Name" value={item.title} onChange={(e) => {
-                                                        const newItems = [...settings.admissions.checklist.items];
-                                                        newItems[idx].title = e.target.value;
-                                                        updateNestedField("admissions.checklist.items", newItems);
-                                                    }} />
-                                                    <Input placeholder="Format/Hint" value={item.desc} onChange={(e) => {
-                                                        const newItems = [...settings.admissions.checklist.items];
-                                                        newItems[idx].desc = e.target.value;
-                                                        updateNestedField("admissions.checklist.items", newItems);
-                                                    }} />
-                                                </div>
-                                            </div>
-                                        ))}
-                                        <button onClick={() => {
-                                            const newItems = [...(settings.admissions?.checklist?.items || []), { title: "Identity Proof", desc: "Birth Certificate", icon: "File" }];
-                                            updateNestedField("admissions.checklist.items", newItems);
-                                        }} className="bg-gray-50 p-5 rounded-2xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-1 hover:bg-gray-100 transition-all group">
-                                            <Plus className="text-gray-300 group-hover:text-accent-600" size={20} />
-                                            <span className="text-[11px] font-bold text-gray-500 uppercase tracking-tight">Add Requirement</span>
-                                        </button>
-                                    </div>
-                                </section>
-
-                                <section className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm space-y-8">
-                                    <SectionHeader icon={Zap} title="Portal & Support" />
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                                        <div className="space-y-6">
-                                            <Input label="Application Heading" value={settings.admissions?.cta?.title || ""} onChange={(e) => updateNestedField("admissions.cta.title", e.target.value)} />
-                                            <div className="space-y-2">
-                                                <label className="text-[13px] font-semibold text-gray-500 ml-1">Portal Description</label>
-                                                <textarea className="w-full px-5 py-4 bg-gray-50 rounded-2xl text-sm font-medium min-h-[100px] outline-none focus:bg-white focus:border-accent-500 transition-all" value={settings.admissions?.cta?.subtitle || ""} onChange={(e) => updateNestedField("admissions.cta.subtitle", e.target.value)} />
-                                            </div>
-                                        </div>
-                                        <div className="space-y-6">
-                                            <Input label="Counseling Badge" value={settings.admissions?.support?.badge || ""} onChange={(e) => updateNestedField("admissions.support.badge", e.target.value)} />
-                                            <Input label="Counseling Heading" value={settings.admissions?.support?.title || ""} onChange={(e) => updateNestedField("admissions.support.title", e.target.value)} />
-                                            <div className="space-y-2">
-                                                <label className="text-[13px] font-semibold text-gray-500 ml-1">Support Narrative</label>
-                                                <textarea className="w-full px-5 py-4 bg-gray-50 rounded-2xl text-sm font-medium min-h-[100px] outline-none focus:bg-white focus:border-accent-500 transition-all" value={settings.admissions?.support?.subtitle || ""} onChange={(e) => updateNestedField("admissions.support.subtitle", e.target.value)} />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </section>
-                            </div>
-                        )}
-
-                        {/* CONTACT TAB */}
-                        {activeTab === "contact" && (
-                            <div className="animate-fade-up space-y-8">
-                                <section className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm space-y-8">
-                                    <SectionHeader icon={Phone} title="Institutional Reach" />
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                                        <div className="space-y-6">
-                                            <Input label="Short Tagline (Badge)" value={typeof settings.contact?.hero?.badge === 'object' ? settings.contact.hero.badge.text : settings.contact?.hero?.badge || ""} onChange={(e) => updateNestedField(typeof settings.contact?.hero?.badge === 'object' ? "contact.hero.badge.text" : "contact.hero.badge", e.target.value)} />
-                                            <Input label="Primary Contact Heading" value={settings.contact?.hero?.title || ""} onChange={(e) => updateNestedField("contact.hero.title", e.target.value)} />
-                                            <div className="space-y-2">
-                                                <label className="text-[13px] font-semibold text-gray-500 ml-1">Contact Narrative</label>
-                                                <textarea className="w-full px-5 py-4 bg-white rounded-2xl border border-gray-200 text-sm font-medium outline-none focus:ring-4 focus:ring-accent-500/5 focus:border-accent-500 transition-all min-h-[100px]" value={settings.contact?.hero?.subtitle || ""} onChange={(e) => updateNestedField("contact.hero.subtitle", e.target.value)} />
-                                            </div>
-                                        </div>
-                                        <div className="space-y-6">
-                                            <Input label="Message Hub Heading" value={settings.contact?.messagePortal?.title || ""} onChange={(e) => updateNestedField("contact.messagePortal.title", e.target.value)} />
-                                            <div className="space-y-2">
-                                                <label className="text-[13px] font-semibold text-gray-500 ml-1">Message Hub Overview</label>
-                                                <textarea className="w-full px-5 py-4 bg-white rounded-2xl border border-gray-200 text-sm font-medium outline-none focus:ring-4 focus:ring-accent-500/5 focus:border-accent-500 transition-all min-h-[100px]" value={settings.contact?.messagePortal?.subtitle || ""} onChange={(e) => updateNestedField("contact.messagePortal.subtitle", e.target.value)} />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </section>
-
-                                <section className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm space-y-8">
-                                    <SectionHeader icon={Zap} title="Direct Support Channels" />
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        {(settings.contact?.cards || []).map((card, idx) => (
-                                            <div key={idx} className="bg-gray-50 p-6 rounded-2xl border border-gray-100 relative group">
-                                                <button onClick={() => {
-                                                    const newCards = settings.contact.cards.filter((_, i) => i !== idx);
-                                                    updateNestedField("contact.cards", newCards);
-                                                }} className="absolute top-3 right-3 text-red-500 hover:scale-110 opacity-0 group-hover:opacity-100 transition-all"><Trash2 size={16} /></button>
-                                                <div className="space-y-4">
-                                                    <div className="grid grid-cols-2 gap-4">
-                                                        <Input label="Channel Title" value={card.title} onChange={(e) => {
-                                                            const newCards = [...settings.contact.cards];
-                                                            newCards[idx].title = e.target.value;
-                                                            updateNestedField("contact.cards", newCards);
-                                                        }} />
-                                                        <Input label="Narrative Label" value={card.label} onChange={(e) => {
-                                                            const newCards = [...settings.contact.cards];
-                                                            newCards[idx].label = e.target.value;
-                                                            updateNestedField("contact.cards", newCards);
-                                                        }} />
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        <label className="text-[11px] font-bold text-gray-400 px-1 uppercase tracking-tight">Active Frequency</label>
-                                                        {(card.details || []).map((detail, dIdx) => (
-                                                            <div key={dIdx} className="flex gap-2 mb-2">
-                                                                <div className="flex-1">
-                                                                    <Input placeholder="Detail (e.g. phone number)" value={detail} onChange={(e) => {
-                                                                        const newCards = [...settings.contact.cards];
-                                                                        newCards[idx].details[dIdx] = e.target.value;
-                                                                        updateNestedField("contact.cards", newCards);
-                                                                    }} />
-                                                                </div>
-                                                                <button onClick={() => {
-                                                                    const newCards = [...settings.contact.cards];
-                                                                    newCards[idx].details = newCards[idx].details.filter((_, i) => i !== dIdx);
-                                                                    updateNestedField("contact.cards", newCards);
-                                                                }} className="p-2 text-red-400 hover:text-red-600 transition-colors"><Trash2 size={14} /></button>
-                                                            </div>
-                                                        ))}
-                                                        <button onClick={() => {
-                                                            const newCards = [...settings.contact.cards];
-                                                            newCards[idx].details = [...(newCards[idx].details || []), "new detail"];
-                                                            updateNestedField("contact.cards", newCards);
-                                                        }} className="text-[11px] font-bold text-accent-600 hover:text-accent-700 flex items-center gap-1.5 px-1 py-1 transition-all">
-                                                            <Plus size={12} /> Add Detail
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                        <button onClick={() => {
-                                            const newCards = [...(settings.contact?.cards || []), { title: "New Channel", label: "Direct Support", details: [""] }];
-                                            updateNestedField("contact.cards", newCards);
-                                        }} className="p-6 rounded-2xl border-2 border-dashed border-gray-200 hover:bg-gray-50 transition-all flex flex-col items-center justify-center gap-2 group">
-                                            <Plus className="text-gray-300 group-hover:text-accent-600" size={32} />
-                                            <span className="text-xs font-bold text-gray-500 uppercase tracking-tight">Add Support Channel</span>
-                                        </button>
-                                    </div>
-                                </section>
-
-                                <section className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm space-y-8">
-                                    <SectionHeader icon={Compass} title="Campus Residency" />
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                        <div className="space-y-6">
-                                            <Input label="Institutional Campus Title" value={settings.contact?.location?.campusName || ""} onChange={(e) => updateNestedField("contact.location.campusName", e.target.value)} />
-                                            <Input label="Full Operational Address" value={settings.contact?.location?.address || ""} onChange={(e) => updateNestedField("contact.location.address", e.target.value)} />
-                                        </div>
-                                        <div className="space-y-6">
-                                            <Input label="Google Maps Embed URL" value={settings.contact?.location?.mapLink || ""} onChange={(e) => updateNestedField("contact.location.mapLink", e.target.value)} placeholder="https://www.google.com/maps/embed?..." />
-                                            <p className="text-[11px] text-gray-400 font-medium leading-relaxed italic px-1">
-                                                Paste the iframe SRC from Google Maps 'Share' -&gt; 'Embed a map' to synchronize the physical location visual.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </section>
-
-                                <section className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm space-y-8">
-                                    <SectionHeader icon={Info} title="FAQ Repository" />
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        {(settings.contact?.faqs || []).map((faq, idx) => (
-                                            <div key={idx} className="bg-gray-50 p-6 rounded-2xl border border-gray-100 relative group">
-                                                <button onClick={() => {
-                                                    const newFaqs = settings.contact.faqs.filter((_, i) => i !== idx);
-                                                    updateNestedField("contact.faqs", newFaqs);
-                                                }} className="absolute top-3 right-3 text-red-500 hover:scale-110 opacity-0 group-hover:opacity-100 transition-all"><Trash2 size={16} /></button>
-                                                <div className="space-y-4">
-                                                    <Input label="Frequency Question" value={faq.q} onChange={(e) => {
-                                                        const newFaqs = [...settings.contact.faqs];
-                                                        newFaqs[idx].q = e.target.value;
-                                                        updateNestedField("contact.faqs", newFaqs);
-                                                    }} />
-                                                    <textarea placeholder="Institutional response..." className="w-full px-4 py-3 bg-white rounded-xl text-sm font-medium border border-gray-200 min-h-[100px] outline-none focus:border-accent-500 transition-all" value={faq.a} onChange={(e) => {
-                                                        const newFaqs = [...settings.contact.faqs];
-                                                        newFaqs[idx].a = e.target.value;
-                                                        updateNestedField("contact.faqs", newFaqs);
-                                                    }} />
-                                                </div>
-                                            </div>
-                                        ))}
-                                        <button onClick={() => {
-                                            const newFaqs = [...(settings.contact.faqs || []), { q: "What are your hours?", a: "Mon-Sat, 8AM to 4PM." }];
-                                            updateNestedField("contact.faqs", newFaqs);
-                                        }} className="p-6 rounded-2xl border-2 border-dashed border-gray-200 hover:bg-gray-50 transition-all flex flex-col items-center justify-center gap-2 group">
-                                            <Plus className="text-gray-300 group-hover:text-accent-600" size={32} />
-                                            <span className="text-xs font-bold text-gray-500 uppercase tracking-tight">Add FAQ Entry</span>
-                                        </button>
-                                    </div>
-                                </section>
-                            </div>
-                        )}
-
-                        {/* FOOTER TAB */}
-                        {activeTab === "footer" && (
-                            <div className="animate-fade-up space-y-8">
-                                <section className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm space-y-8">
-                                    <SectionHeader icon={Copyright} title="Institutional Footer" />
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                                        <div className="space-y-6">
-                                            <div className="space-y-2">
-                                                <label className="text-[13px] font-semibold text-gray-500 ml-1">Operational Mission (Left Column)</label>
-                                                <textarea className="w-full px-5 py-4 bg-white rounded-2xl border border-gray-200 text-sm font-medium outline-none focus:ring-4 focus:ring-accent-500/5 focus:border-accent-500 transition-all min-h-[120px]" value={settings.global?.footerMission || ""} onChange={(e) => updateNestedField("global.footerMission", e.target.value)} />
-                                            </div>
-                                            <Input label="Legal Copyright Line" value={settings.global?.footerCopyright || ""} onChange={(e) => updateNestedField("global.footerCopyright", e.target.value)} placeholder="© 2026 Institutional Name..." />
-                                        </div>
-                                        <div className="space-y-6">
-                                            <Input label="Vision Statement Descriptor" value={settings.global?.visionStatement || ""} onChange={(e) => updateNestedField("global.visionStatement", e.target.value)} />
-                                            <div className="space-y-2">
-                                                <label className="text-[13px] font-semibold text-gray-500 ml-1">Vision Quote (Featured)</label>
-                                                <textarea className="w-full px-5 py-4 bg-white rounded-2xl border border-gray-200 text-sm font-medium outline-none focus:ring-4 focus:ring-accent-500/5 focus:border-accent-500 transition-all min-h-[100px]" value={settings.global?.visionQuote || ""} onChange={(e) => updateNestedField("global.visionQuote", e.target.value)} />
-                                            </div>
-                                            <Input label="Global Hub Button Text" value={settings.global?.ctaButtonText || ""} onChange={(e) => updateNestedField("global.ctaButtonText", e.target.value)} />
-                                        </div>
-                                    </div>
-                                </section>
-                            </div>
-                        )}
-
-                        {/* GALLERY TAB */}
-                        {activeTab === "gallery" && (
-                            <GalleryManager token={token} getImageUrl={getImageUrl} />
-                        )}
+                        {activeTab === "gallery" && <GalleryManager token={token} getImageUrl={getImageUrl} />}
 
                     </main>
             </aside>
 
-            {/* RIGHT PREVIEW (Canvas) */}
             <div className={`flex-1 h-full bg-gray-100/80 relative flex flex-col transition-all duration-300 ${!showPreview && "hidden"}`}>
-                
-                {/* Canvas Toolbar */}
-                <div className="h-14 bg-white/80 backdrop-blur border-b border-gray-200 flex items-center justify-between px-6 shrink-0 relative z-20">
+                <div className="h-14 bg-white/90 backdrop-blur border-b border-gray-200 flex items-center justify-between px-6 shrink-0 z-40 shadow-sm">
                     <div className="flex items-center gap-6">
-                        <div className="flex items-center gap-2 bg-accent-50 text-accent-700 px-3 py-1.5 rounded-md border border-accent-100">
+                        <div className="flex items-center gap-2 bg-accent-50 text-accent-700 px-3 py-1.5 rounded-lg border border-accent-100">
                             <div className="w-1.5 h-1.5 rounded-full bg-accent-500 animate-pulse"></div>
-                            <span className="text-[10px] font-bold uppercase tracking-widest">Live Sync Active</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest">Live Preview</span>
+                        </div>
+                        
+                        <div className="flex items-center gap-3 bg-gray-50/50 px-3 py-1 rounded-lg border border-gray-100">
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Zoom</span>
+                            <input 
+                                type="range" min="10" max="200" step="1" 
+                                value={zoom || 100} 
+                                onChange={(e) => setZoom(parseInt(e.target.value))}
+                                className="w-24 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-accent-600"
+                            />
+                            <span className="text-[10px] font-black text-gray-700 w-10">{(zoom || (containerWidth > 0 ? (containerWidth - 120) / (previewDevice === "desktop" ? 14.4 : previewDevice === "tablet" ? 7.68 : 3.75) : 100)).toFixed(0)}%</span>
                         </div>
                     </div>
                     
                     <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
-                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-tight">Zoom</span>
-                            <input 
-                                type="range" 
-                                min="15" 
-                                max="150" 
-                                value={zoom !== null ? zoom : 50} 
-                                onChange={(e) => setZoom(parseInt(e.target.value))}
-                                className="w-20 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-accent-500"
-                            />
-                            <button 
-                                onClick={() => setZoom(null)}
-                                className={`text-[8px] font-black px-1.5 py-0.5 rounded transition-colors ${zoom === null ? "bg-accent-500 text-white shadow-sm" : "bg-gray-200 text-gray-500 hover:bg-gray-300"}`}
-                            >
-                                AUTO
-                            </button>
-                        </div>
-
-                        <div className="flex items-center bg-gray-100/80 p-1 rounded-lg border border-gray-200/50">
-                            {[
-                                { id: "mobile", icon: Smartphone },
-                                { id: "tablet", icon: Tablet },
-                                { id: "desktop", icon: Monitor }
-                            ].map(device => (
+                        <div className="flex items-center bg-gray-100/80 p-1 rounded-xl border border-gray-200/50">
+                            {[{ id: "mobile", icon: Smartphone, label: "Mobile" }, { id: "tablet", icon: Tablet, label: "Tablet" }, { id: "desktop", icon: Monitor, label: "Desktop" }].map(device => (
                                 <button 
-                                    key={device.id}
-                                    onClick={() => setPreviewDevice(device.id)}
-                                    className={`p-2 rounded-md transition-all duration-300 ${
-                                        previewDevice === device.id 
-                                        ? "bg-white text-primary-950 shadow-sm border border-gray-200/60" 
-                                        : "text-gray-400 hover:text-gray-700"
-                                    }`}
+                                    key={device.id} 
+                                    onClick={() => { setPreviewDevice(device.id); setPan({x:0, y:0}); }} 
+                                    title={device.label}
+                                    className={`p-2 rounded-lg transition-all ${previewDevice === device.id ? "bg-white text-primary-950 shadow-sm border border-gray-200/60" : "text-gray-400 hover:text-gray-700"}`}
                                 >
                                     <device.icon size={14} />
                                 </button>
                             ))}
                         </div>
-
+                        
                         <button 
-                            onClick={() => {
-                                setPan({ x: 0, y: 0 });
-                                setZoom(null);
-                            }}
-                            className="p-2 text-gray-400 hover:text-accent-600 hover:bg-accent-50 rounded-lg transition-all"
+                            onClick={() => { setPan({ x: 0, y: 0 }); setZoom(null); }} 
                             title="Reset View"
+                            className="p-2 text-gray-400 hover:text-accent-600 hover:bg-accent-50 rounded-lg transition-all"
                         >
                             <RotateCcw size={14} />
                         </button>
-                    </div>
 
-                    <div className="flex items-center gap-3">
-                        <button onClick={() => window.open('/', '_blank')} className="text-xs font-bold text-gray-500 hover:text-primary-950 flex items-center gap-1.5 transition-colors">
-                            <Eye size={14} /> View Live
-                        </button>
-                        <div className="w-px h-4 bg-gray-300"></div>
-                        <button onClick={() => setShowPreview(false)} className="text-xs font-bold text-red-500 hover:text-red-600 flex items-center gap-1.5 transition-colors">
-                            <EyeOff size={14} /> Close
-                        </button>
+                        <div className="h-4 w-px bg-gray-200 mx-2"></div>
+
+                        <div className="flex items-center gap-4">
+                            <button onClick={() => window.open(previewUrl, '_blank')} className="text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-primary-950 flex items-center gap-1.5 transition-colors">
+                                <Eye size={14} /> View Live
+                            </button>
+                            <button onClick={() => setShowPreview(false)} className="text-[10px] font-black uppercase tracking-widest text-red-500 hover:text-red-600 flex items-center gap-1.5 transition-colors">
+                                <EyeOff size={14} /> Close
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                {/* Canvas Frame */}
                 <div 
                     ref={containerRef}
                     onMouseDown={(e) => {
-                        // Allow dragging if clicking the background or the dot-grid wrapper
-                        if (e.target === containerRef.current || e.target.getAttribute('data-canvas-bg')) {
+                        // Allow dragging if not clicking on buttons, inputs or the iframe itself
+                        const isInteractive = e.target.closest('button') || e.target.closest('input') || e.target.tagName === 'IFRAME';
+                        if (!isInteractive) {
                             setIsDragging(true);
                             setLastPos({ x: e.clientX, y: e.clientY });
                         }
                     }}
-                    onMouseMove={(e) => {
-                        if (!isDragging) return;
-                        const dx = e.clientX - lastPos.x;
-                        const dy = e.clientY - lastPos.y;
-                        setPan(prev => ({ x: prev.x + dx, y: prev.y + dy }));
-                        setLastPos({ x: e.clientX, y: e.clientY });
-                    }}
-                    onMouseUp={() => setIsDragging(false)}
-                    onMouseLeave={() => setIsDragging(false)}
+                    onMouseMove={handleMouseMove}
+                    onMouseUp={handleMouseUp}
+                    onMouseLeave={handleMouseUp}
+                    className="flex-1 overflow-hidden relative bg-[#f0f2f5] bg-[radial-gradient(#d1d5db_1px,transparent_1px)] [background-size:24px_24px] select-none"
                     style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
-                    className="flex-1 overflow-hidden relative bg-[#f0f2f5] bg-[radial-gradient(#d1d5db_1px,transparent_1px)] [background-size:24px_24px]"
                 >
+                    {/* Drag Overlay Helper - ensures smooth dragging over iframe */}
+                    {isDragging && <div className="absolute inset-0 z-[100] cursor-grabbing" />}
                     {(() => {
-                        // More conservative auto-scale to ensure room for panning
-                        const scaleW = (containerWidth - 100) / 1440;
-                        const scaleH = (containerHeight - 100) / 900;
+                        const scaleW = (containerWidth - 100) / (previewDevice === "desktop" ? 1440 : (previewDevice === "tablet" ? 768 : 375));
+                        const scaleH = (containerHeight - 100) / (previewDevice === "desktop" ? 900 : (previewDevice === "tablet" ? 1024 : 812));
                         const autoScale = Math.max(0.15, Math.min(0.8, Math.min(scaleW, scaleH)));
-                        const currentScale = zoom !== null ? (zoom / 100) : autoScale;
+                        const currentScale = zoom !== null ? (zoom / 100) : (autoScale || 0.5);
+
+                        const width = previewDevice === "desktop" ? "1440px" : (previewDevice === "tablet" ? "768px" : "375px");
+                        const height = previewDevice === "desktop" ? "900px" : (previewDevice === "tablet" ? "1024px" : "812px");
+                        const marginLeft = previewDevice === "desktop" ? "-720px" : (previewDevice === "tablet" ? "-384px" : "-187.5px");
+                        const marginTop = previewDevice === "desktop" ? "-450px" : (previewDevice === "tablet" ? "-512px" : "-406px");
 
                         return (
                             <div 
                                 data-canvas-bg="true"
                                 className="w-full h-full flex items-center justify-center p-8 relative"
                             >
-                                {/* THE SCALED DEVICE CONTAINER */}
                                 <div 
                                     style={{
-                                        width: previewDevice === "desktop" ? "1440px" : (previewDevice === "tablet" ? "768px" : "375px"),
-                                        height: previewDevice === "desktop" ? "900px" : "100%",
+                                        width: width,
+                                        height: height,
                                         transform: `scale(${currentScale})`,
                                         transformOrigin: "center center",
                                         position: "absolute",
                                         left: `calc(50% + ${pan.x}px)`,
                                         top: `calc(50% + ${pan.y}px)`,
-                                        marginLeft: previewDevice === "desktop" ? "-720px" : (previewDevice === "tablet" ? "-384px" : "-187.5px"),
-                                        marginTop: previewDevice === "desktop" ? "-450px" : "-50%",
-                                        flexShrink: 0,
-                                        zIndex: 10
-                                    }}
-                                    className={`bg-white shadow-[0_40px_100px_-20px_rgba(0,0,0,0.3)] transition-all duration-500 ease-out relative flex flex-col overflow-hidden border border-gray-200/50 ${
-                                        previewDevice === "mobile" ? "rounded-[3.5rem] ring-[12px] ring-gray-900" :
-                                        previewDevice === "tablet" ? "rounded-[2.5rem] ring-[10px] ring-gray-900" :
+                                        marginLeft: marginLeft,
+                                        marginTop: marginTop,
+                                        zIndex: 10,
+                                        transition: isDragging ? 'none' : 'all 0.5s cubic-bezier(0.2, 0, 0, 1)'
+                                    }} 
+                                    className={`bg-white shadow-[0_40px_100px_-20px_rgba(0,0,0,0.3)] flex flex-col overflow-hidden border border-gray-200/50 ${
+                                        previewDevice === "mobile" ? "rounded-[3.5rem] ring-[12px] ring-gray-950" : 
+                                        previewDevice === "tablet" ? "rounded-[2.5rem] ring-[10px] ring-gray-950" : 
                                         "rounded-xl"
                                     }`}
                                 >
@@ -1496,25 +986,21 @@ const AdminSiteEditor = () => {
 
                                     <div className="flex-1 overflow-auto bg-white relative">
                                         <iframe 
-                                            ref={iframeRef}
+                                            ref={iframeRef} 
                                             src={previewUrl} 
-                                            className="w-full h-full border-none"
-                                            title="Institutional Site Preview"
-                                            key={previewDevice}
+                                            className="w-full h-full border-none" 
+                                            style={{ pointerEvents: isDragging ? 'none' : 'auto' }} 
                                             onLoad={() => {
                                                 if (iframeRef.current && settings) {
-                                                    iframeRef.current.contentWindow.postMessage({
-                                                        type: 'LIVE_PREVIEW_UPDATE',
-                                                        settings: settings
-                                                    }, '*');
+                                                    iframeRef.current.contentWindow.postMessage({ type: 'LIVE_PREVIEW_UPDATE', settings: settings }, '*');
                                                 }
-                                            }}
+                                            }} 
                                         />
                                     </div>
 
                                     {/* Mobile/Tablet Home Button Area */}
                                     {previewDevice !== "desktop" && (
-                                        <div className="h-8 bg-gray-900 flex items-center justify-center shrink-0">
+                                        <div className="h-8 bg-gray-950 flex items-center justify-center shrink-0">
                                             <div className="w-16 h-1 bg-white/20 rounded-full"></div>
                                         </div>
                                     )}
@@ -1523,19 +1009,12 @@ const AdminSiteEditor = () => {
                         );
                     })()}
                 </div>
-
             </div>
-            
-            {/* Show Preview Toggle (When Hidden) */}
             {!showPreview && (
-                <button 
-                    onClick={() => setShowPreview(true)}
-                    className="absolute bottom-8 right-8 bg-primary-950 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-2 hover:bg-black transition-all hover:-translate-y-1 z-50 text-xs font-bold"
-                >
+                <button onClick={() => setShowPreview(true)} className="absolute bottom-8 right-8 bg-primary-950 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-2 z-50 text-xs font-bold">
                     <Eye size={16} /> Open Canvas
                 </button>
             )}
-
         </div>
     );
 };
@@ -1550,135 +1029,65 @@ const GalleryManager = ({ token, getImageUrl }) => {
         try {
             const data = await adminService.getGalleryImages(token);
             setImages(data);
-        } catch (error) {
-            toast.error("Protocol Failure: Could not synchronize assets.");
-        } finally {
-            setLoading(false);
-        }
+        } catch (error) { toast.error("Protocol Failure."); } finally { setLoading(false); }
     };
 
-    useEffect(() => {
-        if (token) fetchGallery();
-    }, [token]);
+    useEffect(() => { if (token) fetchGallery(); }, [token]);
 
     const handleUpload = async (e) => {
         e.preventDefault();
-        if (!newItem.file) return toast.warning("Selection Required: Please pick an institutional asset.");
-        
+        if (!newItem.file) return toast.warning("Selection Required.");
         setUploading(true);
         const formData = new FormData();
         formData.append("image", newItem.file);
         formData.append("title", newItem.title || "Institutional Memory");
         formData.append("tags", newItem.tags);
-
         try {
             await adminService.uploadGalleryImage(formData, token);
-            toast.success("Digital Asset Synchronized Successfully.");
+            toast.success("Asset Synchronized.");
             setNewItem({ title: "", tags: "", file: null });
             fetchGallery();
-        } catch (error) {
-            toast.error("Upload failure: Check digital integrity.");
-        } finally {
-            setUploading(false);
-        }
+        } catch (error) { toast.error("Upload failure."); } finally { setUploading(false); }
     };
 
     const handleDelete = async (id) => {
         try {
             await adminService.deleteGalleryImage(id, token);
-            toast.success("Asset Decommissioned Successfully.");
+            toast.success("Asset Decommissioned.");
             fetchGallery();
-        } catch (error) {
-            toast.error("Decommission Failure.");
-        }
+        } catch (error) { toast.error("Decommission Failure."); }
     };
 
     return (
         <div className="animate-fade-up space-y-8">
             <section className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm space-y-8">
                 <SectionHeader icon={Upload} title="Asset Intake" />
-
-                <form onSubmit={handleUpload} className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <Input 
-                        label="Asset Identifier" 
-                        placeholder="e.g. Campus Event 2024"
-                        value={newItem.title}
-                        onChange={(e) => setNewItem({...newItem, title: e.target.value})}
-                    />
-                    <Input 
-                        label="Discovery Tags" 
-                        placeholder="e.g. Sports, Award (Comma Separated)"
-                        value={newItem.tags}
-                        onChange={(e) => setNewItem({...newItem, tags: e.target.value})}
-                    />
-                    
-                    <div className="col-span-full">
-                        <div className="relative group border-2 border-dashed border-gray-100 rounded-2xl p-10 text-center hover:bg-gray-50 hover:border-accent-200 transition-all cursor-pointer">
-                            <input 
-                                type="file" 
-                                className="absolute inset-0 opacity-0 cursor-pointer z-10"
-                                onChange={(e) => setNewItem({...newItem, file: e.target.files[0]})}
-                            />
-                            <div className="space-y-4">
-                                <div className="w-14 h-14 bg-accent-50 rounded-2xl flex items-center justify-center text-accent-500 mx-auto group-hover:scale-110 transition-transform">
-                                    <ImageIcon size={28} />
-                                </div>
-                                <div className="space-y-1">
-                                    <p className="text-sm font-bold text-gray-700">
-                                        {newItem.file ? newItem.file.name : "Select Primary Resolution Asset"}
-                                    </p>
-                                    <p className="text-xs text-gray-400 font-medium">
-                                        Drag & drop or click to browse institutional files
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
+                <form onSubmit={handleUpload} className="space-y-6">
+                    <Input label="Asset Identifier" value={newItem.title} onChange={(e) => setNewItem({...newItem, title: e.target.value})} />
+                    <div className="relative group border-2 border-dashed border-gray-100 rounded-2xl p-10 text-center hover:bg-gray-50 transition-all cursor-pointer">
+                        <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => setNewItem({...newItem, file: e.target.files[0]})} />
+                        <ImageIcon size={28} className="mx-auto text-accent-500 mb-2" />
+                        <p className="text-sm font-bold">{newItem.file ? newItem.file.name : "Select Asset"}</p>
                     </div>
-
-                    <div className="col-span-full">
-                        <button 
-                            type="submit" 
-                            disabled={uploading}
-                            className="bg-primary-950 text-white px-8 py-3.5 rounded-xl text-[11px] font-bold uppercase tracking-wider hover:bg-black transition-all flex items-center gap-3 disabled:opacity-50"
-                        >
-                            {uploading ? <Loader2 className="animate-spin" size={16} /> : <Plus size={16} />}
-                            Synchronize to Gallery
-                        </button>
-                    </div>
+                    <button type="submit" disabled={uploading} className="bg-primary-950 text-white px-8 py-3.5 rounded-xl text-xs font-bold uppercase disabled:opacity-50 flex items-center gap-3">
+                        {uploading ? <Loader2 className="animate-spin" size={16} /> : <Plus size={16} />}
+                        Synchronize
+                    </button>
                 </form>
             </section>
-
             <section className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm space-y-8">
                 <SectionHeader icon={ImageIcon} title="Institutional Registry" />
-
-                {loading ? (
-                    <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-50">
-                        <Loader2 className="animate-spin text-accent-600" size={32} />
-                        <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Synchronizing...</span>
-                    </div>
-                ) : images.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-20 space-y-4 opacity-50">
-                        <ImageIcon size={48} className="text-gray-200" />
-                        <p className="text-sm font-bold text-gray-400">Registry is currently empty.</p>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                        {images.map((img) => (
-                            <div key={img._id} className="group relative aspect-[4/5] bg-gray-50 rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500">
-                                <img src={getImageUrl(img.url)} alt={img.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                                <div className="absolute inset-0 bg-gradient-to-t from-gray-950/90 via-gray-950/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-5">
-                                    <h4 className="text-white font-bold text-xs truncate mb-3">{img.title}</h4>
-                                    <button 
-                                        onClick={() => handleDelete(img._id)}
-                                        className="w-full py-2.5 bg-red-500 text-white text-[10px] font-bold uppercase tracking-wider rounded-lg hover:bg-red-600 transition-all flex items-center justify-center gap-2"
-                                    >
-                                        <Trash2 size={12} /> Purge
-                                    </button>
-                                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    {images.map((img) => (
+                        <div key={img._id} className="group relative aspect-[4/5] bg-gray-50 rounded-2xl overflow-hidden shadow-sm">
+                            <img src={getImageUrl(img.url)} alt={img.title} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
+                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
+                                <h4 className="text-white font-bold text-[10px] truncate mb-2">{img.title}</h4>
+                                <button onClick={() => handleDelete(img._id)} className="w-full py-2 bg-red-500 text-white text-[10px] font-bold rounded hover:bg-red-600 transition-all">Delete</button>
                             </div>
-                        ))}
-                    </div>
-                )}
+                        </div>
+                    ))}
+                </div>
             </section>
         </div>
     );

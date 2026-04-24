@@ -14,20 +14,23 @@ import {
   CheckCircle,
   TrendingUp,
   Globe,
-  Loader2
+  Loader2,
+  Trophy,
+  History,
+  ShieldCheck
 } from "lucide-react";
 import { useSiteSettings } from "../../context/SiteSettingsContext";
 import principalImageDefault from "../../assets/principal.png";
 import InlineEdit from "../../components/ui/InlineEdit";
 import EditableRegion from "../../components/ui/EditableRegion";
 
-const DynamicIcon = ({ name, size = 24, className = "" }) => {
+const DynamicIcon = ({ name, size = 24, className = "", ...props }) => {
   const IconMap = { 
     Shield, Star, Zap, Compass, Target, BookOpen, Award, Sparkles, Quote, 
-    CheckCircle, TrendingUp, Globe, Loader2
+    CheckCircle, TrendingUp, Globe, Loader2, Trophy, History, ShieldCheck
   };
   const Icon = IconMap[name] || Star;
-  return <Icon size={size} className={className} />;
+  return <Icon size={size} className={className} {...props} />;
 };
 
 const AboutPage = () => {
@@ -52,7 +55,7 @@ const AboutPage = () => {
     const theme = settings.theme || { primaryColor: "#0a0a0a", accentColor: "#10b981" };
     const layout = settings.layout?.about || { showHero: true, showHeritage: true, showValues: true, showPrincipal: true, showCta: true };
 
-    const IconMap = { Shield, Award, BookOpen, Star, Zap, Compass, CheckCircle, Target, Sparkles, Globe, TrendingUp };
+    const IconMap = { Shield, Award, BookOpen, Star, Zap, Compass, CheckCircle, Target, Sparkles, Globe, TrendingUp, Trophy, History, ShieldCheck };
     
     const defaultValues = [
         { icon: Shield, title: "Integrity", desc: "Honesty and moral principles are the foundation of everything we do.", delay: 0 },
@@ -83,7 +86,7 @@ const AboutPage = () => {
             <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div className="space-y-8 animate-fade-right">
                 <EditableRegion type="badge" path="about.hero.badge" label="Hero Badge">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border shadow-sm" style={{ backgroundColor: `${theme.accentColor}10`, color: theme.accentColor, borderColor: `${theme.accentColor}30` }}>
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border shadow-sm" style={{ backgroundColor: `${settings.about?.hero?.badge?.color || theme.accentColor}10`, color: settings.about?.hero?.badge?.color || theme.accentColor, borderColor: `${settings.about?.hero?.badge?.color || theme.accentColor}30` }}>
                         {settings.about?.hero?.badge?.icon ? (
                             <DynamicIcon name={settings.about.hero.badge.icon} size={14} />
                         ) : (
@@ -92,7 +95,7 @@ const AboutPage = () => {
                         <span>
                             {typeof settings.about?.hero?.badge === 'string' 
                                 ? settings.about.hero.badge 
-                                : (settings.about?.hero?.badge?.text || "Our Institution")}
+                                : (settings.about?.hero?.badge?.text || "Our Story")}
                         </span>
                     </div>
                 </EditableRegion>
@@ -136,10 +139,10 @@ const AboutPage = () => {
                             })}
                         </div>
                     </EditableRegion>
-                    <EditableRegion type="quote" path="global.visionStatement" label="Vision Quote">
+                    <EditableRegion type="text" path="global.visionQuote" label="Vision Quote">
                         <div className="p-6 rounded-2xl text-white space-y-4" style={{ backgroundColor: theme.primaryColor }}>
                             <Quote style={{ color: theme.accentColor }} />
-                            <p className="text-lg font-bold italic opacity-90 leading-tight">"{settings.global?.visionStatement?.substring(0, 60) || "Shaping character and competence."}..."</p>
+                            <p className="text-lg font-bold italic opacity-90 leading-tight">"{settings.global?.visionQuote || "Shaping character and competence."}"</p>
                         </div>
                     </EditableRegion>
                 </div>
@@ -157,11 +160,18 @@ const AboutPage = () => {
             <div className="lg:col-span-5 space-y-8">
                 <div className="space-y-4">
                 <EditableRegion type="badge" path="about.heritage.badge" label="Heritage Badge">
-                    <h2 className="text-xs font-black uppercase tracking-[0.4em]" style={{ color: theme.accentColor }}>
-                        {typeof settings.about?.heritage?.badge === 'string'
-                            ? settings.about.heritage.badge
-                            : (settings.about?.heritage?.badge?.text || "Our Heritage")}
-                    </h2>
+                    <div className="inline-flex items-center gap-2 mb-2">
+                        {settings.about?.heritage?.badge?.icon ? (
+                            <DynamicIcon name={settings.about.heritage.badge.icon} size={14} className="opacity-80" style={{ color: settings.about?.heritage?.badge?.color || theme.accentColor }} />
+                        ) : (
+                            <History size={14} className="opacity-80" style={{ color: settings.about?.heritage?.badge?.color || theme.accentColor }} />
+                        )}
+                        <h2 className="text-xs font-black uppercase tracking-[0.4em]" style={{ color: settings.about?.heritage?.badge?.color || theme.accentColor }}>
+                            {typeof settings.about?.heritage?.badge === 'string'
+                                ? settings.about.heritage.badge
+                                : (settings.about?.heritage?.badge?.text || "Our Heritage")}
+                        </h2>
+                    </div>
                 </EditableRegion>
                 <h3 className="text-4xl md:text-5xl font-black text-primary-950 tracking-tighter leading-none" style={{ color: theme.primaryColor }}>
                     <InlineEdit path="about.heritage.title" text={settings.about?.heritage?.title || "A Legacy of Heart & Mind."} label="Heritage Title" />
@@ -173,24 +183,28 @@ const AboutPage = () => {
             </div>
 
             <div className="lg:col-span-7 grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="bg-neutral-bg-subtle p-8 rounded-3xl space-y-6 self-start transform md:translate-y-12">
+                <EditableRegion type="text" path="about.mission" label="Institutional Mission" className="bg-neutral-bg-subtle p-8 rounded-3xl space-y-6 self-start transform md:translate-y-12 shadow-sm hover:shadow-md transition-shadow">
                     <div className="w-10 h-10 rounded-full text-white flex items-center justify-center font-black" style={{ backgroundColor: theme.accentColor }}>01</div>
-                    <h4 className="text-xl font-black text-primary-950 text-uppercase tracking-tight underline decoration-2 underline-offset-4" style={{ textDecorationColor: `${theme.accentColor}40` }}>
-                        <InlineEdit path="about.mission.title" text={settings.about?.mission?.title || "The Mission"} label="Mission Title" />
-                    </h4>
-                    <p className="text-gray-500 text-sm leading-relaxed font-medium capitalize">
-                        <InlineEdit path="about.mission.content" text={settings.about?.mission?.content || "To provide an inclusive, stimulating environment that fosters curiosity and academic excellence."} label="Mission Content" />
-                    </p>
-                </div>
-                <div className="p-8 rounded-3xl space-y-6 text-white self-center" style={{ backgroundColor: theme.primaryColor }}>
+                    <div className="space-y-4">
+                        <h4 className="text-xl font-black text-primary-950 uppercase tracking-tight underline decoration-2 underline-offset-4" style={{ textDecorationColor: `${theme.accentColor}40` }}>
+                            {settings.about?.mission?.title || "The Mission"}
+                        </h4>
+                        <p className="text-gray-500 text-sm leading-relaxed font-medium">
+                            {settings.about?.mission?.content || "To provide an inclusive, stimulating environment that fosters curiosity and academic excellence."}
+                        </p>
+                    </div>
+                </EditableRegion>
+                <EditableRegion type="text" path="about.vision" label="Institutional Vision" className="p-8 rounded-3xl space-y-6 text-white self-center shadow-xl hover:shadow-2xl transition-all" style={{ backgroundColor: theme.primaryColor }}>
                     <div className="w-10 h-10 rounded-full text-white flex items-center justify-center font-black" style={{ backgroundColor: theme.accentColor }}>02</div>
-                    <h4 className="text-xl font-black text-uppercase tracking-tight underline decoration-2 underline-offset-4" style={{ color: theme.accentColor, textDecorationColor: "rgba(255,255,255,0.1)" }}>
-                        <InlineEdit path="about.vision.title" text={settings.about?.vision?.title || "The Vision"} label="Vision Title" />
-                    </h4>
-                    <p className="text-white/70 text-sm leading-relaxed font-medium capitalize">
-                        <InlineEdit path="about.vision.content" text={settings.about?.vision?.content || "To be a global leader in transformative education, shaping character and competence."} label="Vision Content" />
-                    </p>
-                </div>
+                    <div className="space-y-4">
+                        <h4 className="text-xl font-black uppercase tracking-tight underline decoration-2 underline-offset-4" style={{ color: theme.accentColor, textDecorationColor: "rgba(255,255,255,0.1)" }}>
+                            {settings.about?.vision?.title || "The Vision"}
+                        </h4>
+                        <p className="text-white text-sm leading-relaxed font-medium">
+                            {settings.about?.vision?.content || "To be a global leader in transformative education, shaping character and competence."}
+                        </p>
+                    </div>
+                </EditableRegion>
             </div>
             </div>
         </section>
@@ -204,7 +218,7 @@ const AboutPage = () => {
             <div className="flex flex-col items-center text-center space-y-4 mb-20 animate-reveal">
             <div className="h-1 w-20" style={{ backgroundColor: theme.accentColor }}></div>
             <h2 className="text-4xl md:text-5xl font-black text-primary-950 tracking-tighter leading-none uppercase" style={{ color: theme.primaryColor }}>
-                Core <span className="italic lowercase tracking-tight" style={{ color: theme.accentColor }}>Philosophy.</span>
+                <InlineEdit path="about.philosophy.title" text="Core" /> <span className="italic lowercase tracking-tight" style={{ color: theme.accentColor }}><InlineEdit path="about.philosophy.accent" text="Philosophy." /></span>
             </h2>
             </div>
 
@@ -234,7 +248,9 @@ const AboutPage = () => {
         <section className="py-32 px-6 bg-white">
             <div className="max-w-5xl mx-auto text-center space-y-12">
             <div className="space-y-4">
-                <h2 className="text-xs font-black uppercase tracking-[0.4em]" style={{ color: theme.accentColor }}>Word from the Principal</h2>
+                <h2 className="text-xs font-black uppercase tracking-[0.4em]" style={{ color: theme.accentColor }}>
+                    <InlineEdit path="home.principal.title" text={settings.home?.principal?.title || "Word from the Principal"} label="Leadership Title" />
+                </h2>
                 <div className="relative inline-block group">
                     <EditableRegion type="image" path="home.principal.image" label="Principal Portrait">
                         <div className="relative">
@@ -251,9 +267,11 @@ const AboutPage = () => {
 
             <div className="space-y-8">
                 <Quote size={48} className="mx-auto opacity-30" style={{ color: theme.accentColor }} />
-                <p className="text-2xl md:text-3xl font-black text-primary-950 leading-tight tracking-tight italic">
-                "{settings.home?.principal?.quote || "Education is the manifestation of the perfection already in man."}"
-                </p>
+                <EditableRegion type="text" path="home.principal.quote" label="Leadership Quote">
+                    <p className="text-2xl md:text-3xl font-black text-primary-950 leading-tight tracking-tight italic">
+                    "{settings.home?.principal?.quote || "Education is the manifestation of the perfection already in man."}"
+                    </p>
+                </EditableRegion>
                 <div className="space-y-1 pt-6 border-t border-gray-100 max-w-[200px] mx-auto">
                     <p className="text-xl font-black text-primary-950">
                         <InlineEdit path="home.principal.name" text={settings.home?.principal?.name || "The Principal"} label="Principal Name" />
@@ -277,10 +295,10 @@ const AboutPage = () => {
             
             <div className="max-w-2xl mx-auto space-y-6">
                 <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-none">
-                    Begin Your Journey With <span style={{ color: theme.accentColor }}>{settings.schoolName?.substring(0, 3) || "Institution"}.</span>
+                    <InlineEdit path="about.cta.title" text={settings.about?.cta?.title || "Begin Your Journey With"} /> <span style={{ color: theme.accentColor }}><InlineEdit path="schoolName" text={settings.schoolName?.substring(0, 3) || "Institution"} />.</span>
                 </h2>
                 <p className="text-white/60 text-lg font-medium leading-relaxed">
-                    {settings.about?.cta?.subtitle || "Admissions are now open for the new academic session. Join us today."}
+                    <InlineEdit path="about.cta.subtitle" text={settings.about?.cta?.subtitle || "Admissions are now open for the new academic session. Join us today."} label="CTA Subtitle" />
                 </p>
             </div>
             

@@ -89,22 +89,25 @@ export const INITIAL_SETTINGS = {
         hero: {
             badge: { text: "Our Story", icon: "Sparkles" },
             title: "Inspiring Minds, Empowering Futures.",
-            subtitle: "Nurturing the leaders of tomorrow with modern technology and traditional values."
+            subtitle: "Nurturing the leaders of tomorrow with modern technology and traditional values.",
+            points: ["Academic Rigor", "Character Building", "Global Outlook"]
         },
         heritage: {
             badge: { text: "Our Heritage", icon: "History" },
             title: "A Legacy of Heart & Mind.",
             story: "Established in 2004, SBS Badhwana began as a vision to bring world-class education..."
         },
-        mission: { title: "The Mission", content: "To provide an inclusive, stimulating environment..." },
-        vision: { title: "The Vision", content: "To be a global leader in transformative education..." },
+        mission: { title: "The Mission", content: "To provide an inclusive, stimulating environment that fosters curiosity and academic excellence." },
+        vision: { title: "The Vision", content: "To be a global leader in transformative education, shaping character and competence." },
+        philosophy: { title: "Core", accent: "Philosophy." },
         values: [
-            { icon: "Shield", title: "Integrity", desc: "Honesty and moral principles are the foundation..." },
+            { icon: "Shield", title: "Integrity", desc: "Honesty and moral principles are the foundation of everything we do." },
             { icon: "Zap", title: "Passion", desc: "Igniting a lifelong love for learning in every student's heart." },
             { icon: "Star", title: "Excellence", desc: "Striving for the highest standards in academics and sports." },
             { icon: "Compass", title: "Empathy", desc: "Understanding and respecting ourselves and the global community." }
         ],
         cta: {
+            title: "Begin Your Journey With",
             subtitle: "Admissions are now open for the new academic session. Join us today.",
             btnText: "Apply for Admission"
         }
