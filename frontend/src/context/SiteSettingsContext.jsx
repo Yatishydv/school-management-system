@@ -11,7 +11,13 @@ export const INITIAL_SETTINGS = {
         visionStatement: "Vision 2024",
         visionQuote: "Nurturing leaders for the Indian Armed Forces and beyond.",
         ctaButtonText: "Join Our Legacy",
-        footerCopyright: "© 2024 SBS Badhwana. All rights reserved."
+        footerCopyright: "© 2024 SBS Badhwana. All rights reserved.",
+        foundationYear: "20Y+",
+        holisticVision: "100%",
+        aboutStats: [
+            { label: "Proven Excellence", value: "20Y+", icon: "TrendingUp" },
+            { label: "Holistic Vision", value: "100%", icon: "Globe" }
+        ]
     },
     home: {
         hero: {
@@ -81,12 +87,12 @@ export const INITIAL_SETTINGS = {
     },
     about: {
         hero: {
-            badge: "Our Story",
+            badge: { text: "Our Story", icon: "Sparkles" },
             title: "Inspiring Minds, Empowering Futures.",
             subtitle: "Nurturing the leaders of tomorrow with modern technology and traditional values."
         },
         heritage: {
-            badge: "Our Heritage",
+            badge: { text: "Our Heritage", icon: "History" },
             title: "A Legacy of Heart & Mind.",
             story: "Established in 2004, SBS Badhwana began as a vision to bring world-class education..."
         },
@@ -97,17 +103,21 @@ export const INITIAL_SETTINGS = {
             { icon: "Zap", title: "Passion", desc: "Igniting a lifelong love for learning in every student's heart." },
             { icon: "Star", title: "Excellence", desc: "Striving for the highest standards in academics and sports." },
             { icon: "Compass", title: "Empathy", desc: "Understanding and respecting ourselves and the global community." }
-        ]
+        ],
+        cta: {
+            subtitle: "Admissions are now open for the new academic session. Join us today.",
+            btnText: "Apply for Admission"
+        }
     },
     admissions: {
         hero: {
-            badge: "Session 2024-25 Open",
+            badge: { text: "Session 2024-25 Open", icon: "Sparkles" },
             title: "Shape Their Elite Future.",
             subtitle: "Bridge the gap between potential and excellence.",
             image: ""
         },
         process: {
-            badge: "The Admission Cycle",
+            badge: { text: "The Admission Cycle", icon: "RotateCcw" },
             title: "Four Steps to Excellence.",
             steps: [
                 { title: "Discovery", desc: "Connect with our admissions office.", icon: "Search", badge: "Inquiry" },
@@ -124,11 +134,20 @@ export const INITIAL_SETTINGS = {
                 { title: "Identity Records", desc: "Aadhar card of student and both parents.", icon: "ShieldCheck" },
                 { title: "Academic History", desc: "Previous report cards and transfer certs.", icon: "BookOpen" }
             ]
+        },
+        support: {
+            badge: "Need Assistance?",
+            title: "Admissions Counseling",
+            subtitle: "Our team is here to guide you through every step of the enrollment process."
+        },
+        cta: {
+            title: "Ready to Apply?",
+            subtitle: "The application portal is open for all classes from Nursery to XII."
         }
     },
     contact: {
         hero: {
-            badge: "Connect with our Institution",
+            badge: { text: "Connect with our Institution", icon: "Phone" },
             title: "Contact Our Campus.",
             subtitle: "Reach out to our administrative team for inquiries."
         },
@@ -138,7 +157,7 @@ export const INITIAL_SETTINGS = {
             { title: "Campus Hours", icon: "Calendar", details: ["Mon – Fri: 9:00 AM - 3:00 PM", "Sat: 9:00 AM - 12:00 PM"], color: "bg-purple-50 text-purple-600", label: "Working Schedule" }
         ],
         location: {
-            badge: "Campus Location",
+            badge: { text: "Campus Location", icon: "MapPin" },
             title: "Visit Our Institution.",
             campusName: "SBS Badhwana",
             address: "Village Badhwana, Tehsil Dadri, Charkhi Dadri, Haryana – 127308",
@@ -177,11 +196,12 @@ export const INITIAL_SETTINGS = {
     },
     layout: {
         home: { showHero: true, showStats: true, showAdvantage: true, showPrincipal: true, showCta: true },
-        about: { showHero: true, showHeritage: true, showMissionVision: true, showValues: true },
+        about: { showHero: true, showHeritage: true, showMissionVision: true, showValues: true, showPrincipal: true, showCta: true },
         admissions: { showHero: true, showProcess: true, showChecklist: true, showForm: true, showSupport: true },
         contact: { showHero: true, showCards: true, showLocation: true, showForm: true, showFaqs: true }
     }
 };
+
 // Defensive deep merge logic
 export const mergeSettings = (defaults, data) => {
     if (!data) return defaults;

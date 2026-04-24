@@ -25,6 +25,8 @@ import {
 } from "lucide-react";
 import { useSiteSettings } from "../../context/SiteSettingsContext";
 import schoolImageDefault from "../../assets/school.png";
+import InlineEdit from "../../components/ui/InlineEdit";
+import EditableRegion from "../../components/ui/EditableRegion";
 
 const AdmissionsPage = () => {
   const { settings, loading } = useSiteSettings();
@@ -130,17 +132,23 @@ const AdmissionsPage = () => {
             </div>
 
             <div className="max-w-4xl mx-auto text-center space-y-10 relative z-10 animate-fade-up">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-black uppercase tracking-[0.3em] border shadow-accent-glow" style={{ backgroundColor: `${theme.accentColor}15`, color: theme.accentColor, borderColor: `${theme.accentColor}30` }}>
-                <Sparkles size={14} className="animate-pulse" />
-                <span>{settings.home?.hero?.badge || "Admissions Open"}</span>
-            </div>
+            <EditableRegion type="badge" path="admissions.hero.badge" label="Hero Badge">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-black uppercase tracking-[0.3em] border shadow-accent-glow" style={{ backgroundColor: `${theme.accentColor}15`, color: theme.accentColor, borderColor: `${theme.accentColor}30` }}>
+                    <Sparkles size={14} className="animate-pulse" />
+                    <span>
+                        {typeof settings.admissions?.hero?.badge === 'string'
+                            ? settings.admissions.hero.badge
+                            : (settings.admissions?.hero?.badge?.text || "Admissions Open")}
+                    </span>
+                </div>
+            </EditableRegion>
 
             <h1 className="text-6xl md:text-8xl xl:text-9xl font-black tracking-tighter leading-[0.8]" style={{ color: theme.primaryColor }}>
-                {settings.admissions?.hero?.title || "Shape Their Excellence."}
+                <InlineEdit path="admissions.hero.title" text={settings.admissions?.hero?.title || "Shape Their Excellence."} label="Hero Title" />
             </h1>
 
             <p className="text-xl md:text-2xl text-gray-500 max-w-2xl mx-auto leading-relaxed font-medium">
-                {settings.admissions?.hero?.subtitle || "Bridge the gap between potential and excellence. Admissions are now open."}
+                <InlineEdit path="admissions.hero.subtitle" text={settings.admissions?.hero?.subtitle || "Bridge the gap between potential and excellence. Admissions are now open."} label="Hero Subtitle" />
             </p>
 
             <div className="flex flex-col sm:flex-row items-center gap-6 justify-center pt-6">
@@ -162,10 +170,12 @@ const AdmissionsPage = () => {
 
             <div className="mt-20 relative w-full max-w-5xl mx-auto px-6 hidden md:block">
             <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full blur-3xl" style={{ backgroundColor: `${theme.accentColor}20` }}></div>
-            <div className="relative rounded-[4rem] overflow-hidden shadow-3xl border-[20px] border-white ring-1 ring-gray-100 transform -rotate-1 hover:rotate-0 transition-all duration-1000">
-                <img src={getImageUrl(settings.admissions?.hero?.image, schoolImageDefault)} alt="Admission Portal" className="w-full h-[400px] object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-primary-950/60 to-transparent"></div>
-            </div>
+            <EditableRegion type="image" path="admissions.hero.image" label="Hero Image">
+                <div className="relative rounded-[4rem] overflow-hidden shadow-3xl border-[20px] border-white ring-1 ring-gray-100 transform -rotate-1 hover:rotate-0 transition-all duration-1000">
+                    <img src={getImageUrl(settings.admissions?.hero?.image, schoolImageDefault)} alt="Admission Portal" className="w-full h-[400px] object-cover" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-primary-950/60 to-transparent"></div>
+                </div>
+            </EditableRegion>
             </div>
         </section>
       )}
@@ -175,45 +185,53 @@ const AdmissionsPage = () => {
         <section className="py-32 px-6 bg-white relative">
             <div className="max-w-7xl mx-auto flex flex-col items-center">
             <div className="text-center mb-20 space-y-4">
-                <div className="inline-block px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.3em] rounded-lg" style={{ backgroundColor: `${theme.accentColor}15`, color: theme.accentColor }}>
-                    {settings.admissions?.process?.badge || "The Cycle"}
-                </div>
+                <EditableRegion type="badge" path="admissions.process.badge" label="Process Badge">
+                    <div className="inline-block px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.3em] rounded-lg" style={{ backgroundColor: `${theme.accentColor}15`, color: theme.accentColor }}>
+                        {typeof settings.admissions?.process?.badge === 'string'
+                            ? settings.admissions.process.badge
+                            : (settings.admissions?.process?.badge?.text || "The Cycle")}
+                    </div>
+                </EditableRegion>
                 <h2 className="text-5xl md:text-7xl font-black text-primary-950 leading-tight" style={{ color: theme.primaryColor }}>
-                    {settings.admissions?.process?.title || "Steps to Excellence."}
+                    <InlineEdit path="admissions.process.title" text={settings.admissions?.process?.title || "Steps to Excellence."} label="Process Title" />
                 </h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 auto-rows-[300px]">
-                {bentoProcess.map((step, i) => {
-                const Icon = step.icon;
-                return (
-                    <div 
-                    key={i} 
-                    className={`${step.gridSpan} group p-10 rounded-[3.5rem] bg-neutral-bg-subtle border border-gray-100 hover:bg-white hover:shadow-accent-glow hover:border-accent-200 transition-all duration-700 flex flex-col justify-between overflow-hidden relative animate-fade-up`}
-                    style={{ animationDelay: `${i * 150}ms` }}
-                    >
-                    <div className="relative z-10 flex flex-col h-full gap-6">
-                        <div className="flex items-center justify-between">
-                        <div className="w-16 h-16 rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shadow-sm" style={{ backgroundColor: `${theme.accentColor}10`, color: theme.accentColor }}>
-                            <Icon size={32} />
-                        </div>
-                        <span className="text-[10px] uppercase font-black tracking-widest opacity-30">
-                            {step.badge}
-                        </span>
-                        </div>
-                        
-                        <div>
-                        <h3 className="text-3xl font-black text-primary-950 mb-4 group-hover:text-accent-600 transition-colors" style={{ color: theme.primaryColor }}>
-                            {step.title}
-                        </h3>
-                        <p className="text-gray-500 leading-relaxed font-medium text-base">
-                            {step.desc}
-                        </p>
-                        </div>
+                <EditableRegion type="process" path="admissions.process.steps" label="Admission Process Steps" className="col-span-full">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 auto-rows-[300px]">
+                        {bentoProcess.map((step, i) => {
+                        const Icon = step.icon;
+                        return (
+                            <div 
+                            key={i} 
+                            className={`${step.gridSpan} group p-10 rounded-[3.5rem] bg-neutral-bg-subtle border border-gray-100 hover:bg-white hover:shadow-accent-glow hover:border-accent-200 transition-all duration-700 flex flex-col justify-between overflow-hidden relative animate-fade-up`}
+                            style={{ animationDelay: `${i * 150}ms` }}
+                            >
+                            <div className="relative z-10 flex flex-col h-full gap-6">
+                                <div className="flex items-center justify-between">
+                                <div className="w-16 h-16 rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shadow-sm" style={{ backgroundColor: `${theme.accentColor}10`, color: theme.accentColor }}>
+                                    <Icon size={32} />
+                                </div>
+                                <span className="text-[10px] uppercase font-black tracking-widest opacity-30">
+                                    {step.badge}
+                                </span>
+                                </div>
+                                
+                                <div>
+                                <h3 className="text-3xl font-black text-primary-950 mb-4 group-hover:text-accent-600 transition-colors" style={{ color: theme.primaryColor }}>
+                                    {step.title}
+                                </h3>
+                                <p className="text-gray-500 leading-relaxed font-medium text-base">
+                                    {step.desc}
+                                </p>
+                                </div>
+                            </div>
+                            </div>
+                        );
+                        })}
                     </div>
-                    </div>
-                );
-                })}
+                </EditableRegion>
             </div>
             </div>
         </section>
@@ -227,29 +245,35 @@ const AdmissionsPage = () => {
             <div className="max-w-7xl mx-auto relative z-10">
             <div className="text-center mb-20">
                 <h2 className="text-5xl md:text-6xl font-black text-white leading-tight">
-                    {settings.admissions?.checklist?.title || "Essentials for Application."}
+                    <InlineEdit path="admissions.checklist.title" text={settings.admissions?.checklist?.title || "Essentials for Application."} label="Checklist Title" />
                 </h2>
-                <p className="text-accent-100/40 text-sm font-black uppercase tracking-[0.4em] mt-4">{settings.admissions?.checklist?.subtitle || "Required Documents Checklist"}</p>
+                <p className="text-accent-100/40 text-sm font-black uppercase tracking-[0.4em] mt-4">
+                    <InlineEdit path="admissions.checklist.subtitle" text={settings.admissions?.checklist?.subtitle || "Required Documents Checklist"} label="Checklist Subtitle" />
+                </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                {(settings.admissions?.checklist?.items || [
-                { title: "Birth Certificate", desc: "Digital copy.", icon: "ClipboardList" },
-                { title: "Identity Records", desc: "Aadhar card.", icon: "ShieldCheck" },
-                { title: "Academic History", desc: "Previous report cards.", icon: "BookOpen" },
-                ]).map((card, i) => {
-                const Icon = IconMap[card.icon] || ClipboardList;
-                return (
-                <div key={i} className="group p-8 rounded-[3rem] bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-500 flex flex-col gap-6 animate-fade-up" style={{ animationDelay: `${i * 100}ms` }}>
-                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center group-hover:rotate-[360deg] transition-transform duration-1000" style={{ backgroundColor: theme.accentColor, color: "#fff" }}>
-                        <Icon size={24} />
+                <EditableRegion type="checklist" path="admissions.checklist.items" label="Document Checklist" className="col-span-full">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {(settings.admissions?.checklist?.items || [
+                        { title: "Birth Certificate", desc: "Digital copy.", icon: "ClipboardList" },
+                        { title: "Identity Records", desc: "Aadhar card.", icon: "ShieldCheck" },
+                        { title: "Academic History", desc: "Previous report cards.", icon: "BookOpen" },
+                        ]).map((card, i) => {
+                        const Icon = IconMap[card.icon] || ClipboardList;
+                        return (
+                        <div key={i} className="group p-8 rounded-[3rem] bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-500 flex flex-col gap-6 animate-fade-up" style={{ animationDelay: `${i * 100}ms` }}>
+                            <div className="w-14 h-14 rounded-2xl flex items-center justify-center group-hover:rotate-[360deg] transition-transform duration-1000" style={{ backgroundColor: theme.accentColor, color: "#fff" }}>
+                                <Icon size={24} />
+                            </div>
+                            <div>
+                                <h4 className="text-xl font-bold text-white mb-2">{card.title}</h4>
+                                <p className="text-white/40 text-sm font-medium leading-relaxed">{card.desc}</p>
+                            </div>
+                        </div>
+                        )})}
                     </div>
-                    <div>
-                        <h4 className="text-xl font-bold text-white mb-2">{card.title}</h4>
-                        <p className="text-white/40 text-sm font-medium leading-relaxed">{card.desc}</p>
-                    </div>
-                </div>
-                )})}
+                </EditableRegion>
             </div>
             </div>
         </section>

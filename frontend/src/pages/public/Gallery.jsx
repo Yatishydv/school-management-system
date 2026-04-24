@@ -8,6 +8,8 @@ import {
   Search 
 } from "lucide-react";
 import { useSiteSettings } from "../../context/SiteSettingsContext";
+import InlineEdit from "../../components/ui/InlineEdit";
+import EditableRegion from "../../components/ui/EditableRegion";
 
 const getImageUrl = (url) => {
   if (!url) return "";
@@ -118,7 +120,7 @@ const Gallery = () => {
             </h1>
           </div>
           <p className="max-w-md text-gray-400 font-medium text-lg leading-snug">
-            A window into the vibrant life at {settings.schoolName || "the Institution"}.
+            <InlineEdit path="global.gallerySubtitle" text={settings.global?.gallerySubtitle || `A window into the vibrant life at ${settings.schoolName || "the Institution"}.`} label="Gallery Subtitle" />
           </p>
         </div>
 

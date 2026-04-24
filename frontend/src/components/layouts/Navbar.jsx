@@ -4,6 +4,7 @@ import { LogOut, Menu, X } from "lucide-react";
 import useAuthStore from "../../stores/authStore";
 import Button from "../ui/Button";
 import { useSiteSettings } from "../../context/SiteSettingsContext";
+import EditableRegion from "../ui/EditableRegion";
 
 const Navbar = () => {
   const { settings, loading } = useSiteSettings();
@@ -50,7 +51,9 @@ const Navbar = () => {
             className="text-2xl font-heading font-extrabold tracking-tight"
             style={{ color: theme.primaryColor }}
           >
-            {settings.schoolName || "Institution"}<span style={{ color: theme.accentColor }}>.</span>
+            <EditableRegion type="text" path="schoolName" label="School Name">
+                {settings.schoolName || "Institution"}<span style={{ color: theme.accentColor }}>.</span>
+            </EditableRegion>
           </Link>
 
           {/* Desktop Menu */}

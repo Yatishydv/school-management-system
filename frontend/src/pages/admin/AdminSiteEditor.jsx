@@ -47,7 +47,9 @@ import {
   X,
   ArrowLeft,
   MousePointerClick,
-  RotateCcw
+  RotateCcw,
+  TrendingUp,
+  HelpCircle
 } from "lucide-react";
 import { toast } from "react-toastify";
 import useAuthStore from "../../stores/authStore.js";
@@ -141,6 +143,7 @@ const AdminSiteEditor = () => {
     const [lastPos, setLastPos] = useState({ x: 0, y: 0 });
     const [containerWidth, setContainerWidth] = useState(0);
     const [containerHeight, setContainerHeight] = useState(0);
+    const [previewUrl, setPreviewUrl] = useState("/");
     const containerRef = useRef(null);
     const iframeRef = useRef(null);
 
@@ -157,6 +160,24 @@ const AdminSiteEditor = () => {
         observer.observe(containerRef.current);
         return () => observer.disconnect();
     }, [showPreview]); // Re-observe when showPreview changes
+
+    const handleTabChange = (id) => {
+        setActiveTab(id);
+        const urlMap = {
+            home: "/",
+            about: "/about",
+            admissions: "/admissions",
+            contact: "/contact",
+            gallery: "/gallery",
+            footer: null, // Keep current
+            global: null,
+            theme: null,
+            layout: null
+        };
+        if (urlMap[id]) {
+            setPreviewUrl(urlMap[id]);
+        }
+    };
 
     const fetchSettings = async () => {
         try {
@@ -324,15 +345,15 @@ const AdminSiteEditor = () => {
                 {/* Contextual Top Navigation */}
                 {!selectedElement ? (
                     <div className="flex border-b border-gray-100 overflow-x-auto no-scrollbar bg-gray-50/50 p-3 gap-2 relative z-10 shrink-0 shadow-inner">
-                        <SidebarBtn id="global" activeTab={activeTab} setActiveTab={setActiveTab} icon={Globe} label="Global" />
-                        <SidebarBtn id="theme" activeTab={activeTab} setActiveTab={setActiveTab} icon={Palette} label="Theme" />
-                        <SidebarBtn id="layout" activeTab={activeTab} setActiveTab={setActiveTab} icon={LayoutTemplate} label="Layout" />
-                        <SidebarBtn id="home" activeTab={activeTab} setActiveTab={setActiveTab} icon={Monitor} label="Home" />
-                        <SidebarBtn id="about" activeTab={activeTab} setActiveTab={setActiveTab} icon={BookOpen} label="About" />
-                        <SidebarBtn id="admissions" activeTab={activeTab} setActiveTab={setActiveTab} icon={FileText} label="Admissions" />
-                        <SidebarBtn id="contact" activeTab={activeTab} setActiveTab={setActiveTab} icon={Phone} label="Contact" />
-                        <SidebarBtn id="footer" activeTab={activeTab} setActiveTab={setActiveTab} icon={Copyright} label="Footer" />
-                        <SidebarBtn id="gallery" activeTab={activeTab} setActiveTab={setActiveTab} icon={ImageIcon} label="Gallery" />
+                        <SidebarBtn id="global" activeTab={activeTab} setActiveTab={handleTabChange} icon={Globe} label="Global" />
+                        <SidebarBtn id="theme" activeTab={activeTab} setActiveTab={handleTabChange} icon={Palette} label="Theme" />
+                        <SidebarBtn id="layout" activeTab={activeTab} setActiveTab={handleTabChange} icon={LayoutTemplate} label="Layout" />
+                        <SidebarBtn id="home" activeTab={activeTab} setActiveTab={handleTabChange} icon={Monitor} label="Home" />
+                        <SidebarBtn id="about" activeTab={activeTab} setActiveTab={handleTabChange} icon={BookOpen} label="About" />
+                        <SidebarBtn id="admissions" activeTab={activeTab} setActiveTab={handleTabChange} icon={FileText} label="Admissions" />
+                        <SidebarBtn id="contact" activeTab={activeTab} setActiveTab={handleTabChange} icon={Phone} label="Contact" />
+                        <SidebarBtn id="footer" activeTab={activeTab} setActiveTab={handleTabChange} icon={Copyright} label="Footer" />
+                        <SidebarBtn id="gallery" activeTab={activeTab} setActiveTab={handleTabChange} icon={ImageIcon} label="Gallery" />
                     </div>
                 ) : (
                     <div className="flex border-b border-gray-100 bg-gray-50/50 p-4 relative z-10 shrink-0 shadow-inner items-center gap-3">
@@ -389,22 +410,23 @@ const AdminSiteEditor = () => {
                                                     updateNestedField(selectedElement.path, newStats);
                                                 }} className="px-3 py-1.5 bg-accent-50 text-accent-700 text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-accent-100 transition-colors">Add Stat</button>
                                             </div>
-                                            {(getNestedField(settings, selectedElement.path) || []).map((stat, idx) => (
+                                            {(Array.isArray(getNestedField(settings, selectedElement.path)) ? getNestedField(settings, selectedElement.path) : []).map((stat, idx) => (
                                                 <div key={idx} className="bg-gray-50 p-5 rounded-xl border border-gray-100 relative group">
                                                     <button onClick={() => {
-                                                        const newStats = getNestedField(settings, selectedElement.path).filter((_, i) => i !== idx);
+                                                        const currentStats = getNestedField(settings, selectedElement.path);
+                                                        const newStats = currentStats.filter((_, i) => i !== idx);
                                                         updateNestedField(selectedElement.path, newStats);
                                                     }} className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-all text-red-500 hover:scale-110"><Trash2 size={14} /></button>
                                                     <div className="space-y-3">
                                                         <Input placeholder="Stat Number (e.g. 50+)" value={stat.value} onChange={(e) => {
-                                                            const newStats = [...getNestedField(settings, selectedElement.path)];
-                                                            newStats[idx].value = e.target.value;
-                                                            updateNestedField(selectedElement.path, newStats);
+                                                            const currentStats = [...getNestedField(settings, selectedElement.path)];
+                                                            currentStats[idx].value = e.target.value;
+                                                            updateNestedField(selectedElement.path, currentStats);
                                                         }} />
                                                         <Input placeholder="Stat Label" value={stat.label} onChange={(e) => {
-                                                            const newStats = [...getNestedField(settings, selectedElement.path)];
-                                                            newStats[idx].label = e.target.value;
-                                                            updateNestedField(selectedElement.path, newStats);
+                                                            const currentStats = [...getNestedField(settings, selectedElement.path)];
+                                                            currentStats[idx].label = e.target.value;
+                                                            updateNestedField(selectedElement.path, currentStats);
                                                         }} />
                                                     </div>
                                                 </div>
@@ -420,7 +442,7 @@ const AdminSiteEditor = () => {
                                                     updateNestedField(selectedElement.path, newFeats);
                                                 }} className="px-3 py-1.5 bg-accent-50 text-accent-700 text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-accent-100 transition-colors">Add Box</button>
                                             </div>
-                                            {(getNestedField(settings, selectedElement.path) || []).map((feat, idx) => (
+                                            {(Array.isArray(getNestedField(settings, selectedElement.path)) ? getNestedField(settings, selectedElement.path) : []).map((feat, idx) => (
                                                 <div key={idx} className="bg-gray-50 p-5 rounded-xl border border-gray-100 relative group">
                                                     <button onClick={() => {
                                                         const newFeats = getNestedField(settings, selectedElement.path).filter((_, i) => i !== idx);
@@ -527,26 +549,36 @@ const AdminSiteEditor = () => {
                                                 <label className="text-xs font-bold text-gray-900 uppercase tracking-widest">{selectedElement.label}</label>
                                             </div>
                                             <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 space-y-6">
-                                                <Input label="Badge Text" value={getNestedField(settings, selectedElement.path)?.text || ""} onChange={(e) => {
-                                                    const current = getNestedField(settings, selectedElement.path) || {};
-                                                    updateNestedField(selectedElement.path, { ...current, text: e.target.value });
-                                                }} />
+                                                <Input 
+                                                    label="Badge Text" 
+                                                    value={typeof getNestedField(settings, selectedElement.path) === 'string' ? getNestedField(settings, selectedElement.path) : (getNestedField(settings, selectedElement.path)?.text || "")} 
+                                                    onChange={(e) => {
+                                                        const current = getNestedField(settings, selectedElement.path);
+                                                        if (typeof current === 'string') {
+                                                            updateNestedField(selectedElement.path, e.target.value);
+                                                        } else {
+                                                            updateNestedField(selectedElement.path, { ...current, text: e.target.value });
+                                                        }
+                                                    }} 
+                                                />
                                                 
-                                                <div className="space-y-3">
-                                                    <label className="text-[11px] font-bold text-gray-400 uppercase tracking-tight">Badge Icon</label>
-                                                    <select className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-accent-500 transition-all" value={getNestedField(settings, selectedElement.path)?.icon || "Star"} onChange={(e) => {
-                                                        const current = getNestedField(settings, selectedElement.path) || {};
-                                                        updateNestedField(selectedElement.path, { ...current, icon: e.target.value });
-                                                    }}>
-                                                        <option value="Star">Star</option>
-                                                        <option value="Sparkles">Sparkles</option>
-                                                        <option value="Trophy">Trophy</option>
-                                                        <option value="Award">Award</option>
-                                                        <option value="Target">Target</option>
-                                                        <option value="Zap">Zap</option>
-                                                        <option value="ShieldCheck">Shield</option>
-                                                    </select>
-                                                </div>
+                                                {(typeof getNestedField(settings, selectedElement.path) === 'object') && (
+                                                    <div className="space-y-3">
+                                                        <label className="text-[11px] font-bold text-gray-400 uppercase tracking-tight">Badge Icon</label>
+                                                        <select className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-accent-500 transition-all" value={getNestedField(settings, selectedElement.path)?.icon || "Star"} onChange={(e) => {
+                                                            const current = getNestedField(settings, selectedElement.path) || {};
+                                                            updateNestedField(selectedElement.path, { ...current, icon: e.target.value });
+                                                        }}>
+                                                            <option value="Star">Star</option>
+                                                            <option value="Sparkles">Sparkles</option>
+                                                            <option value="Trophy">Trophy</option>
+                                                            <option value="Award">Award</option>
+                                                            <option value="Target">Target</option>
+                                                            <option value="Zap">Zap</option>
+                                                            <option value="ShieldCheck">Shield</option>
+                                                        </select>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     )}
@@ -696,48 +728,50 @@ const AdminSiteEditor = () => {
 
                                 <section className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm space-y-6">
                                     <SectionHeader icon={Globe} title="Social Connectivity" />
-                                    <div className="grid grid-cols-1 gap-6">
-                                        <div className="space-y-1">
-                                            <div className="flex items-center gap-2 mb-1.5 px-1">
-                                                <Facebook size={16} className="text-[#1877F2]" />
-                                                <span className="text-[13px] font-semibold text-gray-500">Facebook URL</span>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        {[
+                                            { icon: Facebook, label: "Facebook", path: "socialLinks.facebook", color: "#1877F2" },
+                                            { icon: Instagram, label: "Instagram", path: "socialLinks.instagram", color: "#E4405F" },
+                                            { icon: Twitter, label: "X (Twitter)", path: "socialLinks.twitter", color: "#000000" },
+                                            { icon: Youtube, label: "YouTube", path: "socialLinks.youtube", color: "#FF0000" },
+                                            { icon: MessageCircle, label: "WhatsApp", path: "socialLinks.whatsapp", color: "#25D366" },
+                                            { icon: Linkedin, label: "LinkedIn", path: "socialLinks.linkedin", color: "#0A66C2" }
+                                        ].map((social, i) => (
+                                            <div key={i} className="space-y-1">
+                                                <div className="flex items-center gap-2 mb-1.5 px-1">
+                                                    <social.icon size={16} style={{ color: social.color }} />
+                                                    <span className="text-[13px] font-semibold text-gray-500">{social.label} URL</span>
+                                                </div>
+                                                <Input value={getNestedField(settings, social.path) || ""} onChange={(e) => updateNestedField(social.path, e.target.value)} placeholder="https://..." />
                                             </div>
-                                            <Input value={settings.socialLinks?.facebook || ""} onChange={(e) => updateNestedField("socialLinks.facebook", e.target.value)} placeholder="https://facebook.com/..." />
+                                        ))}
+                                    </div>
+                                </section>
+
+                                <section className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm space-y-8">
+                                    <SectionHeader icon={Award} title="Institutional Heritage" />
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                        <Input label="Foundation Year" value={settings.global?.foundationYear || ""} onChange={(e) => updateNestedField("global.foundationYear", e.target.value)} placeholder="e.g. 1995" />
+                                        <Input label="Holistic Vision Tag" value={settings.global?.holisticVision || ""} onChange={(e) => updateNestedField("global.holisticVision", e.target.value)} placeholder="e.g. Empowering Minds" />
+                                    </div>
+                                </section>
+
+                                <section className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm space-y-8">
+                                    <SectionHeader icon={LayoutTemplate} title="Footer Configuration" />
+                                    <div className="space-y-8">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                            <div className="space-y-4">
+                                                <label className="text-[13px] font-semibold text-gray-500 ml-1">Footer Narrative</label>
+                                                <textarea className="w-full px-5 py-4 bg-gray-50 rounded-2xl text-sm font-medium min-h-[120px] outline-none focus:bg-white focus:border-accent-500 transition-all" value={settings.global?.footer?.desc || ""} onChange={(e) => updateNestedField("global.footer.desc", e.target.value)} />
+                                            </div>
+                                            <div className="space-y-6">
+                                                <Input label="Institutional Email" value={settings.global?.footer?.email || ""} onChange={(e) => updateNestedField("global.footer.email", e.target.value)} />
+                                                <Input label="Direct Hotline" value={settings.global?.footer?.phone || ""} onChange={(e) => updateNestedField("global.footer.phone", e.target.value)} />
+                                            </div>
                                         </div>
-                                        <div className="space-y-1">
-                                            <div className="flex items-center gap-2 mb-1.5 px-1">
-                                                <Instagram size={16} className="text-[#E4405F]" />
-                                                <span className="text-[13px] font-semibold text-gray-500">Instagram URL</span>
-                                            </div>
-                                            <Input value={settings.socialLinks?.instagram || ""} onChange={(e) => updateNestedField("socialLinks.instagram", e.target.value)} placeholder="https://instagram.com/..." />
-                                        </div>
-                                        <div className="space-y-1">
-                                            <div className="flex items-center gap-2 mb-1.5 px-1">
-                                                <Twitter size={16} className="text-[#000000]" />
-                                                <span className="text-[13px] font-semibold text-gray-500">X (Twitter) URL</span>
-                                            </div>
-                                            <Input value={settings.socialLinks?.twitter || ""} onChange={(e) => updateNestedField("socialLinks.twitter", e.target.value)} placeholder="https://x.com/..." />
-                                        </div>
-                                        <div className="space-y-1">
-                                            <div className="flex items-center gap-2 mb-1.5 px-1">
-                                                <Youtube size={16} className="text-[#FF0000]" />
-                                                <span className="text-[13px] font-semibold text-gray-500">YouTube Channel</span>
-                                            </div>
-                                            <Input value={settings.socialLinks?.youtube || ""} onChange={(e) => updateNestedField("socialLinks.youtube", e.target.value)} placeholder="https://youtube.com/..." />
-                                        </div>
-                                        <div className="space-y-1">
-                                            <div className="flex items-center gap-2 mb-1.5 px-1">
-                                                <MessageCircle size={16} className="text-[#25D366]" />
-                                                <span className="text-[13px] font-semibold text-gray-500">WhatsApp Connectivity</span>
-                                            </div>
-                                            <Input value={settings.socialLinks?.whatsapp || ""} onChange={(e) => updateNestedField("socialLinks.whatsapp", e.target.value)} placeholder="Phone number with country code" />
-                                        </div>
-                                        <div className="space-y-1">
-                                            <div className="flex items-center gap-2 mb-1.5 px-1">
-                                                <Linkedin size={16} className="text-[#0A66C2]" />
-                                                <span className="text-[13px] font-semibold text-gray-500">LinkedIn Page</span>
-                                            </div>
-                                            <Input value={settings.socialLinks?.linkedin || ""} onChange={(e) => updateNestedField("socialLinks.linkedin", e.target.value)} placeholder="https://linkedin.com/..." />
+                                        <div className="space-y-4">
+                                            <label className="text-[13px] font-semibold text-gray-500 ml-1">Office Address</label>
+                                            <textarea className="w-full px-5 py-4 bg-gray-50 rounded-2xl text-sm font-medium min-h-[100px] outline-none focus:bg-white focus:border-accent-500 transition-all" value={settings.global?.footer?.address || ""} onChange={(e) => updateNestedField("global.footer.address", e.target.value)} />
                                         </div>
                                     </div>
                                 </section>
@@ -874,7 +908,7 @@ const AdminSiteEditor = () => {
                                     <SectionHeader icon={Zap} title="Enrollment CTA" />
                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                                         <div className="space-y-6">
-                                            <Input label="Action Tagline" value={settings.home?.cta?.badge || ""} onChange={(e) => updateNestedField("home.cta.badge", e.target.value)} />
+                                            <Input label="Action Tagline" value={typeof settings.home?.cta?.badge === 'object' ? settings.home.cta.badge.text : settings.home?.cta?.badge || ""} onChange={(e) => updateNestedField(typeof settings.home?.cta?.badge === 'object' ? "home.cta.badge.text" : "home.cta.badge", e.target.value)} />
                                             <Input label="Call-to-Action Title" value={settings.home?.cta?.title || ""} onChange={(e) => updateNestedField("home.cta.title", e.target.value)} />
                                             <div className="space-y-2">
                                                 <label className="text-[13px] font-semibold text-gray-500 ml-1">Action Subtext</label>
@@ -883,8 +917,8 @@ const AdminSiteEditor = () => {
                                         </div>
                                         <div className="space-y-6">
                                             <div className="grid grid-cols-2 gap-4">
-                                                <Input label="Primary Button" value={settings.home?.cta?.primaryBtn || ""} onChange={(e) => updateNestedField("home.cta.primaryBtn", e.target.value)} />
-                                                <Input label="Secondary Button" value={settings.home?.cta?.secondaryBtn || ""} onChange={(e) => updateNestedField("home.cta.secondaryBtn", e.target.value)} />
+                                                <Input label="Primary Button" value={typeof settings.home?.cta?.primaryBtn === 'object' ? settings.home.cta.primaryBtn.text : settings.home?.cta?.primaryBtn || ""} onChange={(e) => updateNestedField(typeof settings.home?.cta?.primaryBtn === 'object' ? "home.cta.primaryBtn.text" : "home.cta.primaryBtn", e.target.value)} />
+                                                <Input label="Secondary Button" value={typeof settings.home?.cta?.secondaryBtn === 'object' ? settings.home.cta.secondaryBtn.text : settings.home?.cta?.secondaryBtn || ""} onChange={(e) => updateNestedField(typeof settings.home?.cta?.secondaryBtn === 'object' ? "home.cta.secondaryBtn.text" : "home.cta.secondaryBtn", e.target.value)} />
                                             </div>
                                             <Input label="Social Proof / Trust Text" value={settings.home?.cta?.trustText || ""} onChange={(e) => updateNestedField("home.cta.trustText", e.target.value)} />
                                         </div>
@@ -900,7 +934,7 @@ const AdminSiteEditor = () => {
                                     <SectionHeader icon={BookOpen} title="Heritage & Mission" />
                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                                         <div className="space-y-6">
-                                            <Input label="Short Tagline (Badge)" value={settings.about?.hero?.badge || ""} onChange={(e) => updateNestedField("about.hero.badge", e.target.value)} />
+                                            <Input label="Short Tagline (Badge)" value={typeof settings.about?.hero?.badge === 'object' ? settings.about.hero.badge.text : settings.about?.hero?.badge || ""} onChange={(e) => updateNestedField(typeof settings.about?.hero?.badge === 'object' ? "about.hero.badge.text" : "about.hero.badge", e.target.value)} />
                                             <Input label="Primary Narrative Heading" value={settings.about?.hero?.title || ""} onChange={(e) => updateNestedField("about.hero.title", e.target.value)} />
                                             <div className="space-y-2">
                                                 <label className="text-[13px] font-semibold text-gray-500 ml-1">Institutional Story (Teaser)</label>
@@ -908,7 +942,7 @@ const AdminSiteEditor = () => {
                                             </div>
                                         </div>
                                         <div className="space-y-6">
-                                            <Input label="Historical Heritage Title" value={settings.about?.heritage?.title || ""} onChange={(e) => updateNestedField("about.heritage.title", e.target.value)} />
+                                            <Input label="Historical Heritage Title" value={typeof settings.about?.heritage?.title === 'object' ? settings.about.heritage.title.text : settings.about?.heritage?.title || ""} onChange={(e) => updateNestedField(typeof settings.about?.heritage?.title === 'object' ? "about.heritage.title.text" : "about.heritage.title", e.target.value)} />
                                             <div className="space-y-2">
                                                 <label className="text-[13px] font-semibold text-gray-500 ml-1">The Full Legacy Tale</label>
                                                 <textarea className="w-full px-5 py-4 bg-white rounded-2xl border border-gray-200 text-sm font-medium outline-none focus:ring-4 focus:ring-accent-500/5 focus:border-accent-500 transition-all min-h-[160px]" value={settings.about?.heritage?.story || ""} onChange={(e) => updateNestedField("about.heritage.story", e.target.value)} />
@@ -971,11 +1005,59 @@ const AdminSiteEditor = () => {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                         <div className="space-y-4">
                                             <Input label="Decision Title" value={settings.about?.cta?.title || ""} onChange={(e) => updateNestedField("about.cta.title", e.target.value)} />
-                                            <textarea placeholder="Why choose us? Summarize here..." className="w-full px-4 py-3 bg-gray-50 rounded-2xl text-sm font-medium min-h-[100px]" value={settings.about?.cta?.subtitle || ""} onChange={(e) => updateNestedField("about.cta.subtitle", e.target.value)} />
+                                            <textarea placeholder="Why choose us? Summarize here..." className="w-full px-4 py-3 bg-gray-50 rounded-2xl text-sm font-medium min-h-[100px] outline-none focus:bg-white focus:border-accent-500 transition-all" value={settings.about?.cta?.subtitle || ""} onChange={(e) => updateNestedField("about.cta.subtitle", e.target.value)} />
                                         </div>
                                         <div className="space-y-4">
-                                            <Input label="Primary Action Text" value={settings.about?.cta?.btnText || "Contact Admissions"} onChange={(e) => updateNestedField("about.cta.btnText", e.target.value)} />
+                                            <Input label="Primary Action Text" value={settings.about?.cta?.btnText || "Apply for Admission"} onChange={(e) => updateNestedField("about.cta.btnText", e.target.value)} />
                                         </div>
+                                    </div>
+                                </section>
+
+                                <section className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm space-y-8">
+                                    <SectionHeader icon={TrendingUp} title="Institutional Metrics" />
+                                    <div className="space-y-6">
+                                        <div className="flex items-center justify-between">
+                                            <label className="text-xs font-bold text-gray-600 uppercase tracking-widest">Global Stats (About Page)</label>
+                                            <button onClick={() => {
+                                                const current = settings.global?.aboutStats || [];
+                                                updateNestedField("global.aboutStats", [...current, { label: "New Metric", value: "100%", icon: "Star" }]);
+                                            }} className="px-3 py-1.5 bg-accent-50 text-accent-700 text-[10px] font-black uppercase tracking-widest rounded-lg">Add Metric</button>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            {(settings.global?.aboutStats || []).map((stat, idx) => (
+                                                <div key={idx} className="bg-gray-50 p-5 rounded-2xl border border-gray-100 space-y-4 relative group">
+                                                    <button onClick={() => {
+                                                        const current = settings.global.aboutStats.filter((_, i) => i !== idx);
+                                                        updateNestedField("global.aboutStats", current);
+                                                    }} className="absolute top-2 right-2 text-red-500 opacity-0 group-hover:opacity-100 transition-all"><Trash2 size={14} /></button>
+                                                    <Input label="Value" value={stat.value} onChange={(e) => {
+                                                        const current = [...settings.global.aboutStats];
+                                                        current[idx].value = e.target.value;
+                                                        updateNestedField("global.aboutStats", current);
+                                                    }} />
+                                                    <Input label="Label" value={stat.label} onChange={(e) => {
+                                                        const current = [...settings.global.aboutStats];
+                                                        current[idx].label = e.target.value;
+                                                        updateNestedField("global.aboutStats", current);
+                                                    }} />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </section>
+
+                                <section className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm space-y-8">
+                                    <SectionHeader icon={Users} title="Leadership Pulse" />
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                                        <div className="space-y-6">
+                                            <Input label="Principal Name" value={settings.home?.principal?.name || ""} onChange={(e) => updateNestedField("home.principal.name", e.target.value)} />
+                                            <Input label="Principal Title" value={settings.home?.principal?.designation || ""} onChange={(e) => updateNestedField("home.principal.designation", e.target.value)} />
+                                            <div className="space-y-2">
+                                                <label className="text-[13px] font-semibold text-gray-500 ml-1">Leadership Quote</label>
+                                                <textarea className="w-full px-5 py-4 bg-gray-50 rounded-2xl text-sm font-medium min-h-[120px] outline-none focus:bg-white focus:border-accent-500 transition-all" value={settings.home?.principal?.quote || ""} onChange={(e) => updateNestedField("home.principal.quote", e.target.value)} />
+                                            </div>
+                                        </div>
+                                        <ImagePicker label="Principal Portrait" value={settings.home?.principal?.image} path="home.principal.image" handleImageUpload={handleImageUpload} getImageUrl={getImageUrl} uploadingImage={uploadingImage} />
                                     </div>
                                 </section>
                             </div>
@@ -988,7 +1070,7 @@ const AdminSiteEditor = () => {
                                     <SectionHeader icon={FileText} title="Enrollment Strategy" />
                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                                         <div className="space-y-6">
-                                            <Input label="Short Tagline (Badge)" value={settings.admissions?.hero?.badge || ""} onChange={(e) => updateNestedField("admissions.hero.badge", e.target.value)} />
+                                            <Input label="Short Tagline (Badge)" value={typeof settings.admissions?.hero?.badge === 'object' ? settings.admissions.hero.badge.text : settings.admissions?.hero?.badge || ""} onChange={(e) => updateNestedField(typeof settings.admissions?.hero?.badge === 'object' ? "admissions.hero.badge.text" : "admissions.hero.badge", e.target.value)} />
                                             <Input label="Primary Enrollment Heading" value={settings.admissions?.hero?.title || ""} onChange={(e) => updateNestedField("admissions.hero.title", e.target.value)} />
                                             <div className="space-y-2">
                                                 <label className="text-[13px] font-semibold text-gray-500 ml-1">Admission Overview</label>
@@ -1102,7 +1184,7 @@ const AdminSiteEditor = () => {
                                     <SectionHeader icon={Phone} title="Institutional Reach" />
                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                                         <div className="space-y-6">
-                                            <Input label="Short Tagline (Badge)" value={settings.contact?.hero?.badge || ""} onChange={(e) => updateNestedField("contact.hero.badge", e.target.value)} />
+                                            <Input label="Short Tagline (Badge)" value={typeof settings.contact?.hero?.badge === 'object' ? settings.contact.hero.badge.text : settings.contact?.hero?.badge || ""} onChange={(e) => updateNestedField(typeof settings.contact?.hero?.badge === 'object' ? "contact.hero.badge.text" : "contact.hero.badge", e.target.value)} />
                                             <Input label="Primary Contact Heading" value={settings.contact?.hero?.title || ""} onChange={(e) => updateNestedField("contact.hero.title", e.target.value)} />
                                             <div className="space-y-2">
                                                 <label className="text-[13px] font-semibold text-gray-500 ml-1">Contact Narrative</label>
@@ -1415,7 +1497,7 @@ const AdminSiteEditor = () => {
                                     <div className="flex-1 overflow-auto bg-white relative">
                                         <iframe 
                                             ref={iframeRef}
-                                            src="/" 
+                                            src={previewUrl} 
                                             className="w-full h-full border-none"
                                             title="Institutional Site Preview"
                                             key={previewDevice}

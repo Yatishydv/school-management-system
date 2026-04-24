@@ -27,6 +27,8 @@ import {
   Zap
 } from "lucide-react";
 import { useSiteSettings } from "../../context/SiteSettingsContext";
+import InlineEdit from "../../components/ui/InlineEdit";
+import EditableRegion from "../../components/ui/EditableRegion";
 
 const ContactPage = () => {
     const { settings, loading } = useSiteSettings();
@@ -102,17 +104,23 @@ const ContactPage = () => {
             </div>
 
             <div className="max-w-6xl mx-auto text-center space-y-12 relative z-10 animate-fade-up">
-            <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full text-white text-[10px] font-black uppercase tracking-[0.4em] shadow-2xl" style={{ backgroundColor: theme.primaryColor }}>
-                <Sparkles size={14} style={{ color: theme.accentColor }} />
-                <span>{settings.contact?.hero?.badge || "Get In Touch"}</span>
-            </div>
+            <EditableRegion type="badge" path="contact.hero.badge" label="Hero Badge">
+                <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full text-white text-[10px] font-black uppercase tracking-[0.4em] shadow-2xl" style={{ backgroundColor: theme.primaryColor }}>
+                    <Sparkles size={14} style={{ color: theme.accentColor }} />
+                    <span>
+                        {typeof settings.contact?.hero?.badge === 'string'
+                            ? settings.contact.hero.badge
+                            : (settings.contact?.hero?.badge?.text || "Get In Touch")}
+                    </span>
+                </div>
+            </EditableRegion>
 
             <h1 className="text-7xl md:text-9xl font-black tracking-tighter leading-[0.85]" style={{ color: theme.primaryColor }}>
-                {settings.contact?.hero?.title || "Contact Our Campus."}
+                <InlineEdit path="contact.hero.title" text={settings.contact?.hero?.title || "Contact Our Campus."} label="Hero Title" />
             </h1>
 
             <p className="text-xl md:text-2xl text-gray-500 max-w-3xl mx-auto leading-relaxed font-medium tracking-tight">
-                {settings.contact?.hero?.subtitle || "Reach out for inquiries, admissions, or technical support. We are here to assist."}
+                <InlineEdit path="contact.hero.subtitle" text={settings.contact?.hero?.subtitle || "Reach out for inquiries, admissions, or technical support. We are here to assist."} label="Hero Subtitle" />
             </p>
 
             <div 
@@ -131,39 +139,43 @@ const ContactPage = () => {
       {layout.showCards && (
         <section className="py-24 px-6 relative bg-white border-y border-gray-50">
             <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
-            {contactCards.map((card, i) => {
-                const Icon = card.icon;
-                return (
-                    <div 
-                    key={i} 
-                    className="group p-12 rounded-[3.5rem] bg-neutral-bg-subtle border border-gray-100 hover:bg-white hover:shadow-accent-glow transition-all duration-700 relative overflow-hidden active:scale-95"
-                    >
-                    <div className="relative z-10 space-y-10">
-                        <div className="flex items-center justify-between">
-                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm group-hover:rotate-6 transition-all duration-500`} style={{ backgroundColor: `${theme.accentColor}15`, color: theme.accentColor }}>
-                            <Icon size={24} />
-                        </div>
-                        <div className="text-[9px] uppercase font-black tracking-[0.3em] text-gray-300 group-hover:text-accent-500 transition-colors">
-                            {card.label}
-                        </div>
-                        </div>
+                <EditableRegion type="cards" path="contact.cards" label="Contact Info Cards" className="col-span-full">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        {contactCards.map((card, i) => {
+                            const Icon = card.icon;
+                            return (
+                                <div 
+                                key={i} 
+                                className="group p-12 rounded-[3.5rem] bg-neutral-bg-subtle border border-gray-100 hover:bg-white hover:shadow-accent-glow transition-all duration-700 relative overflow-hidden active:scale-95"
+                                >
+                                <div className="relative z-10 space-y-10">
+                                    <div className="flex items-center justify-between">
+                                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm group-hover:rotate-6 transition-all duration-500`} style={{ backgroundColor: `${theme.accentColor}15`, color: theme.accentColor }}>
+                                        <Icon size={24} />
+                                    </div>
+                                    <div className="text-[9px] uppercase font-black tracking-[0.3em] text-gray-300 group-hover:text-accent-500 transition-colors">
+                                        {card.label}
+                                    </div>
+                                    </div>
 
-                        <div className="space-y-4">
-                        <h3 className="text-2xl font-black text-primary-950 group-hover:text-accent-600 transition-colors uppercase tracking-tight" style={{ color: theme.primaryColor }}>
-                            {card.title}
-                        </h3>
-                        <div className="space-y-1">
-                            {card.details.map((text, idx) => (
-                                <p key={idx} className="text-gray-500 font-bold tracking-tight text-xs uppercase opacity-80 leading-relaxed">
-                                    {text}
-                                </p>
-                            ))}
-                        </div>
-                        </div>
+                                    <div className="space-y-4">
+                                    <h3 className="text-2xl font-black text-primary-950 group-hover:text-accent-600 transition-colors uppercase tracking-tight" style={{ color: theme.primaryColor }}>
+                                        {card.title}
+                                    </h3>
+                                    <div className="space-y-1">
+                                        {card.details.map((text, idx) => (
+                                            <p key={idx} className="text-gray-500 font-bold tracking-tight text-xs uppercase opacity-80 leading-relaxed">
+                                                {text}
+                                            </p>
+                                        ))}
+                                    </div>
+                                    </div>
+                                </div>
+                                </div>
+                            );
+                        })}
                     </div>
-                    </div>
-                );
-            })}
+                </EditableRegion>
             </div>
         </section>
       )}
@@ -174,11 +186,13 @@ const ContactPage = () => {
             <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-20 items-center relative z-10">
             <div className="flex-1 space-y-12">
                 <div className="space-y-6">
-                    <div className="inline-block px-5 py-2 rounded-2xl text-[10px] font-black uppercase tracking-[0.4em] border" style={{ backgroundColor: `${theme.accentColor}10`, color: theme.accentColor, borderColor: `${theme.accentColor}30` }}>
-                        {settings.contact?.location?.badge || "Institution Location"}
-                    </div>
+                    <EditableRegion type="badge" path="contact.location.badge" label="Location Badge">
+                        <div className="inline-block px-5 py-2 rounded-2xl text-[10px] font-black uppercase tracking-[0.4em] border" style={{ backgroundColor: `${theme.accentColor}10`, color: theme.accentColor, borderColor: `${theme.accentColor}30` }}>
+                            {settings.contact?.location?.badge || "Institution Location"}
+                        </div>
+                    </EditableRegion>
                     <h2 className="text-6xl md:text-8xl font-black text-primary-950 tracking-tighter leading-[0.9] italic" style={{ color: theme.primaryColor }}>
-                        {settings.contact?.location?.title || "Visit Our Campus."}
+                        <InlineEdit path="contact.location.title" text={settings.contact?.location?.title || "Visit Our Campus."} label="Location Title" />
                     </h2>
                     <div className="w-20 h-2 rounded-full" style={{ backgroundColor: theme.accentColor }}></div>
                 </div>
@@ -199,15 +213,17 @@ const ContactPage = () => {
             </div>
 
             <div className="flex-1 w-full">
-                <div className="relative group p-4 border border-gray-100 rounded-[5rem] bg-white shadow-accent-glow">
-                    <iframe
-                    title="Location"
-                    className="w-full h-[550px] rounded-[4.2rem] grayscale hover:grayscale-0 transition-all duration-1000 border-4 border-white shadow-inner"
-                    loading="lazy"
-                    allowFullScreen
-                    src={settings.contact?.location?.mapLink || "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1!2d76.16!3d28.46!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2sin!4v1"}
-                    ></iframe>
-                </div>
+                <EditableRegion type="map" path="contact.location.mapLink" label="Interactive Google Map">
+                    <div className="relative group p-4 border border-gray-100 rounded-[5rem] bg-white shadow-accent-glow">
+                        <iframe
+                        title="Location"
+                        className="w-full h-[550px] rounded-[4.2rem] grayscale hover:grayscale-0 transition-all duration-1000 border-4 border-white shadow-inner"
+                        loading="lazy"
+                        allowFullScreen
+                        src={settings.contact?.location?.mapLink || "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1!2d76.16!3d28.46!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2sin!4v1"}
+                        ></iframe>
+                    </div>
+                </EditableRegion>
             </div>
             </div>
         </section>

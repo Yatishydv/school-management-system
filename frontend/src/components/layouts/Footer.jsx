@@ -13,6 +13,8 @@ import {
   Youtube
 } from "lucide-react";
 import { useSiteSettings } from "../../context/SiteSettingsContext";
+import EditableRegion from "../ui/EditableRegion";
+import InlineEdit from "../ui/InlineEdit";
 
 const Footer = () => {
     const { settings, loading } = useSiteSettings();
@@ -56,7 +58,9 @@ const Footer = () => {
           <div className="md:col-span-12 lg:col-span-4 space-y-4">
             <Link to="/" className="inline-block group">
               <h3 className="text-2xl font-black text-white tracking-tighter uppercase leading-none group-hover:text-accent-500 transition-colors">
-                {settings.schoolName || "Institution"}
+                <EditableRegion type="text" path="schoolName" label="School Name">
+                    {settings.schoolName || "Institution"}
+                </EditableRegion>
               </h3>
               <div className="flex items-center gap-2 mt-4">
                   <div className="h-1 w-12 rounded-full" style={{ backgroundColor: theme.accentColor }}></div>
@@ -65,7 +69,7 @@ const Footer = () => {
             </Link>
             
             <p className="text-sm leading-relaxed text-gray-500 font-medium italic opacity-80 max-w-sm">
-                "{footerMeta.footerMission || "Empowering the next generation with excellence in education and innovation."}"
+                "<InlineEdit path="global.footer.desc" text={footerMeta.footer?.desc || "Empowering the next generation with excellence in education and innovation."} label="Footer Mission" />"
             </p>
 
             <div className="flex items-center gap-4">
@@ -106,7 +110,7 @@ const Footer = () => {
                 <div className="space-y-1">
                     <p className="text-[9px] font-black uppercase tracking-widest text-gray-600">Location</p>
                     <span className="text-sm font-bold leading-relaxed block text-gray-300">
-                        {settings.global?.footer?.address || "Institution Address"}
+                        <InlineEdit path="contact.location.address" text={settings.contact?.location?.address || "Institution Address"} label="Campus Address" />
                     </span>
                 </div>
               </li>
@@ -153,7 +157,7 @@ const Footer = () => {
 
         <div className="mt-12 pt-8 border-t border-white/5 flex flex-col lg:flex-row justify-between items-center gap-6">
             <p className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-500">
-                {footerMeta.footerCopyright || `© ${new Date().getFullYear()} ${settings.schoolName || "Institution"}. All Rights Reserved.`}
+                <InlineEdit path="global.footer.copyright" text={footerMeta.footer?.copyright || `© ${new Date().getFullYear()} ${settings.schoolName || "Institution"}. All Rights Reserved.`} label="Footer Copyright" />
             </p>
             
             <div className="flex items-center gap-10">
